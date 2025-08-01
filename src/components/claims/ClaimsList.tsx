@@ -123,7 +123,7 @@ export function ClaimsList({
                 <SelectValue placeholder="สถานะ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="submitted">ส่งคำขอแล้ว</SelectItem>
                 <SelectItem value="under_review">กำลังตรวจสอบ</SelectItem>
                 <SelectItem value="approved">อนุมัติแล้ว</SelectItem>
@@ -140,7 +140,7 @@ export function ClaimsList({
                 <SelectValue placeholder="ประเภท" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="warranty">การรับประกัน</SelectItem>
                 <SelectItem value="defect">ข้อบกพร่อง</SelectItem>
                 <SelectItem value="damage">ความเสียหาย</SelectItem>
@@ -156,7 +156,7 @@ export function ClaimsList({
                 <SelectValue placeholder="ความสำคัญ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="urgent">เร่งด่วน</SelectItem>
                 <SelectItem value="high">สูง</SelectItem>
                 <SelectItem value="medium">ปานกลาง</SelectItem>
@@ -172,7 +172,7 @@ export function ClaimsList({
                 <SelectValue placeholder="สถานะประกัน" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="under_warranty">ยังอยู่ในประกัน</SelectItem>
                 <SelectItem value="expired">หมดประกันแล้ว</SelectItem>
               </SelectContent>

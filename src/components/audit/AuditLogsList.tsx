@@ -115,7 +115,7 @@ export function AuditLogsList({
                 <SelectValue placeholder="ผู้ใช้" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 {users.map(user => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.fullName} (@{user.username})
@@ -132,7 +132,7 @@ export function AuditLogsList({
                 <SelectValue placeholder="การกระทำ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 {Object.entries(auditActionLabels).map(([action, label]) => (
                   <SelectItem key={action} value={action}>
                     {label}
@@ -149,7 +149,7 @@ export function AuditLogsList({
                 <SelectValue placeholder="โมดูล" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 {Object.entries(systemModuleLabels).map(([module, label]) => (
                   <SelectItem key={module} value={module}>
                     {label}
@@ -166,7 +166,7 @@ export function AuditLogsList({
                 <SelectValue placeholder="ความสำคัญ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 {Object.entries(auditSeverityLabels).map(([severity, label]) => (
                   <SelectItem key={severity} value={severity}>
                     {label}
@@ -207,7 +207,7 @@ export function AuditLogsList({
                 <SelectValue placeholder="สถานะ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 {Object.entries(auditStatusLabels).map(([status, label]) => (
                   <SelectItem key={status} value={status}>
                     {label}

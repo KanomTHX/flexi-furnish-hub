@@ -137,7 +137,7 @@ export function TaskManagement({
                 <SelectValue placeholder="สถานะ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="pending">รอดำเนินการ</SelectItem>
                 <SelectItem value="assigned">มอบหมายแล้ว</SelectItem>
                 <SelectItem value="in_progress">กำลังดำเนินการ</SelectItem>
@@ -154,7 +154,7 @@ export function TaskManagement({
                 <SelectValue placeholder="ความสำคัญ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="low">ต่ำ</SelectItem>
                 <SelectItem value="medium">ปานกลาง</SelectItem>
                 <SelectItem value="high">สูง</SelectItem>
@@ -170,7 +170,7 @@ export function TaskManagement({
                 <SelectValue placeholder="ประเภทงาน" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="inventory_check">ตรวจนับสินค้า</SelectItem>
                 <SelectItem value="maintenance">บำรุงรักษา</SelectItem>
                 <SelectItem value="cleaning">ทำความสะอาด</SelectItem>

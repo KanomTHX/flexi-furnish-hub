@@ -13,6 +13,8 @@ import Warehouses from "./pages/Warehouses";
 import Accounting from "./pages/Accounting";
 import Claims from "./pages/Claims";
 import Audit from "./pages/Audit";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import Employees from "./pages/Employees";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -94,14 +96,14 @@ const App = () => (
           <Route path="/reports" element={
             <ProtectedRoute>
               <AdminLayout>
-                <div className="p-6"><h1 className="text-2xl font-bold">Reports</h1><p className="text-muted-foreground">Coming soon...</p></div>
+                <Reports />
               </AdminLayout>
             </ProtectedRoute>
           } />
           <Route path="/settings" element={
             <ProtectedRoute>
               <AdminLayout>
-                <div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-muted-foreground">Coming soon...</p></div>
+                <Settings />
               </AdminLayout>
             </ProtectedRoute>
           } />

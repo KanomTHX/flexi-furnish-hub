@@ -115,7 +115,7 @@ export function JournalEntries({
                 <SelectValue placeholder="สถานะ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="draft">ร่าง</SelectItem>
                 <SelectItem value="pending">รออนุมัติ</SelectItem>
                 <SelectItem value="approved">อนุมัติแล้ว</SelectItem>
@@ -145,7 +145,7 @@ export function JournalEntries({
                 <SelectValue placeholder="บัญชี" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 {accounts.map(account => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.code} - {account.name}

@@ -15,14 +15,20 @@ import {
 } from 'lucide-react';
 import { InstallmentManagement } from '@/components/installments/InstallmentManagement';
 import { InstallmentDialog } from '@/components/installments/InstallmentDialog';
+import { CustomerManagement } from '@/components/installments/CustomerManagement';
+import { CustomerDetail } from '@/components/installments/CustomerDetail';
 import { useInstallments } from '@/hooks/useInstallments';
+import { useCustomers } from '@/hooks/useCustomers';
 import { Customer, InstallmentContract } from '@/types/pos';
 
 export default function Installments() {
   const { contracts, summary, actions } = useInstallments();
+  const { customers, loading: customersLoading, actions: customerActions } = useCustomers();
   const { toast } = useToast();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomerForDetail, setSelectedCustomerForDetail] = useState<any>(null);
   const [totalAmount, setTotalAmount] = useState(0);
 
   const handleCreateContract = (contract: InstallmentContract) => {
@@ -36,6 +42,8 @@ export default function Installments() {
 
   const handlePaymentReceived = (contractId: string, paymentId: string, amount: number) => {
     actions.recordPayment(contractId, paymentId, amount);
+    // อัปเดตข้อมูลลูกค้าจากสัญญา
+    customerActions.updateCustomerFromContracts(contracts);
     toast({
       title: "บันทึกการชำระเงินแล้ว",
       description: `รับชำระเงิน ${amount.toLocaleString()} บาท เรียบร้อยแล้ว`,
@@ -44,10 +52,52 @@ export default function Installments() {
 
   const handleUpdateContract = (contract: InstallmentContract) => {
     actions.updateContract(contract);
+    // อัปเดตข้อมูลลูกค้าจากสัญญา
+    customerActions.updateCustomerFromContracts(contracts);
     toast({
       title: "อัพเดทสัญญาแล้ว",
       description: `สัญญาเลขที่ ${contract.contractNumber} ถูกอัพเดทแล้ว`,
     });
+  };
+
+  const handleViewCustomer = (customerId: string) => {
+    const customer = customerActions.getCustomerById(customerId);
+    if (customer) {
+      setSelectedCustomerForDetail(customer);
+      setCustomerDetailOpen(true);
+    }
+  };
+
+  const handleCreateCustomer = async (customerData: any) => {
+    try {
+      await customerActions.createCustomer(customerData);
+      toast({
+        title: "สำเร็จ",
+        description: "สร้างลูกค้าใหม่เรียบร้อยแล้ว",
+      });
+    } catch (error) {
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "ไม่สามารถสร้างลูกค้าได้",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateCustomer = async (customerId: string, customerData: any) => {
+    try {
+      await customerActions.updateCustomer(customerId, customerData);
+      toast({
+        title: "สำเร็จ",
+        description: "อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว",
+      });
+    } catch (error) {
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "ไม่สามารถอัปเดตข้อมูลลูกค้าได้",
+        variant: "destructive",
+      });
+    }
   };
 
   // Mock function สำหรับสร้างสัญญาใหม่
@@ -252,20 +302,13 @@ export default function Installments() {
         </TabsContent>
 
         <TabsContent value="customers" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>ลูกค้าผ่อนชำระ</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>ระบบจัดการลูกค้าจะพัฒนาในเวอร์ชันถัดไป</p>
-                <p className="text-sm mt-2">
-                  จะรวมถึงประวัติการชำระ คะแนนเครดิต และการจัดกลุ่มลูกค้า
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <CustomerManagement
+            customers={customers}
+            onCreateCustomer={handleCreateCustomer}
+            onUpdateCustomer={handleUpdateCustomer}
+            onViewCustomer={handleViewCustomer}
+            loading={customersLoading}
+          />
         </TabsContent>
       </Tabs>
 
@@ -279,6 +322,14 @@ export default function Installments() {
           onConfirm={handleCreateContract}
         />
       )}
+
+      {/* Dialog รายละเอียดลูกค้า */}
+      <CustomerDetail
+        open={customerDetailOpen}
+        onOpenChange={setCustomerDetailOpen}
+        customer={selectedCustomerForDetail}
+        contracts={contracts}
+      />
     </div>
   );
 }

@@ -151,7 +151,7 @@ export function ChartOfAccounts({
                 <SelectValue placeholder="ประเภทบัญชี" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="asset">สินทรัพย์</SelectItem>
                 <SelectItem value="liability">หนี้สิน</SelectItem>
                 <SelectItem value="equity">ส่วนของเจ้าของ</SelectItem>
@@ -168,7 +168,7 @@ export function ChartOfAccounts({
                 <SelectValue placeholder="หมวดหมู่" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="current_asset">สินทรัพย์หมุนเวียน</SelectItem>
                 <SelectItem value="fixed_asset">สินทรัพย์ถาวร</SelectItem>
                 <SelectItem value="current_liability">หนี้สินหมุนเวียน</SelectItem>
@@ -180,17 +180,17 @@ export function ChartOfAccounts({
             </Select>
 
             <Select
-              value={filter.isActive === undefined ? '' : filter.isActive.toString()}
+              value={filter.isActive === undefined ? 'all' : filter.isActive.toString()}
               onValueChange={(value) => onFilterChange({ 
                 ...filter, 
-                isActive: value === '' ? undefined : value === 'true' 
+                isActive: value === 'all' ? undefined : value === 'true' 
               })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="สถานะ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="true">ใช้งาน</SelectItem>
                 <SelectItem value="false">ไม่ใช้งาน</SelectItem>
               </SelectContent>
