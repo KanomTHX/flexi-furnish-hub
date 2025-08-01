@@ -1,46 +1,284 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CreditCard, FileText, Calendar } from "lucide-react";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  CreditCard, 
+  FileText, 
+  Plus, 
+  TrendingUp, 
+  Users, 
+  AlertTriangle,
+  DollarSign,
+  Calculator
+} from 'lucide-react';
+import { InstallmentManagement } from '@/components/installments/InstallmentManagement';
+import { InstallmentDialog } from '@/components/installments/InstallmentDialog';
+import { useInstallments } from '@/hooks/useInstallments';
+import { Customer, InstallmentContract } from '@/types/pos';
 
 export default function Installments() {
+  const { contracts, summary, actions } = useInstallments();
+  const { toast } = useToast();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [totalAmount, setTotalAmount] = useState(0);
+
+  const handleCreateContract = (contract: InstallmentContract) => {
+    actions.addContract(contract);
+    toast({
+      title: "สัญญาผ่อนชำระถูกสร้างแล้ว!",
+      description: `สัญญาเลขที่ ${contract.contractNumber} ถูกสร้างเรียบร้อยแล้ว`,
+    });
+    setCreateDialogOpen(false);
+  };
+
+  const handlePaymentReceived = (contractId: string, paymentId: string, amount: number) => {
+    actions.recordPayment(contractId, paymentId, amount);
+    toast({
+      title: "บันทึกการชำระเงินแล้ว",
+      description: `รับชำระเงิน ${amount.toLocaleString()} บาท เรียบร้อยแล้ว`,
+    });
+  };
+
+  const handleUpdateContract = (contract: InstallmentContract) => {
+    actions.updateContract(contract);
+    toast({
+      title: "อัพเดทสัญญาแล้ว",
+      description: `สัญญาเลขที่ ${contract.contractNumber} ถูกอัพเดทแล้ว`,
+    });
+  };
+
+  // Mock function สำหรับสร้างสัญญาใหม่
+  const handleQuickCreate = () => {
+    const mockCustomer: Customer = {
+      id: `customer-${Date.now()}`,
+      name: 'ลูกค้าตัวอย่าง',
+      phone: '081-234-5678',
+      email: 'customer@example.com',
+      address: '123 ถนนตัวอย่าง กรุงเทพฯ 10100',
+      idCard: '1-2345-67890-12-3',
+      occupation: 'พนักงานบริษัท',
+      monthlyIncome: 30000
+    };
+    
+    setSelectedCustomer(mockCustomer);
+    setTotalAmount(50000);
+    setCreateDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Installment Contracts</h1>
-          <p className="text-muted-foreground">Hire-purchase contracts and payment schedules</p>
+          <h1 className="text-3xl font-bold text-foreground">สัญญาผ่อนชำระ</h1>
+          <p className="text-muted-foreground">
+            จัดการสัญญาผ่อนชำระ ติดตามการชำระเงิน และรายงานสถิติ
+          </p>
         </div>
-        <Button variant="admin">
-          <CreditCard className="w-4 h-4 mr-2" />
-          New Contract
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={handleQuickCreate} className="bg-green-600 hover:bg-green-700">
+            <Plus className="w-4 h-4 mr-2" />
+            สร้างสัญญาใหม่
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle>Contract Setup</CardTitle>
+      {/* สรุปข้อมูลรวม */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">สัญญาทั้งหมด</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Contract creation interface coming soon...</p>
-            </div>
+            <div className="text-2xl font-bold">{summary.totalContracts}</div>
+            <p className="text-xs text-muted-foreground">
+              ใช้งาน {summary.activeContracts} สัญญา
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle>Payment Schedule</CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">ยอดให้เครดิต</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Payment schedule will appear here</p>
+            <div className="text-2xl font-bold">
+              ฿{summary.totalFinanced.toLocaleString()}
             </div>
+            <p className="text-xs text-muted-foreground">
+              เก็บแล้ว ฿{summary.totalCollected.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">ค้างชำระ</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">
+              ฿{summary.overdueAmount.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {summary.overdueContracts} สัญญา
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">เก็บเงินรายเดือน</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ฿{summary.monthlyCollection.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              จากสัญญาที่ใช้งาน
+            </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* เนื้อหาหลัก */}
+      <Tabs defaultValue="contracts" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="contracts" className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            จัดการสัญญา
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            รายงาน
+          </TabsTrigger>
+          <TabsTrigger value="customers" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            ลูกค้า
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="contracts" className="space-y-6">
+          <InstallmentManagement
+            contracts={contracts}
+            onUpdateContract={handleUpdateContract}
+            onPaymentReceived={handlePaymentReceived}
+          />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  สถิติการชำระเงิน
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">อัตราการชำระตรงเวลา</span>
+                    <span className="font-medium">
+                      {contracts.length > 0 
+                        ? Math.round(((summary.totalContracts - summary.overdueContracts) / summary.totalContracts) * 100)
+                        : 0
+                      }%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">ยอดเก็บเฉลี่ยต่อเดือน</span>
+                    <span className="font-medium">
+                      ฿{Math.round(summary.monthlyCollection / (summary.activeContracts || 1)).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">สัญญาที่เสร็จสิ้น</span>
+                    <span className="font-medium">
+                      {contracts.filter(c => c.status === 'completed').length} สัญญา
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4" />
+                  การวิเคราะห์ความเสี่ยง
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">สัญญาเสี่ยงสูง</span>
+                    <span className="font-medium text-destructive">
+                      {contracts.filter(c => {
+                        const overduePayments = c.payments.filter(p => p.status === 'overdue');
+                        return overduePayments.length >= 2;
+                      }).length} สัญญา
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">ยอดเสี่ยงรวม</span>
+                    <span className="font-medium text-destructive">
+                      ฿{contracts
+                        .filter(c => c.payments.some(p => p.status === 'overdue'))
+                        .reduce((sum, c) => sum + c.remainingBalance, 0)
+                        .toLocaleString()
+                      }
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">อัตราการผิดนัด</span>
+                    <span className="font-medium">
+                      {contracts.length > 0 
+                        ? Math.round((contracts.filter(c => c.status === 'defaulted').length / contracts.length) * 100)
+                        : 0
+                      }%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="customers" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>ลูกค้าผ่อนชำระ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>ระบบจัดการลูกค้าจะพัฒนาในเวอร์ชันถัดไป</p>
+                <p className="text-sm mt-2">
+                  จะรวมถึงประวัติการชำระ คะแนนเครดิต และการจัดกลุ่มลูกค้า
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialog สร้างสัญญาใหม่ */}
+      {selectedCustomer && (
+        <InstallmentDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          customer={selectedCustomer}
+          totalAmount={totalAmount}
+          onConfirm={handleCreateContract}
+        />
+      )}
     </div>
   );
 }

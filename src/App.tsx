@@ -9,6 +9,10 @@ import Dashboard from "./pages/Dashboard";
 import POS from "./pages/POS";
 import Installments from "./pages/Installments";
 import Stock from "./pages/Stock";
+import Warehouses from "./pages/Warehouses";
+import Accounting from "./pages/Accounting";
+import Claims from "./pages/Claims";
+import Audit from "./pages/Audit";
 import Employees from "./pages/Employees";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -62,28 +66,28 @@ const App = () => (
           <Route path="/warehouses" element={
             <ProtectedRoute>
               <AdminLayout>
-                <div className="p-6"><h1 className="text-2xl font-bold">Warehouses</h1><p className="text-muted-foreground">Coming soon...</p></div>
+                <Warehouses />
               </AdminLayout>
             </ProtectedRoute>
           } />
           <Route path="/accounting" element={
             <ProtectedRoute>
               <AdminLayout>
-                <div className="p-6"><h1 className="text-2xl font-bold">Accounting</h1><p className="text-muted-foreground">Coming soon...</p></div>
+                <Accounting />
               </AdminLayout>
             </ProtectedRoute>
           } />
           <Route path="/claims" element={
             <ProtectedRoute>
               <AdminLayout>
-                <div className="p-6"><h1 className="text-2xl font-bold">Claims & Warranty</h1><p className="text-muted-foreground">Coming soon...</p></div>
+                <Claims />
               </AdminLayout>
             </ProtectedRoute>
           } />
           <Route path="/audit" element={
             <ProtectedRoute>
               <AdminLayout>
-                <div className="p-6"><h1 className="text-2xl font-bold">Audit Logs</h1><p className="text-muted-foreground">Coming soon...</p></div>
+                <Audit />
               </AdminLayout>
             </ProtectedRoute>
           } />
