@@ -4,10 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AdminLayout } from "@/components/layouts/AdminLayout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import POS from "./pages/POS";
 import Installments from "./pages/Installments";
 import Stock from "./pages/Stock";
+import Employees from "./pages/Employees";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,24 +21,89 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AdminLayout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/pos" element={<POS />} />
-            <Route path="/installments" element={<Installments />} />
-            <Route path="/stock" element={<Stock />} />
-            {/* Placeholder routes for other modules */}
-            <Route path="/warehouses" element={<div className="p-6"><h1 className="text-2xl font-bold">Warehouses</h1><p className="text-muted-foreground">Coming soon...</p></div>} />
-            <Route path="/accounting" element={<div className="p-6"><h1 className="text-2xl font-bold">Accounting</h1><p className="text-muted-foreground">Coming soon...</p></div>} />
-            <Route path="/claims" element={<div className="p-6"><h1 className="text-2xl font-bold">Claims & Warranty</h1><p className="text-muted-foreground">Coming soon...</p></div>} />
-            <Route path="/employees" element={<div className="p-6"><h1 className="text-2xl font-bold">Employee Management</h1><p className="text-muted-foreground">Coming soon...</p></div>} />
-            <Route path="/audit" element={<div className="p-6"><h1 className="text-2xl font-bold">Audit Logs</h1><p className="text-muted-foreground">Coming soon...</p></div>} />
-            <Route path="/reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reports</h1><p className="text-muted-foreground">Coming soon...</p></div>} />
-            <Route path="/settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-muted-foreground">Coming soon...</p></div>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AdminLayout>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <Dashboard />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/pos" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <POS />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/installments" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <Installments />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/stock" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <Stock />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/employees" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <Employees />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          {/* Placeholder routes for other modules */}
+          <Route path="/warehouses" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <div className="p-6"><h1 className="text-2xl font-bold">Warehouses</h1><p className="text-muted-foreground">Coming soon...</p></div>
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/accounting" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <div className="p-6"><h1 className="text-2xl font-bold">Accounting</h1><p className="text-muted-foreground">Coming soon...</p></div>
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/claims" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <div className="p-6"><h1 className="text-2xl font-bold">Claims & Warranty</h1><p className="text-muted-foreground">Coming soon...</p></div>
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/audit" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <div className="p-6"><h1 className="text-2xl font-bold">Audit Logs</h1><p className="text-muted-foreground">Coming soon...</p></div>
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/reports" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <div className="p-6"><h1 className="text-2xl font-bold">Reports</h1><p className="text-muted-foreground">Coming soon...</p></div>
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-muted-foreground">Coming soon...</p></div>
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
