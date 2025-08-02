@@ -126,7 +126,7 @@ export function AuditLogsList({
 
             <Select
               value={filter.action || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, action: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, action: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="การกระทำ" />
@@ -143,7 +143,7 @@ export function AuditLogsList({
 
             <Select
               value={filter.module || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, module: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, module: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="โมดูล" />
@@ -160,7 +160,7 @@ export function AuditLogsList({
 
             <Select
               value={filter.severity || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, severity: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, severity: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="ความสำคัญ" />
@@ -201,7 +201,7 @@ export function AuditLogsList({
             />
             <Select
               value={filter.status || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, status: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, status: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="สถานะ" />
@@ -417,23 +417,23 @@ function LogDetailView({ log }: { log: AuditLog }) {
           <h3 className="font-medium mb-2">ข้อมูลการกระทำ</h3>
           <div className="space-y-1 text-sm">
             <div><strong>การกระทำ:</strong> 
-              <Badge className={getActionColor(log.action)} size="sm" className="ml-2">
+              <Badge className={`${getActionColor(log.action)} ml-2`}>
                 {auditActionLabels[log.action]}
               </Badge>
             </div>
             <div><strong>ทรัพยากร:</strong> {auditResourceLabels[log.resource]}</div>
             <div><strong>โมดูล:</strong> 
-              <Badge className={getModuleColor(log.module)} size="sm" className="ml-2">
+              <Badge className={`${getModuleColor(log.module)} ml-2`}>
                 {systemModuleLabels[log.module]}
               </Badge>
             </div>
             <div><strong>ความสำคัญ:</strong> 
-              <Badge className={getSeverityColor(log.severity)} size="sm" className="ml-2">
+              <Badge className={`${getSeverityColor(log.severity)} ml-2`}>
                 {auditSeverityLabels[log.severity]}
               </Badge>
             </div>
             <div><strong>สถานะ:</strong> 
-              <Badge className={getStatusColor(log.status)} size="sm" className="ml-2">
+              <Badge className={`${getStatusColor(log.status)} ml-2`}>
                 {auditStatusLabels[log.status]}
               </Badge>
             </div>

@@ -302,7 +302,7 @@ export const mockClaims: Claim[] = [
     purchaseDate: '2024-01-05',
     claimDate: '2024-01-22',
     issueDescription: 'โต๊ะไม่สามารถประกอบได้ เนื่องจากขาดน็อตและสกรู',
-    category: 'missing_parts',
+    category: 'product_defect',
     warrantyInfo: {
       isUnderWarranty: true,
       warrantyStartDate: '2024-01-05',
@@ -442,7 +442,7 @@ export const mockClaimTemplates: ClaimTemplate[] = [
     id: 'template-003',
     name: 'ชิ้นส่วนขาดหาย',
     type: 'installation',
-    category: 'missing_parts',
+    category: 'product_defect',
     description: 'สินค้าขาดชิ้นส่วนสำหรับการประกอบ',
     standardResolution: 'จัดส่งชิ้นส่วนที่ขาดหายและติดตั้งให้',
     estimatedTime: 1,

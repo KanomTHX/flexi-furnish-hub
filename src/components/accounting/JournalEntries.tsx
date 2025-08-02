@@ -109,7 +109,7 @@ export function JournalEntries({
 
             <Select
               value={filter.status || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, status: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, status: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="สถานะ" />

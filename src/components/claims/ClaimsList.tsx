@@ -30,7 +30,8 @@ import {
   AlertTriangle,
   User,
   Package,
-  Calendar
+  Calendar,
+  Star
 } from 'lucide-react';
 
 interface ClaimsListProps {
@@ -117,7 +118,7 @@ export function ClaimsList({
 
             <Select
               value={filter.status || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, status: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, status: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="สถานะ" />
@@ -134,7 +135,7 @@ export function ClaimsList({
 
             <Select
               value={filter.type || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, type: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, type: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="ประเภท" />
@@ -150,7 +151,7 @@ export function ClaimsList({
 
             <Select
               value={filter.priority || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, priority: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, priority: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="ความสำคัญ" />
@@ -166,7 +167,7 @@ export function ClaimsList({
 
             <Select
               value={filter.warrantyStatus || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, warrantyStatus: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, warrantyStatus: value === 'all' ? undefined : value as any })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="สถานะประกัน" />
@@ -443,10 +444,10 @@ function ClaimDetailView({ claim }: { claim: Claim }) {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <strong>สถานะ:</strong> 
-            <Badge className={getWarrantyStatusColor(
+            <Badge className={`${getWarrantyStatusColor(
               claim.warrantyInfo.isUnderWarranty, 
               claim.warrantyInfo.remainingDays
-            )} size="sm" className="ml-2">
+            )} ml-2`}>
               {claim.warrantyInfo.isUnderWarranty ? 'ยังอยู่ในประกัน' : 'หมดประกันแล้ว'}
             </Badge>
           </div>
