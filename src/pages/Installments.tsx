@@ -17,6 +17,7 @@ import { InstallmentManagement } from '@/components/installments/InstallmentMana
 import { InstallmentDialog } from '@/components/installments/InstallmentDialog';
 import { CustomerManagement } from '@/components/installments/CustomerManagement';
 import { CustomerDetail } from '@/components/installments/CustomerDetail';
+import { CustomerAnalytics } from '@/components/installments/CustomerAnalytics';
 import { useInstallments } from '@/hooks/useInstallments';
 import { useCustomers } from '@/hooks/useCustomers';
 import { Customer, InstallmentContract } from '@/types/pos';
@@ -199,7 +200,7 @@ export default function Installments() {
 
       {/* เนื้อหาหลัก */}
       <Tabs defaultValue="contracts" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="contracts" className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
             จัดการสัญญา
@@ -211,6 +212,10 @@ export default function Installments() {
           <TabsTrigger value="customers" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             ลูกค้า
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <Calculator className="w-4 h-4" />
+            การวิเคราะห์
           </TabsTrigger>
         </TabsList>
 
@@ -309,6 +314,10 @@ export default function Installments() {
             onViewCustomer={handleViewCustomer}
             loading={customersLoading}
           />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <CustomerAnalytics customers={customers} />
         </TabsContent>
       </Tabs>
 

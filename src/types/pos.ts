@@ -165,4 +165,5 @@ export interface POSState {
     tax: number;
     subtotal: number;
     total: number;
+    sales: Sale[];
 }

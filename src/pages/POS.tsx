@@ -11,6 +11,8 @@ import { ReceiptPreview } from "@/components/pos/ReceiptPreview";
 import { CheckoutDialog } from "@/components/pos/CheckoutDialog";
 import { QuickActions } from "@/components/pos/QuickActions";
 import { BarcodeScanner } from "@/components/pos/BarcodeScanner";
+import { CustomerManagementDialog } from "@/components/pos/CustomerManagementDialog";
+import { SalesHistoryDialog } from "@/components/pos/SalesHistoryDialog";
 import { Product } from "@/types/pos";
 import { generateSaleNumber } from "@/utils/posHelpers";
 
@@ -19,6 +21,8 @@ export default function POS() {
   const { toast } = useToast();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [customerManagementOpen, setCustomerManagementOpen] = useState(false);
+  const [salesHistoryOpen, setSalesHistoryOpen] = useState(false);
   const [currentSaleNumber] = useState(() => generateSaleNumber());
 
   const handleAddToCart = (product: Product) => {
@@ -72,17 +76,11 @@ export default function POS() {
   };
 
   const handleShowCustomers = () => {
-    toast({
-      title: "Customer Management",
-      description: "Customer management feature coming soon.",
-    });
+    setCustomerManagementOpen(true);
   };
 
   const handleShowHistory = () => {
-    toast({
-      title: "Sales History",
-      description: "Sales history feature coming soon.",
-    });
+    setSalesHistoryOpen(true);
   };
 
   const handleBarcodeScanner = () => {
@@ -187,6 +185,26 @@ export default function POS() {
         open={scannerOpen}
         onOpenChange={setScannerOpen}
         onProductFound={handleProductFoundByBarcode}
+      />
+
+      {/* Customer Management Dialog */}
+      <CustomerManagementDialog
+        open={customerManagementOpen}
+        onOpenChange={setCustomerManagementOpen}
+      />
+
+      {/* Sales History Dialog */}
+      <SalesHistoryDialog
+        open={salesHistoryOpen}
+        onOpenChange={setSalesHistoryOpen}
+        sales={state.sales}
+        onRefresh={() => {
+          // Refresh sales data if needed
+          toast({
+            title: "รีเฟรชข้อมูล",
+            description: "ข้อมูลการขายได้รับการอัปเดตแล้ว",
+          });
+        }}
       />
     </div>
   );

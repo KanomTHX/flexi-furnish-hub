@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { User, CreditCard, Receipt, Check } from 'lucide-react';
 import { POSState, Customer, PaymentMethod } from '@/types/pos';
 import { paymentMethods } from '@/data/mockProducts';
+import { CustomerSelector } from './CustomerSelector';
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -28,12 +27,6 @@ export function CheckoutDialog({
   onSetPaymentMethod,
   onCompleteSale
 }: CheckoutDialogProps) {
-  const [customerForm, setCustomerForm] = useState({
-    name: state.customer?.name || '',
-    phone: state.customer?.phone || '',
-    email: state.customer?.email || '',
-    address: state.customer?.address || ''
-  });
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('th-TH', {
@@ -43,15 +36,8 @@ export function CheckoutDialog({
     }).format(price);
   };
 
-  const handleCustomerSubmit = () => {
-    if (customerForm.name.trim()) {
-      onSetCustomer({
-        name: customerForm.name.trim(),
-        phone: customerForm.phone.trim() || undefined,
-        email: customerForm.email.trim() || undefined,
-        address: customerForm.address.trim() || undefined
-      });
-    }
+  const handleCustomerSelect = (customer: Customer | null) => {
+    onSetCustomer(customer);
   };
 
   const handlePaymentMethodSelect = (method: PaymentMethod) => {
@@ -93,67 +79,10 @@ export function CheckoutDialog({
               </TabsList>
 
               <TabsContent value="customer" className="space-y-4">
-                <Card>
-                  <CardContent className="p-4 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="customerName">Customer Name *</Label>
-                      <Input
-                        id="customerName"
-                        value={customerForm.name}
-                        onChange={(e) => setCustomerForm(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Enter customer name"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="customerPhone">Phone Number</Label>
-                      <Input
-                        id="customerPhone"
-                        value={customerForm.phone}
-                        onChange={(e) => setCustomerForm(prev => ({ ...prev, phone: e.target.value }))}
-                        placeholder="Enter phone number"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="customerEmail">Email</Label>
-                      <Input
-                        id="customerEmail"
-                        type="email"
-                        value={customerForm.email}
-                        onChange={(e) => setCustomerForm(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="Enter email address"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="customerAddress">Address</Label>
-                      <Input
-                        id="customerAddress"
-                        value={customerForm.address}
-                        onChange={(e) => setCustomerForm(prev => ({ ...prev, address: e.target.value }))}
-                        placeholder="Enter address"
-                      />
-                    </div>
-
-                    <Button onClick={handleCustomerSubmit} className="w-full">
-                      {state.customer ? 'Update Customer' : 'Set Customer'}
-                    </Button>
-
-                    {state.customer && (
-                      <div className="p-3 bg-success/10 rounded-lg border border-success/20">
-                        <div className="flex items-center gap-2 text-success mb-2">
-                          <Check className="w-4 h-4" />
-                          <span className="font-medium">Customer Set</span>
-                        </div>
-                        <p className="text-sm">{state.customer.name}</p>
-                        {state.customer.phone && (
-                          <p className="text-xs text-muted-foreground">{state.customer.phone}</p>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <CustomerSelector
+                  selectedCustomer={state.customer}
+                  onSelectCustomer={handleCustomerSelect}
+                />
               </TabsContent>
 
               <TabsContent value="payment" className="space-y-4">

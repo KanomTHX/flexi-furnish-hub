@@ -19,7 +19,139 @@ export function usePOS() {
   const [customer, setCustomer] = useState<Customer | undefined>(persistedCustomer);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>();
   const [discount, setDiscount] = useState(persistedDiscount || 0);
-  const [sales, setSales] = useState<Sale[]>([]);
+  // Mock sales data for testing
+  const mockSales: Sale[] = [
+    {
+      id: 'sale-001',
+      saleNumber: 'S240001',
+      customerId: 'customer-001',
+      customer: {
+        id: 'customer-001',
+        name: 'สมชาย ใจดี',
+        phone: '081-234-5678',
+        email: 'somchai@example.com'
+      },
+      items: [
+        {
+          product: {
+            id: 'prod-001',
+            name: 'โซฟา 3 ที่นั่ง Modern',
+            sku: 'SF-001',
+            price: 15000,
+            category: 'โซฟา',
+            stock: 10
+          },
+          quantity: 1,
+          unitPrice: 15000,
+          totalPrice: 15000
+        },
+        {
+          product: {
+            id: 'prod-002',
+            name: 'โต๊ะกาแฟ Glass Top',
+            sku: 'TB-002',
+            price: 3500,
+            category: 'โต๊ะ',
+            stock: 15
+          },
+          quantity: 1,
+          unitPrice: 3500,
+          totalPrice: 3500
+        }
+      ],
+      subtotal: 18500,
+      discount: 500,
+      tax: 1260,
+      total: 19260,
+      paymentMethod: {
+        id: 'cash',
+        name: 'เงินสด',
+        type: 'cash',
+        icon: '💵'
+      },
+      paymentStatus: 'completed',
+      status: 'completed',
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+      updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      employeeId: 'emp-001'
+    },
+    {
+      id: 'sale-002',
+      saleNumber: 'S240002',
+      customerId: 'customer-002',
+      customer: {
+        id: 'customer-002',
+        name: 'สมหญิง รักงาน',
+        phone: '082-345-6789'
+      },
+      items: [
+        {
+          product: {
+            id: 'prod-003',
+            name: 'เตียงนอน King Size',
+            sku: 'BD-003',
+            price: 25000,
+            category: 'เตียง',
+            stock: 5
+          },
+          quantity: 1,
+          unitPrice: 25000,
+          totalPrice: 25000
+        }
+      ],
+      subtotal: 25000,
+      discount: 0,
+      tax: 1750,
+      total: 26750,
+      paymentMethod: {
+        id: 'card',
+        name: 'บัตรเครดิต',
+        type: 'card',
+        icon: '💳'
+      },
+      paymentStatus: 'completed',
+      status: 'completed',
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+      updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      employeeId: 'emp-001'
+    },
+    {
+      id: 'sale-003',
+      saleNumber: 'S240003',
+      items: [
+        {
+          product: {
+            id: 'prod-004',
+            name: 'เก้าอี้ทำงาน Ergonomic',
+            sku: 'CH-004',
+            price: 4500,
+            category: 'เก้าอี้',
+            stock: 20
+          },
+          quantity: 2,
+          unitPrice: 4500,
+          totalPrice: 9000
+        }
+      ],
+      subtotal: 9000,
+      discount: 0,
+      tax: 630,
+      total: 9630,
+      paymentMethod: {
+        id: 'cash',
+        name: 'เงินสด',
+        type: 'cash',
+        icon: '💵'
+      },
+      paymentStatus: 'completed',
+      status: 'completed',
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+      updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      employeeId: 'emp-001'
+    }
+  ];
+
+  const [sales, setSales] = useState<Sale[]>(mockSales);
 
   // Sync with localStorage
   useEffect(() => {
@@ -146,7 +278,8 @@ export function usePOS() {
     discount,
     tax,
     subtotal,
-    total
+    total,
+    sales
   };
 
   return {
