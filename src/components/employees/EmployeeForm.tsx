@@ -77,41 +77,41 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'กรุณากรอกชื่อ';
+      newErrors.firstName = 'First name is required';
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'กรุณากรอกนามสกุล';
+      newErrors.lastName = 'Last name is required';
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'กรุณากรอกอีเมล';
+      newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'รูปแบบอีเมลไม่ถูกต้อง';
+      newErrors.email = 'Invalid email format';
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = 'กรุณากรอกเบอร์โทรศัพท์';
+      newErrors.phone = 'Phone number is required';
     }
 
     if (!formData.positionId) {
-      newErrors.positionId = 'กรุณาเลือกตำแหน่ง';
+      newErrors.positionId = 'Position is required';
     }
 
     if (!formData.departmentId) {
-      newErrors.departmentId = 'กรุณาเลือกแผนก';
+      newErrors.departmentId = 'Department is required';
     }
 
     if (formData.salary <= 0) {
-      newErrors.salary = 'กรุณากรอกเงินเดือนที่ถูกต้อง';
+      newErrors.salary = 'Valid salary is required';
     }
 
     if (!formData.emergencyContact.name.trim()) {
-      newErrors.emergencyContactName = 'กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน';
+      newErrors.emergencyContactName = 'Emergency contact name is required';
     }
 
     if (!formData.emergencyContact.phone.trim()) {
-      newErrors.emergencyContactPhone = 'กรุณากรอกเบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน';
+      newErrors.emergencyContactPhone = 'Emergency contact phone is required';
     }
 
     setErrors(newErrors);
@@ -167,104 +167,104 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
   };
 
   const dayNames = {
-    monday: 'จันทร์',
-    tuesday: 'อังคาร',
-    wednesday: 'พุธ',
-    thursday: 'พฤหัสบดี',
-    friday: 'ศุกร์',
-    saturday: 'เสาร์',
-    sunday: 'อาทิตย์'
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday',
+    sunday: 'Sunday'
   };
 
   return (
-    <form onSubmit={handleSubmit} className=\"space-y-6\">
-      <Tabs defaultValue=\"personal\" className=\"w-full\">
-        <TabsList className=\"grid w-full grid-cols-4\">
-          <TabsTrigger value=\"personal\">ข้อมูลส่วนตัว</TabsTrigger>
-          <TabsTrigger value=\"work\">ข้อมูลการทำงาน</TabsTrigger>
-          <TabsTrigger value=\"emergency\">ผู้ติดต่อฉุกเฉิน</TabsTrigger>
-          <TabsTrigger value=\"schedule\">ตารางงาน</TabsTrigger>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Tabs defaultValue="personal" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="personal">Personal</TabsTrigger>
+          <TabsTrigger value="work">Work</TabsTrigger>
+          <TabsTrigger value="emergency">Emergency</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
         </TabsList>
 
         {/* Personal Information */}
-        <TabsContent value=\"personal\" className=\"space-y-4\">
+        <TabsContent value="personal" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>ข้อมูลส่วนตัว</CardTitle>
+              <CardTitle>Personal Information</CardTitle>
             </CardHeader>
-            <CardContent className=\"space-y-4\">
-              <div className=\"grid gap-4 md:grid-cols-2\">
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"firstName\">ชื่อ *</Label>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
                   <Input
-                    id=\"firstName\"
+                    id="firstName"
                     value={formData.firstName}
                     onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
                     className={errors.firstName ? 'border-red-500' : ''}
                   />
                   {errors.firstName && (
-                    <p className=\"text-sm text-red-500\">{errors.firstName}</p>
+                    <p className="text-sm text-red-500">{errors.firstName}</p>
                   )}
                 </div>
 
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"lastName\">นามสกุล *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
                   <Input
-                    id=\"lastName\"
+                    id="lastName"
                     value={formData.lastName}
                     onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
                     className={errors.lastName ? 'border-red-500' : ''}
                   />
                   {errors.lastName && (
-                    <p className=\"text-sm text-red-500\">{errors.lastName}</p>
+                    <p className="text-sm text-red-500">{errors.lastName}</p>
                   )}
                 </div>
               </div>
 
-              <div className=\"grid gap-4 md:grid-cols-2\">
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"email\">อีเมล *</Label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
                   <Input
-                    id=\"email\"
-                    type=\"email\"
+                    id="email"
+                    type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     className={errors.email ? 'border-red-500' : ''}
                   />
                   {errors.email && (
-                    <p className=\"text-sm text-red-500\">{errors.email}</p>
+                    <p className="text-sm text-red-500">{errors.email}</p>
                   )}
                 </div>
 
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"phone\">โทรศัพท์ *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone *</Label>
                   <Input
-                    id=\"phone\"
+                    id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                     className={errors.phone ? 'border-red-500' : ''}
                   />
                   {errors.phone && (
-                    <p className=\"text-sm text-red-500\">{errors.phone}</p>
+                    <p className="text-sm text-red-500">{errors.phone}</p>
                   )}
                 </div>
               </div>
 
-              <div className=\"space-y-2\">
-                <Label htmlFor=\"address\">ที่อยู่</Label>
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
                 <Textarea
-                  id=\"address\"
+                  id="address"
                   value={formData.address}
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                   rows={3}
                 />
               </div>
 
-              <div className=\"space-y-2\">
-                <Label htmlFor=\"dateOfBirth\">วันเกิด</Label>
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
                 <Input
-                  id=\"dateOfBirth\"
-                  type=\"date\"
+                  id="dateOfBirth"
+                  type="date"
                   value={formData.dateOfBirth}
                   onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
                 />
@@ -274,21 +274,21 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         </TabsContent>
 
         {/* Work Information */}
-        <TabsContent value=\"work\" className=\"space-y-4\">
+        <TabsContent value="work" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>ข้อมูลการทำงาน</CardTitle>
+              <CardTitle>Work Information</CardTitle>
             </CardHeader>
-            <CardContent className=\"space-y-4\">
-              <div className=\"grid gap-4 md:grid-cols-2\">
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"departmentId\">แผนก *</Label>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="departmentId">Department *</Label>
                   <Select
                     value={formData.departmentId}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, departmentId: value }))}
                   >
                     <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
-                      <SelectValue placeholder=\"เลือกแผนก\" />
+                      <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
                     <SelectContent>
                       {departments.map((dept) => (
@@ -299,18 +299,18 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     </SelectContent>
                   </Select>
                   {errors.departmentId && (
-                    <p className=\"text-sm text-red-500\">{errors.departmentId}</p>
+                    <p className="text-sm text-red-500">{errors.departmentId}</p>
                   )}
                 </div>
 
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"positionId\">ตำแหน่ง *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="positionId">Position *</Label>
                   <Select
                     value={formData.positionId}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, positionId: value }))}
                   >
                     <SelectTrigger className={errors.positionId ? 'border-red-500' : ''}>
-                      <SelectValue placeholder=\"เลือกตำแหน่ง\" />
+                      <SelectValue placeholder="Select Position" />
                     </SelectTrigger>
                     <SelectContent>
                       {positions.map((pos) => (
@@ -321,31 +321,31 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     </SelectContent>
                   </Select>
                   {errors.positionId && (
-                    <p className=\"text-sm text-red-500\">{errors.positionId}</p>
+                    <p className="text-sm text-red-500">{errors.positionId}</p>
                   )}
                 </div>
               </div>
 
-              <div className=\"grid gap-4 md:grid-cols-2\">
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"salary\">เงินเดือน (บาท) *</Label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="salary">Salary (฿) *</Label>
                   <Input
-                    id=\"salary\"
-                    type=\"number\"
+                    id="salary"
+                    type="number"
                     value={formData.salary}
                     onChange={(e) => setFormData(prev => ({ ...prev, salary: Number(e.target.value) }))}
                     className={errors.salary ? 'border-red-500' : ''}
                   />
                   {errors.salary && (
-                    <p className=\"text-sm text-red-500\">{errors.salary}</p>
+                    <p className="text-sm text-red-500">{errors.salary}</p>
                   )}
                 </div>
 
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"hireDate\">วันที่เข้าทำงาน</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="hireDate">Hire Date</Label>
                   <Input
-                    id=\"hireDate\"
-                    type=\"date\"
+                    id="hireDate"
+                    type="date"
                     value={formData.hireDate}
                     onChange={(e) => setFormData(prev => ({ ...prev, hireDate: e.target.value }))}
                   />
@@ -353,14 +353,14 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
               </div>
 
               {/* Bank Account */}
-              <div className=\"space-y-4 pt-4 border-t\">
-                <h4 className=\"font-medium\">ข้อมูลบัญชีธนาคาร</h4>
+              <div className="space-y-4 pt-4 border-t">
+                <h4 className="font-medium">Bank Account Information</h4>
                 
-                <div className=\"grid gap-4 md:grid-cols-2\">
-                  <div className=\"space-y-2\">
-                    <Label htmlFor=\"bankName\">ธนาคาร</Label>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName">Bank</Label>
                     <Input
-                      id=\"bankName\"
+                      id="bankName"
                       value={formData.bankAccount.bankName}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
@@ -369,10 +369,10 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     />
                   </div>
 
-                  <div className=\"space-y-2\">
-                    <Label htmlFor=\"accountNumber\">เลขที่บัญชี</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Account Number</Label>
                     <Input
-                      id=\"accountNumber\"
+                      id="accountNumber"
                       value={formData.bankAccount.accountNumber}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
@@ -382,11 +382,11 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   </div>
                 </div>
 
-                <div className=\"grid gap-4 md:grid-cols-2\">
-                  <div className=\"space-y-2\">
-                    <Label htmlFor=\"accountName\">ชื่อบัญชี</Label>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="accountName">Account Name</Label>
                     <Input
-                      id=\"accountName\"
+                      id="accountName"
                       value={formData.bankAccount.accountName}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
@@ -395,10 +395,10 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     />
                   </div>
 
-                  <div className=\"space-y-2\">
-                    <Label htmlFor=\"branchName\">สาขา</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="branchName">Branch</Label>
                     <Input
-                      id=\"branchName\"
+                      id="branchName"
                       value={formData.bankAccount.branchName}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
@@ -413,17 +413,17 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         </TabsContent>
 
         {/* Emergency Contact */}
-        <TabsContent value=\"emergency\" className=\"space-y-4\">
+        <TabsContent value="emergency" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>ผู้ติดต่อฉุกเฉิน</CardTitle>
+              <CardTitle>Emergency Contact</CardTitle>
             </CardHeader>
-            <CardContent className=\"space-y-4\">
-              <div className=\"grid gap-4 md:grid-cols-2\">
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"emergencyName\">ชื่อ *</Label>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="emergencyName">Name *</Label>
                   <Input
-                    id=\"emergencyName\"
+                    id="emergencyName"
                     value={formData.emergencyContact.name}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
@@ -432,14 +432,14 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     className={errors.emergencyContactName ? 'border-red-500' : ''}
                   />
                   {errors.emergencyContactName && (
-                    <p className=\"text-sm text-red-500\">{errors.emergencyContactName}</p>
+                    <p className="text-sm text-red-500">{errors.emergencyContactName}</p>
                   )}
                 </div>
 
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"emergencyRelationship\">ความสัมพันธ์</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="emergencyRelationship">Relationship</Label>
                   <Input
-                    id=\"emergencyRelationship\"
+                    id="emergencyRelationship"
                     value={formData.emergencyContact.relationship}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
@@ -449,11 +449,11 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
               </div>
 
-              <div className=\"grid gap-4 md:grid-cols-2\">
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"emergencyPhone\">โทรศัพท์ *</Label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="emergencyPhone">Phone *</Label>
                   <Input
-                    id=\"emergencyPhone\"
+                    id="emergencyPhone"
                     value={formData.emergencyContact.phone}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
@@ -462,15 +462,15 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     className={errors.emergencyContactPhone ? 'border-red-500' : ''}
                   />
                   {errors.emergencyContactPhone && (
-                    <p className=\"text-sm text-red-500\">{errors.emergencyContactPhone}</p>
+                    <p className="text-sm text-red-500">{errors.emergencyContactPhone}</p>
                   )}
                 </div>
 
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"emergencyEmail\">อีเมล</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="emergencyEmail">Email</Label>
                   <Input
-                    id=\"emergencyEmail\"
-                    type=\"email\"
+                    id="emergencyEmail"
+                    type="email"
                     value={formData.emergencyContact.email || ''}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
@@ -484,15 +484,15 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         </TabsContent>
 
         {/* Work Schedule */}
-        <TabsContent value=\"schedule\" className=\"space-y-4\">
+        <TabsContent value="schedule" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>ตารางการทำงาน</CardTitle>
+              <CardTitle>Work Schedule</CardTitle>
             </CardHeader>
-            <CardContent className=\"space-y-4\">
-              <div className=\"grid gap-4 md:grid-cols-3\">
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"workType\">ประเภทการทำงาน</Label>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="workType">Work Type</Label>
                   <Select
                     value={formData.workSchedule.type}
                     onValueChange={(value: any) => setFormData(prev => ({
@@ -504,20 +504,20 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=\"full-time\">เต็มเวลา</SelectItem>
-                      <SelectItem value=\"part-time\">พาร์ทไทม์</SelectItem>
-                      <SelectItem value=\"contract\">สัญญาจ้าง</SelectItem>
-                      <SelectItem value=\"intern\">ฝึกงาน</SelectItem>
+                      <SelectItem value="full-time">Full-time</SelectItem>
+                      <SelectItem value="part-time">Part-time</SelectItem>
+                      <SelectItem value="contract">Contract</SelectItem>
+                      <SelectItem value="intern">Intern</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"overtimeRate\">อัตราล่วงเวลา</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="overtimeRate">Overtime Rate</Label>
                   <Input
-                    id=\"overtimeRate\"
-                    type=\"number\"
-                    step=\"0.1\"
+                    id="overtimeRate"
+                    type="number"
+                    step="0.1"
                     value={formData.workSchedule.overtimeRate}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
@@ -526,11 +526,11 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   />
                 </div>
 
-                <div className=\"space-y-2\">
-                  <Label htmlFor=\"vacationDays\">วันลาพักร้อน (วัน/ปี)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="vacationDays">Vacation Days (days/year)</Label>
                   <Input
-                    id=\"vacationDays\"
-                    type=\"number\"
+                    id="vacationDays"
+                    type="number"
                     value={formData.workSchedule.vacationDays}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
@@ -540,13 +540,13 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
               </div>
 
-              <div className=\"space-y-4 pt-4 border-t\">
-                <h4 className=\"font-medium\">วันและเวลาทำงาน</h4>
+              <div className="space-y-4 pt-4 border-t">
+                <h4 className="font-medium">Work Days & Hours</h4>
                 
-                <div className=\"space-y-3\">
+                <div className="space-y-3">
                   {formData.workSchedule.workDays.map((day, index) => (
-                    <div key={day.day} className=\"flex items-center space-x-4 p-3 border rounded-lg\">
-                      <div className=\"flex items-center space-x-2\">
+                    <div key={day.day} className="flex items-center space-x-4 p-3 border rounded-lg">
+                      <div className="flex items-center space-x-2">
                         <Checkbox
                           id={`workday-${day.day}`}
                           checked={day.isWorkingDay}
@@ -554,40 +554,40 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                             updateWorkDay(index, { isWorkingDay: checked as boolean })
                           }
                         />
-                        <Label htmlFor={`workday-${day.day}`} className=\"w-20\">
+                        <Label htmlFor={`workday-${day.day}`} className="w-20">
                           {dayNames[day.day as keyof typeof dayNames]}
                         </Label>
                       </div>
                       
                       {day.isWorkingDay && (
                         <>
-                          <div className=\"flex items-center space-x-2\">
-                            <Label className=\"text-sm\">เริ่ม:</Label>
+                          <div className="flex items-center space-x-2">
+                            <Label className="text-sm">Start:</Label>
                             <Input
-                              type=\"time\"
+                              type="time"
                               value={day.startTime}
                               onChange={(e) => updateWorkDay(index, { startTime: e.target.value })}
-                              className=\"w-24\"
+                              className="w-24"
                             />
                           </div>
                           
-                          <div className=\"flex items-center space-x-2\">
-                            <Label className=\"text-sm\">สิ้นสุด:</Label>
+                          <div className="flex items-center space-x-2">
+                            <Label className="text-sm">End:</Label>
                             <Input
-                              type=\"time\"
+                              type="time"
                               value={day.endTime}
                               onChange={(e) => updateWorkDay(index, { endTime: e.target.value })}
-                              className=\"w-24\"
+                              className="w-24"
                             />
                           </div>
                           
-                          <div className=\"flex items-center space-x-2\">
-                            <Label className=\"text-sm\">พัก (นาที):</Label>
+                          <div className="flex items-center space-x-2">
+                            <Label className="text-sm">Break (min):</Label>
                             <Input
-                              type=\"number\"
+                              type="number"
                               value={day.breakTime}
                               onChange={(e) => updateWorkDay(index, { breakTime: Number(e.target.value) })}
-                              className=\"w-20\"
+                              className="w-20"
                             />
                           </div>
                         </>
@@ -602,12 +602,12 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
       </Tabs>
 
       {/* Form Actions */}
-      <div className=\"flex items-center justify-end space-x-2 pt-4 border-t\">
-        <Button type=\"button\" variant=\"outline\" onClick={onCancel}>
-          ยกเลิก
+      <div className="flex items-center justify-end space-x-2 pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
         </Button>
-        <Button type=\"submit\" disabled={loading}>
-          {loading ? 'กำลังบันทึก...' : employee ? 'บันทึกการแก้ไข' : 'เพิ่มพนักงาน'}
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Saving...' : employee ? 'Update Employee' : 'Add Employee'}
         </Button>
       </div>
     </form>

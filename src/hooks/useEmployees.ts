@@ -59,11 +59,20 @@ export const useEmployees = () => {
 
   // Employee Management
   const addEmployee = useCallback((employeeData: EmployeeFormData) => {
+    const position = state.positions.find(p => p.id === employeeData.positionId);
+    const department = state.departments.find(d => d.id === employeeData.departmentId);
+    
+    if (!position || !department) {
+      throw new Error('Position or Department not found');
+    }
+
     const newEmployee: Employee = {
       id: `emp-${Date.now()}`,
       employeeId: `EMP${String(state.employees.length + 1).padStart(3, '0')}`,
       ...employeeData,
-      status: 'active',
+      position,
+      department,
+      status: 'active' as const,
       documents: [],
       permissions: [],
       createdAt: new Date().toISOString(),
@@ -86,6 +95,17 @@ export const useEmployees = () => {
       employees: prev.employees.map(emp => 
         emp.id === id 
           ? { ...emp, ...updates, updatedAt: new Date().toISOString() }
+          : emp
+      )
+    }));
+  }, []);
+
+  const updateEmployeeStatus = useCallback((id: string, status: string) => {
+    setState(prev => ({
+      ...prev,
+      employees: prev.employees.map(emp => 
+        emp.id === id 
+          ? { ...emp, status: status as any, updatedAt: new Date().toISOString() }
           : emp
       )
     }));
@@ -630,6 +650,7 @@ export const useEmployees = () => {
     // Employee Management
     addEmployee,
     updateEmployee,
+    updateEmployeeStatus,
     deleteEmployee,
     getEmployee,
     getFilteredEmployees,

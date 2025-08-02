@@ -27,7 +27,7 @@ import { PayrollManagement } from '@/components/employees/PayrollManagement';
 import { TrainingManagement } from '@/components/employees/TrainingManagement';
 import { EmployeeAnalytics } from '@/components/employees/EmployeeAnalytics';
 
-export const Employees: React.FC = () => {
+const Employees: React.FC = () => {
   const {
     employees,
     departments,
@@ -297,3 +297,5 @@ export const Employees: React.FC = () => {
     </div>
   );
 };
+
+export default Employees;

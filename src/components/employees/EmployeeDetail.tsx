@@ -30,11 +30,11 @@ interface EmployeeDetailProps {
 export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClose }) => {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { label: 'ทำงาน', variant: 'default' as const, color: 'bg-green-100 text-green-800' },
-      inactive: { label: 'ไม่ทำงาน', variant: 'secondary' as const, color: 'bg-gray-100 text-gray-800' },
-      terminated: { label: 'ออกจากงาน', variant: 'destructive' as const, color: 'bg-red-100 text-red-800' },
-      'on-leave': { label: 'ลาพัก', variant: 'outline' as const, color: 'bg-yellow-100 text-yellow-800' },
-      probation: { label: 'ทดลองงาน', variant: 'secondary' as const, color: 'bg-blue-100 text-blue-800' }
+      active: { label: 'Active', variant: 'default' as const },
+      inactive: { label: 'Inactive', variant: 'secondary' as const },
+      terminated: { label: 'Terminated', variant: 'destructive' as const },
+      'on-leave': { label: 'On Leave', variant: 'outline' as const },
+      probation: { label: 'Probation', variant: 'secondary' as const }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
@@ -43,7 +43,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
 
   const getWorkScheduleText = () => {
     const workDays = employee.workSchedule.workDays.filter(day => day.isWorkingDay);
-    if (workDays.length === 0) return 'ไม่มีกำหนดการทำงาน';
+    if (workDays.length === 0) return 'No work schedule';
     
     const firstDay = workDays[0];
     const allSameTime = workDays.every(day => 
@@ -51,80 +51,80 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
     );
     
     if (allSameTime) {
-      return `${firstDay.startTime} - ${firstDay.endTime} (${workDays.length} วัน/สัปดาห์)`;
+      return `${firstDay.startTime} - ${firstDay.endTime} (${workDays.length} days/week)`;
     }
     
-    return 'ตารางงานแบบผสม';
+    return 'Mixed schedule';
   };
 
   return (
-    <div className=\"space-y-6\">
+    <div className="space-y-6">
       {/* Header */}
-      <div className=\"flex items-start justify-between\">
-        <div className=\"flex items-center space-x-4\">
-          <Avatar className=\"h-16 w-16\">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center space-x-4">
+          <Avatar className="h-16 w-16">
             <AvatarImage src={employee.avatar} />
-            <AvatarFallback className=\"text-lg\">
+            <AvatarFallback className="text-lg">
               {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h3 className=\"text-2xl font-bold\">
+            <h3 className="text-2xl font-bold">
               {employee.firstName} {employee.lastName}
             </h3>
-            <p className=\"text-muted-foreground\">{employee.position.name}</p>
-            <div className=\"flex items-center space-x-2 mt-2\">
-              <Badge variant=\"outline\">{employee.employeeId}</Badge>
+            <p className="text-muted-foreground">{employee.position.name}</p>
+            <div className="flex items-center space-x-2 mt-2">
+              <Badge variant="outline">{employee.employeeId}</Badge>
               {getStatusBadge(employee.status)}
             </div>
           </div>
         </div>
-        <Button variant=\"outline\" size=\"sm\">
-          <Edit className=\"h-4 w-4 mr-2\" />
-          แก้ไข
+        <Button variant="outline" size="sm">
+          <Edit className="h-4 w-4 mr-2" />
+          Edit
         </Button>
       </div>
 
-      <div className=\"grid gap-6 md:grid-cols-2\">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Personal Information */}
         <Card>
           <CardHeader>
-            <CardTitle className=\"flex items-center\">
-              <User className=\"h-5 w-5 mr-2\" />
-              ข้อมูลส่วนตัว
+            <CardTitle className="flex items-center">
+              <User className="h-5 w-5 mr-2" />
+              Personal Information
             </CardTitle>
           </CardHeader>
-          <CardContent className=\"space-y-4\">
-            <div className=\"flex items-center space-x-3\">
-              <Mail className=\"h-4 w-4 text-muted-foreground\" />
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <Mail className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className=\"text-sm text-muted-foreground\">อีเมล</p>
-                <p className=\"font-medium\">{employee.email}</p>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium">{employee.email}</p>
               </div>
             </div>
             
-            <div className=\"flex items-center space-x-3\">
-              <Phone className=\"h-4 w-4 text-muted-foreground\" />
+            <div className="flex items-center space-x-3">
+              <Phone className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className=\"text-sm text-muted-foreground\">โทรศัพท์</p>
-                <p className=\"font-medium\">{employee.phone}</p>
+                <p className="text-sm text-muted-foreground">Phone</p>
+                <p className="font-medium">{employee.phone}</p>
               </div>
             </div>
             
-            <div className=\"flex items-start space-x-3\">
-              <MapPin className=\"h-4 w-4 text-muted-foreground mt-1\" />
+            <div className="flex items-start space-x-3">
+              <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
               <div>
-                <p className=\"text-sm text-muted-foreground\">ที่อยู่</p>
-                <p className=\"font-medium\">{employee.address}</p>
+                <p className="text-sm text-muted-foreground">Address</p>
+                <p className="font-medium">{employee.address}</p>
               </div>
             </div>
             
-            <div className=\"flex items-center space-x-3\">
-              <Calendar className=\"h-4 w-4 text-muted-foreground\" />
+            <div className="flex items-center space-x-3">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className=\"text-sm text-muted-foreground\">วันเกิด</p>
-                <p className=\"font-medium\">
-                  {new Date(employee.dateOfBirth).toLocaleDateString('th-TH')}
+                <p className="text-sm text-muted-foreground">Date of Birth</p>
+                <p className="font-medium">
+                  {new Date(employee.dateOfBirth).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -134,42 +134,42 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
         {/* Work Information */}
         <Card>
           <CardHeader>
-            <CardTitle className=\"flex items-center\">
-              <Briefcase className=\"h-5 w-5 mr-2\" />
-              ข้อมูลการทำงาน
+            <CardTitle className="flex items-center">
+              <Briefcase className="h-5 w-5 mr-2" />
+              Work Information
             </CardTitle>
           </CardHeader>
-          <CardContent className=\"space-y-4\">
-            <div className=\"flex items-center space-x-3\">
-              <Building2 className=\"h-4 w-4 text-muted-foreground\" />
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className=\"text-sm text-muted-foreground\">แผนก</p>
-                <p className=\"font-medium\">{employee.department.name}</p>
+                <p className="text-sm text-muted-foreground">Department</p>
+                <p className="font-medium">{employee.department.name}</p>
               </div>
             </div>
             
-            <div className=\"flex items-center space-x-3\">
-              <Briefcase className=\"h-4 w-4 text-muted-foreground\" />
+            <div className="flex items-center space-x-3">
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className=\"text-sm text-muted-foreground\">ตำแหน่ง</p>
-                <p className=\"font-medium\">{employee.position.name}</p>
+                <p className="text-sm text-muted-foreground">Position</p>
+                <p className="font-medium">{employee.position.name}</p>
               </div>
             </div>
             
-            <div className=\"flex items-center space-x-3\">
-              <DollarSign className=\"h-4 w-4 text-muted-foreground\" />
+            <div className="flex items-center space-x-3">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className=\"text-sm text-muted-foreground\">เงินเดือน</p>
-                <p className=\"font-medium\">฿{employee.salary.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Salary</p>
+                <p className="font-medium">฿{employee.salary.toLocaleString()}</p>
               </div>
             </div>
             
-            <div className=\"flex items-center space-x-3\">
-              <Calendar className=\"h-4 w-4 text-muted-foreground\" />
+            <div className="flex items-center space-x-3">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className=\"text-sm text-muted-foreground\">วันที่เข้าทำงาน</p>
-                <p className=\"font-medium\">
-                  {new Date(employee.hireDate).toLocaleDateString('th-TH')}
+                <p className="text-sm text-muted-foreground">Hire Date</p>
+                <p className="font-medium">
+                  {new Date(employee.hireDate).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -179,31 +179,31 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
         {/* Emergency Contact */}
         <Card>
           <CardHeader>
-            <CardTitle className=\"flex items-center\">
-              <AlertCircle className=\"h-5 w-5 mr-2\" />
-              ผู้ติดต่อฉุกเฉิน
+            <CardTitle className="flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Emergency Contact
             </CardTitle>
           </CardHeader>
-          <CardContent className=\"space-y-4\">
+          <CardContent className="space-y-4">
             <div>
-              <p className=\"text-sm text-muted-foreground\">ชื่อ</p>
-              <p className=\"font-medium\">{employee.emergencyContact.name}</p>
+              <p className="text-sm text-muted-foreground">Name</p>
+              <p className="font-medium">{employee.emergencyContact.name}</p>
             </div>
             
             <div>
-              <p className=\"text-sm text-muted-foreground\">ความสัมพันธ์</p>
-              <p className=\"font-medium\">{employee.emergencyContact.relationship}</p>
+              <p className="text-sm text-muted-foreground">Relationship</p>
+              <p className="font-medium">{employee.emergencyContact.relationship}</p>
             </div>
             
             <div>
-              <p className=\"text-sm text-muted-foreground\">โทรศัพท์</p>
-              <p className=\"font-medium\">{employee.emergencyContact.phone}</p>
+              <p className="text-sm text-muted-foreground">Phone</p>
+              <p className="font-medium">{employee.emergencyContact.phone}</p>
             </div>
             
             {employee.emergencyContact.email && (
               <div>
-                <p className=\"text-sm text-muted-foreground\">อีเมล</p>
-                <p className=\"font-medium\">{employee.emergencyContact.email}</p>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium">{employee.emergencyContact.email}</p>
               </div>
             )}
           </CardContent>
@@ -212,30 +212,30 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
         {/* Bank Account */}
         <Card>
           <CardHeader>
-            <CardTitle className=\"flex items-center\">
-              <CreditCard className=\"h-5 w-5 mr-2\" />
-              บัญชีธนาคาร
+            <CardTitle className="flex items-center">
+              <CreditCard className="h-5 w-5 mr-2" />
+              Bank Account
             </CardTitle>
           </CardHeader>
-          <CardContent className=\"space-y-4\">
+          <CardContent className="space-y-4">
             <div>
-              <p className=\"text-sm text-muted-foreground\">ธนาคาร</p>
-              <p className=\"font-medium\">{employee.bankAccount.bankName}</p>
+              <p className="text-sm text-muted-foreground">Bank</p>
+              <p className="font-medium">{employee.bankAccount.bankName}</p>
             </div>
             
             <div>
-              <p className=\"text-sm text-muted-foreground\">เลขที่บัญชี</p>
-              <p className=\"font-medium font-mono\">{employee.bankAccount.accountNumber}</p>
+              <p className="text-sm text-muted-foreground">Account Number</p>
+              <p className="font-medium font-mono">{employee.bankAccount.accountNumber}</p>
             </div>
             
             <div>
-              <p className=\"text-sm text-muted-foreground\">ชื่อบัญชี</p>
-              <p className=\"font-medium\">{employee.bankAccount.accountName}</p>
+              <p className="text-sm text-muted-foreground">Account Name</p>
+              <p className="font-medium">{employee.bankAccount.accountName}</p>
             </div>
             
             <div>
-              <p className=\"text-sm text-muted-foreground\">สาขา</p>
-              <p className=\"font-medium\">{employee.bankAccount.branchName}</p>
+              <p className="text-sm text-muted-foreground">Branch</p>
+              <p className="font-medium">{employee.bankAccount.branchName}</p>
             </div>
           </CardContent>
         </Card>
@@ -244,52 +244,44 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
       {/* Work Schedule */}
       <Card>
         <CardHeader>
-          <CardTitle className=\"flex items-center\">
-            <Clock className=\"h-5 w-5 mr-2\" />
-            ตารางการทำงาน
+          <CardTitle className="flex items-center">
+            <Clock className="h-5 w-5 mr-2" />
+            Work Schedule
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className=\"grid gap-4 md:grid-cols-2\">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <p className=\"text-sm text-muted-foreground mb-2\">ประเภทการทำงาน</p>
-              <Badge variant=\"outline\">{employee.workSchedule.type}</Badge>
+              <p className="text-sm text-muted-foreground mb-2">Type</p>
+              <Badge variant="outline">{employee.workSchedule.type}</Badge>
             </div>
             
             <div>
-              <p className=\"text-sm text-muted-foreground mb-2\">เวลาทำงาน</p>
-              <p className=\"font-medium\">{getWorkScheduleText()}</p>
+              <p className="text-sm text-muted-foreground mb-2">Hours</p>
+              <p className="font-medium">{getWorkScheduleText()}</p>
             </div>
             
             <div>
-              <p className=\"text-sm text-muted-foreground mb-2\">อัตราล่วงเวลา</p>
-              <p className=\"font-medium\">{employee.workSchedule.overtimeRate}x</p>
+              <p className="text-sm text-muted-foreground mb-2">Overtime Rate</p>
+              <p className="font-medium">{employee.workSchedule.overtimeRate}x</p>
             </div>
             
             <div>
-              <p className=\"text-sm text-muted-foreground mb-2\">วันลาพักร้อน</p>
-              <p className=\"font-medium\">{employee.workSchedule.vacationDays} วัน/ปี</p>
+              <p className="text-sm text-muted-foreground mb-2">Vacation Days</p>
+              <p className="font-medium">{employee.workSchedule.vacationDays} days/year</p>
             </div>
           </div>
 
-          <Separator className=\"my-4\" />
+          <Separator className="my-4" />
 
           <div>
-            <p className=\"text-sm text-muted-foreground mb-3\">รายละเอียดวันทำงาน</p>
-            <div className=\"grid gap-2 md:grid-cols-2\">
+            <p className="text-sm text-muted-foreground mb-3">Weekly Schedule</p>
+            <div className="grid gap-2 md:grid-cols-2">
               {employee.workSchedule.workDays.map((day) => (
-                <div key={day.day} className=\"flex items-center justify-between p-2 rounded-lg bg-gray-50\">
-                  <span className=\"capitalize font-medium\">
-                    {day.day === 'monday' && 'จันทร์'}
-                    {day.day === 'tuesday' && 'อังคาร'}
-                    {day.day === 'wednesday' && 'พุธ'}
-                    {day.day === 'thursday' && 'พฤหัสบดี'}
-                    {day.day === 'friday' && 'ศุกร์'}
-                    {day.day === 'saturday' && 'เสาร์'}
-                    {day.day === 'sunday' && 'อาทิตย์'}
-                  </span>
-                  <span className=\"text-sm text-muted-foreground\">
-                    {day.isWorkingDay ? `${day.startTime} - ${day.endTime}` : 'วันหยุด'}
+                <div key={day.day} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+                  <span className="capitalize font-medium">{day.day}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {day.isWorkingDay ? `${day.startTime} - ${day.endTime}` : 'Off'}
                   </span>
                 </div>
               ))}
@@ -302,29 +294,29 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
       {employee.documents.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className=\"flex items-center\">
-              <FileText className=\"h-5 w-5 mr-2\" />
-              เอกสาร
+            <CardTitle className="flex items-center">
+              <FileText className="h-5 w-5 mr-2" />
+              Documents
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-3\">
+            <div className="space-y-3">
               {employee.documents.map((doc) => (
-                <div key={doc.id} className=\"flex items-center justify-between p-3 border rounded-lg\">
-                  <div className=\"flex items-center space-x-3\">
-                    <FileText className=\"h-4 w-4 text-muted-foreground\" />
+                <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className=\"font-medium\">{doc.name}</p>
-                      <p className=\"text-sm text-muted-foreground\">
-                        อัปโหลดเมื่อ {new Date(doc.uploadedAt).toLocaleDateString('th-TH')}
+                      <p className="font-medium">{doc.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <div className=\"flex items-center space-x-2\">
+                  <div className="flex items-center space-x-2">
                     {doc.isRequired && (
-                      <Badge variant=\"destructive\" className=\"text-xs\">จำเป็น</Badge>
+                      <Badge variant="destructive" className="text-xs">Required</Badge>
                     )}
-                    <Button variant=\"outline\" size=\"sm\">ดู</Button>
+                    <Button variant="outline" size="sm">View</Button>
                   </div>
                 </div>
               ))}
@@ -337,22 +329,22 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
       {employee.permissions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className=\"flex items-center\">
-              <Shield className=\"h-5 w-5 mr-2\" />
-              สิทธิ์การใช้งาน
+            <CardTitle className="flex items-center">
+              <Shield className="h-5 w-5 mr-2" />
+              Permissions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-3\">
+            <div className="space-y-3">
               {employee.permissions.map((permission, index) => (
-                <div key={index} className=\"p-3 border rounded-lg\">
-                  <div className=\"flex items-center justify-between mb-2\">
-                    <h4 className=\"font-medium capitalize\">{permission.module}</h4>
-                    <Badge variant=\"outline\">{permission.actions.length} สิทธิ์</Badge>
+                <div key={index} className="p-3 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium capitalize">{permission.module}</h4>
+                    <Badge variant="outline">{permission.actions.length} permissions</Badge>
                   </div>
-                  <div className=\"flex flex-wrap gap-1\">
+                  <div className="flex flex-wrap gap-1">
                     {permission.actions.map((action) => (
-                      <Badge key={action} variant=\"secondary\" className=\"text-xs\">
+                      <Badge key={action} variant="secondary" className="text-xs">
                         {action}
                       </Badge>
                     ))}
