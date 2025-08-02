@@ -352,6 +352,7 @@ export interface AttendanceFilters {
 }
 
 export interface LeaveFilters {
+  search?: string;
   employeeId?: string;
   type?: LeaveType;
   status?: LeaveStatus;
@@ -362,6 +363,7 @@ export interface LeaveFilters {
 }
 
 export interface PayrollFilters {
+  search?: string;
   employeeId?: string;
   department?: string;
   period?: {
@@ -372,6 +374,7 @@ export interface PayrollFilters {
 }
 
 export interface TrainingFilters {
+  search?: string;
   type?: TrainingType;
   status?: TrainingStatus;
   date?: {

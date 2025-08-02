@@ -207,10 +207,15 @@ export const useEmployees = () => {
 
     const newLeave: Leave = {
       id: `leave-${Date.now()}`,
-      ...leaveData,
+      employeeId: leaveData.employeeId,
+      type: leaveData.type,
+      startDate: leaveData.startDate,
+      endDate: leaveData.endDate,
+      reason: leaveData.reason,
       days,
       status: 'pending',
-      appliedAt: new Date().toISOString()
+      appliedAt: new Date().toISOString(),
+      documents: leaveData.documents?.map(file => file.name) || []
     };
 
     setState(prev => ({
