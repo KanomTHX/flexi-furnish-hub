@@ -134,7 +134,18 @@ export function useClaims() {
   const updateClaim = useCallback((claimId: string, updates: UpdateClaimForm) => {
     setClaims(prev => prev.map(claim => {
       if (claim.id === claimId) {
-        const updatedClaim = { ...claim, ...updates, updatedAt: new Date().toISOString() };
+        // Handle resolution update properly
+        const { resolution, ...otherUpdates } = updates;
+        const updatedClaim = { 
+          ...claim, 
+          ...otherUpdates, 
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Only update resolution if it's a complete ClaimResolution
+        if (resolution && resolution.type) {
+          updatedClaim.resolution = resolution as ClaimResolution;
+        }
         
         // Add timeline entry for status change
         if (updates.status && updates.status !== claim.status) {

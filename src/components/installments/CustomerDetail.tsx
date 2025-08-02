@@ -263,10 +263,10 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                         <p className="font-medium">สัญญา #{contract.contractNumber}</p>
                         <p className="text-sm text-muted-foreground">
                           ยอดรวม ฿{contract.totalAmount.toLocaleString()} • 
-                          ผ่อน {contract.installmentPlan.months} เดือน
+                          ผ่อน {contract.plan.months} เดือน
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          เริ่ม {contract.startDate.toLocaleDateString('th-TH')}
+                          เริ่ม {new Date(contract.contractDate).toLocaleDateString('th-TH')}
                         </p>
                       </div>
                       <div className="text-right">
@@ -304,7 +304,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                         <p className="font-medium">สัญญา #{payment.contractNumber}</p>
                         <p className="text-sm text-muted-foreground">
                           งวดที่ {payment.installmentNumber} • 
-                          ครบกำหนด {payment.dueDate.toLocaleDateString('th-TH')}
+                          ครบกำหนด {new Date(payment.dueDate).toLocaleDateString('th-TH')}
                         </p>
                       </div>
                       <div className="text-right">

@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WarehouseTask, WarehouseTaskFilter } from '@/types/warehouse';
+import { WarehouseTask, WarehouseFilter } from '@/types/warehouse';
 import { CheckSquare, Clock, User, AlertTriangle, Search, Filter, Download } from 'lucide-react';
 
 interface TaskManagementProps {
   tasks: WarehouseTask[];
-  filter: WarehouseTaskFilter;
-  onFilterChange: (filter: WarehouseTaskFilter) => void;
+  filter: WarehouseFilter;
+  onFilterChange: (filter: WarehouseFilter) => void;
   onExport: () => void;
   onAssignTask: (taskId: string, assigneeId: string) => void;
   onStartTask: (taskId: string) => void;
@@ -82,7 +82,7 @@ export function TaskManagement({
     const matchesStatus = !filter.status || task.status === filter.status;
     const matchesPriority = !filter.priority || task.priority === filter.priority;
     const matchesWarehouse = !filter.warehouseId || task.warehouseId === filter.warehouseId;
-    const matchesAssignee = !filter.assigneeId || task.assigneeId === filter.assigneeId;
+    const matchesAssignee = !filter.assignee || task.assignedTo === filter.assignee;
 
     return matchesSearch && matchesStatus && matchesPriority && matchesWarehouse && matchesAssignee;
   });
@@ -218,7 +218,7 @@ export function TaskManagement({
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span>ผู้รับผิดชอบ: {task.assigneeId || 'ยังไม่มอบหมาย'}</span>
+                        <span>ผู้รับผิดชอบ: {task.assignedTo || 'ยังไม่มอบหมาย'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
@@ -228,12 +228,10 @@ export function TaskManagement({
                         <CheckSquare className="h-4 w-4 text-muted-foreground" />
                         <span>ประเภท: {task.type}</span>
                       </div>
-                      {task.estimatedHours && (
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span>ประมาณ: {task.estimatedHours} ชม.</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>ประเภท: {task.type}</span>
+                      </div>
                     </div>
 
                     {task.notes && (
@@ -252,7 +250,7 @@ export function TaskManagement({
                         มอบหมาย
                       </Button>
                     )}
-                    {task.status === 'assigned' && (
+                    {task.status === 'pending' && (
                       <Button
                         size="sm"
                         onClick={() => onStartTask(task.id)}
@@ -268,7 +266,7 @@ export function TaskManagement({
                         เสร็จสิ้น
                       </Button>
                     )}
-                    {(task.status === 'pending' || task.status === 'assigned') && (
+                    {task.status !== 'completed' && task.status !== 'cancelled' && (
                       <Button
                         size="sm"
                         variant="destructive"
@@ -308,7 +306,7 @@ export function TaskManagement({
             </div>
             <div>
               <div className="text-2xl font-bold text-blue-600">
-                {tasks.filter(t => t.status === 'assigned').length}
+                {tasks.filter(t => t.status === 'in_progress').length}
               </div>
               <div className="text-sm text-muted-foreground">มอบหมายแล้ว</div>
             </div>
