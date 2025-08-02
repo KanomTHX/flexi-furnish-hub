@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Customer } from '@/types/pos';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -14,19 +15,18 @@ import {
   PieChart
 } from 'lucide-react';
 
-interface CustomerData {
-  id: string;
-  name: string;
-  creditScore: number;
-  totalContracts: number;
-  activeContracts: number;
-  totalFinanced: number;
-  totalPaid: number;
-  overdueAmount: number;
-  riskLevel: 'low' | 'medium' | 'high';
-  customerSince: Date;
-  monthlyIncome: number;
-  occupation: string;
+interface CustomerData extends Customer {
+  creditScore?: number;
+  totalContracts?: number;
+  activeContracts?: number;
+  totalFinanced?: number;
+  totalPaid?: number;
+  overdueAmount?: number;
+  riskLevel?: 'low' | 'medium' | 'high';
+  lastPaymentDate?: Date;
+  customerSince?: Date;
+  monthlyIncome?: number;
+  occupation?: string;
 }
 
 interface CustomerAnalyticsProps {
@@ -39,22 +39,22 @@ export const CustomerAnalytics: React.FC<CustomerAnalyticsProps> = ({
   // คำนวณสถิติต่างๆ
   const analytics = {
     total: customers.length,
-    active: customers.filter(c => c.activeContracts > 0).length,
-    overdue: customers.filter(c => c.overdueAmount > 0).length,
+    active: customers.filter(c => (c.activeContracts || 0) > 0).length,
+    overdue: customers.filter(c => (c.overdueAmount || 0) > 0).length,
     highRisk: customers.filter(c => c.riskLevel === 'high').length,
-    averageCreditScore: Math.round(customers.reduce((sum, c) => sum + c.creditScore, 0) / customers.length),
-    totalFinanced: customers.reduce((sum, c) => sum + c.totalFinanced, 0),
-    totalPaid: customers.reduce((sum, c) => sum + c.totalPaid, 0),
-    totalOverdue: customers.reduce((sum, c) => sum + c.overdueAmount, 0),
-    averageIncome: Math.round(customers.reduce((sum, c) => sum + c.monthlyIncome, 0) / customers.length)
+    averageCreditScore: customers.length > 0 ? Math.round(customers.reduce((sum, c) => sum + (c.creditScore || 0), 0) / customers.length) : 0,
+    totalFinanced: customers.reduce((sum, c) => sum + (c.totalFinanced || 0), 0),
+    totalPaid: customers.reduce((sum, c) => sum + (c.totalPaid || 0), 0),
+    totalOverdue: customers.reduce((sum, c) => sum + (c.overdueAmount || 0), 0),
+    averageIncome: customers.length > 0 ? Math.round(customers.reduce((sum, c) => sum + (c.monthlyIncome || 0), 0) / customers.length) : 0
   };
 
   // การกระจายตามคะแนนเครดิต
   const creditScoreDistribution = [
-    { range: '750-850', count: customers.filter(c => c.creditScore >= 750).length, color: 'bg-green-500', label: 'ดีเยี่ยม' },
-    { range: '650-749', count: customers.filter(c => c.creditScore >= 650 && c.creditScore < 750).length, color: 'bg-yellow-500', label: 'ดี' },
-    { range: '550-649', count: customers.filter(c => c.creditScore >= 550 && c.creditScore < 650).length, color: 'bg-orange-500', label: 'พอใช้' },
-    { range: '300-549', count: customers.filter(c => c.creditScore < 550).length, color: 'bg-red-500', label: 'ต้องปรับปรุง' }
+    { range: '750-850', count: customers.filter(c => (c.creditScore || 0) >= 750).length, color: 'bg-green-500', label: 'ดีเยี่ยม' },
+    { range: '650-749', count: customers.filter(c => (c.creditScore || 0) >= 650 && (c.creditScore || 0) < 750).length, color: 'bg-yellow-500', label: 'ดี' },
+    { range: '550-649', count: customers.filter(c => (c.creditScore || 0) >= 550 && (c.creditScore || 0) < 650).length, color: 'bg-orange-500', label: 'พอใช้' },
+    { range: '300-549', count: customers.filter(c => (c.creditScore || 0) < 550).length, color: 'bg-red-500', label: 'ต้องปรับปรุง' }
   ];
 
   // การกระจายตามความเสี่ยง
@@ -66,7 +66,8 @@ export const CustomerAnalytics: React.FC<CustomerAnalyticsProps> = ({
 
   // การกระจายตามอาชีพ
   const occupationDistribution = customers.reduce((acc, customer) => {
-    acc[customer.occupation] = (acc[customer.occupation] || 0) + 1;
+    const occupation = customer.occupation || 'ไม่ระบุ';
+    acc[occupation] = (acc[occupation] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -79,7 +80,7 @@ export const CustomerAnalytics: React.FC<CustomerAnalyticsProps> = ({
     const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     
     const count = customers.filter(c => 
-      c.customerSince >= monthStart && c.customerSince <= monthEnd
+      c.customerSince && c.customerSince >= monthStart && c.customerSince <= monthEnd
     ).length;
     
     monthlyNewCustomers.push({
@@ -90,13 +91,13 @@ export const CustomerAnalytics: React.FC<CustomerAnalyticsProps> = ({
 
   // Top 5 ลูกค้าตามยอดให้เครดิต
   const topCustomers = customers
-    .sort((a, b) => b.totalFinanced - a.totalFinanced)
+    .sort((a, b) => (b.totalFinanced || 0) - (a.totalFinanced || 0))
     .slice(0, 5);
 
   // ลูกค้าเสี่ยงสูงที่ต้องติดตาม
   const highRiskCustomers = customers
-    .filter(c => c.riskLevel === 'high' || c.overdueAmount > 0)
-    .sort((a, b) => b.overdueAmount - a.overdueAmount)
+    .filter(c => c.riskLevel === 'high' || (c.overdueAmount || 0) > 0)
+    .sort((a, b) => (b.overdueAmount || 0) - (a.overdueAmount || 0))
     .slice(0, 5);
 
   const paymentRate = analytics.totalFinanced > 0 
@@ -319,13 +320,13 @@ export const CustomerAnalytics: React.FC<CustomerAnalyticsProps> = ({
                     <div>
                       <p className="font-medium">{customer.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        คะแนน {customer.creditScore} • {customer.activeContracts} สัญญา
+                        คะแนน {customer.creditScore || 0} • {customer.activeContracts || 0} สัญญา
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">
-                      ฿{customer.totalFinanced.toLocaleString()}
+                      ฿{(customer.totalFinanced || 0).toLocaleString()}
                     </p>
                     <Badge variant="outline" className="text-xs">
                       {customer.riskLevel === 'low' ? 'เสี่ยงต่ำ' :
@@ -358,13 +359,13 @@ export const CustomerAnalytics: React.FC<CustomerAnalyticsProps> = ({
                       <div>
                         <p className="font-medium">{customer.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          คะแนน {customer.creditScore} • {customer.activeContracts} สัญญา
+                          คะแนน {customer.creditScore || 0} • {customer.activeContracts || 0} สัญญา
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-red-600">
-                        ฿{customer.overdueAmount.toLocaleString()}
+                        ฿{(customer.overdueAmount || 0).toLocaleString()}
                       </p>
                       <Badge variant="destructive" className="text-xs">
                         ค้างชำระ

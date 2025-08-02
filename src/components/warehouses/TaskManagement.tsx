@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WarehouseTask, WarehouseFilter } from '@/types/warehouse';
+import { WarehouseTask, TaskFilter } from '@/types/warehouse';
 import { CheckSquare, Clock, User, AlertTriangle, Search, Filter, Download } from 'lucide-react';
 
 interface TaskManagementProps {
   tasks: WarehouseTask[];
-  filter: WarehouseFilter;
-  onFilterChange: (filter: WarehouseFilter) => void;
+  filter: TaskFilter;
+  onFilterChange: (filter: TaskFilter) => void;
   onExport: () => void;
   onAssignTask: (taskId: string, assigneeId: string) => void;
   onStartTask: (taskId: string) => void;
@@ -82,7 +82,7 @@ export function TaskManagement({
     const matchesStatus = !filter.status || task.status === filter.status;
     const matchesPriority = !filter.priority || task.priority === filter.priority;
     const matchesWarehouse = !filter.warehouseId || task.warehouseId === filter.warehouseId;
-    const matchesAssignee = !filter.assignee || task.assignedTo === filter.assignee;
+    const matchesAssignee = !filter.assignedTo || task.assignedTo === filter.assignedTo;
 
     return matchesSearch && matchesStatus && matchesPriority && matchesWarehouse && matchesAssignee;
   });
@@ -131,7 +131,7 @@ export function TaskManagement({
 
             <Select
               value={filter.status || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, status: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, status: value as any || undefined })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="สถานะ" />
@@ -139,16 +139,16 @@ export function TaskManagement({
               <SelectContent>
                 <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="pending">รอดำเนินการ</SelectItem>
-                <SelectItem value="assigned">มอบหมายแล้ว</SelectItem>
                 <SelectItem value="in_progress">กำลังดำเนินการ</SelectItem>
                 <SelectItem value="completed">เสร็จสิ้น</SelectItem>
                 <SelectItem value="cancelled">ยกเลิก</SelectItem>
+                <SelectItem value="on_hold">หยุดชั่วคราว</SelectItem>
               </SelectContent>
             </Select>
 
             <Select
               value={filter.priority || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, priority: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, priority: value as any || undefined })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="ความสำคัญ" />
@@ -164,17 +164,20 @@ export function TaskManagement({
 
             <Select
               value={filter.type || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, type: value || undefined })}
+              onValueChange={(value) => onFilterChange({ ...filter, type: value as any || undefined })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="ประเภทงาน" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทั้งหมด</SelectItem>
-                <SelectItem value="inventory_check">ตรวจนับสินค้า</SelectItem>
+                <SelectItem value="receiving">รับสินค้า</SelectItem>
+                <SelectItem value="picking">เบิกสินค้า</SelectItem>
+                <SelectItem value="packing">แพ็คสินค้า</SelectItem>
+                <SelectItem value="shipping">ส่งสินค้า</SelectItem>
+                <SelectItem value="counting">นับสินค้า</SelectItem>
                 <SelectItem value="maintenance">บำรุงรักษา</SelectItem>
                 <SelectItem value="cleaning">ทำความสะอาด</SelectItem>
-                <SelectItem value="organization">จัดระเบียบ</SelectItem>
                 <SelectItem value="inspection">ตรวจสอบ</SelectItem>
               </SelectContent>
             </Select>
@@ -230,7 +233,7 @@ export function TaskManagement({
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>ประเภท: {task.type}</span>
+                        <span>ระยะเวลาที่ประมาณ: {task.estimatedDuration} นาที</span>
                       </div>
                     </div>
 
@@ -306,7 +309,7 @@ export function TaskManagement({
             </div>
             <div>
               <div className="text-2xl font-bold text-blue-600">
-                {tasks.filter(t => t.status === 'in_progress').length}
+                {tasks.filter(t => t.assignedTo && t.status === 'pending').length}
               </div>
               <div className="text-sm text-muted-foreground">มอบหมายแล้ว</div>
             </div>
