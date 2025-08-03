@@ -26,6 +26,8 @@ import { LeaveManagement } from '@/components/employees/LeaveManagement';
 import { PayrollManagement } from '@/components/employees/PayrollManagement';
 import { TrainingManagement } from '@/components/employees/TrainingManagement';
 import { EmployeeAnalytics } from '@/components/employees/EmployeeAnalytics';
+import { ExportEmployeeDataDialog } from '@/components/employees/ExportEmployeeDataDialog';
+import { AddEmployeeDialog } from '@/components/employees/AddEmployeeDialog';
 
 const Employees: React.FC = () => {
   const {
@@ -43,6 +45,8 @@ const Employees: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
 
   const currentAnalytics = calculateAnalytics();
 
@@ -136,11 +140,20 @@ const Employees: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowExportDialog(true)}
+            className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-900"
+          >
             <Download className="h-4 w-4 mr-2" />
             ส่งออกข้อมูล
           </Button>
-          <Button size="sm">
+          <Button 
+            size="sm"
+            onClick={() => setShowAddEmployeeDialog(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             เพิ่มพนักงาน
           </Button>
@@ -294,6 +307,17 @@ const Employees: React.FC = () => {
           <TrainingManagement />
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <ExportEmployeeDataDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+      />
+      
+      <AddEmployeeDialog
+        open={showAddEmployeeDialog}
+        onOpenChange={setShowAddEmployeeDialog}
+      />
     </div>
   );
 };

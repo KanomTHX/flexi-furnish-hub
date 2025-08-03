@@ -7,6 +7,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useAudit } from '@/hooks/useAudit';
 import { AuditOverview } from '@/components/audit/AuditOverview';
 import { AuditLogsList } from '@/components/audit/AuditLogsList';
+import { ComplianceOverview } from '@/components/audit/ComplianceOverview';
+import { SecurityIncidentsDialog } from '@/components/audit/SecurityIncidentsDialog';
+import { AuditFilterDialog } from '@/components/audit/AuditFilterDialog';
+import { GenerateAuditReportDialog } from '@/components/audit/GenerateAuditReportDialog';
+import { ComplianceReportDialog } from '@/components/audit/ComplianceReportDialog';
 import { exportAuditLogsToCSV, exportSecurityEventsToCSV, exportUsersToCSV } from '@/utils/auditHelpers';
 import { 
   Shield, 
@@ -43,6 +48,11 @@ export default function Audit() {
   } = useAudit();
 
   const { toast } = useToast();
+
+  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showComplianceReportDialog, setShowComplianceReportDialog] = useState(false);
 
   const handleExportAuditLogs = () => {
     const csv = exportAuditLogsToCSV(auditLogs);
@@ -139,35 +149,33 @@ export default function Audit() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {unresolvedSecurityEvents.length > 0 && (
-            <Button 
-              variant="outline" 
-              className="relative"
-            >
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              เหตุการณ์ความปลอดภัย
+          <Button 
+            variant="outline" 
+            className={`relative ${unresolvedSecurityEvents.length > 0 ? 'border-red-200 text-red-700 hover:bg-red-50' : ''}`}
+            onClick={() => setShowSecurityDialog(true)}
+          >
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            เหตุการณ์ความปลอดภัย
+            {unresolvedSecurityEvents.length > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {unresolvedSecurityEvents.length}
               </span>
-            </Button>
-          )}
-          {criticalEvents.criticalLogs.length > 0 && (
-            <Button 
-              variant="outline" 
-              className="relative"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              เหตุการณ์วิกฤต
-              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {criticalEvents.criticalLogs.length}
-              </span>
-            </Button>
-          )}
-          <Button onClick={() => clearAuditFilter()} variant="outline">
-            <Settings className="w-4 h-4 mr-2" />
-            ล้างตัวกรอง
+            )}
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleGenerateComplianceReport}>
+          
+          <Button 
+            variant="outline"
+            onClick={() => setShowFilterDialog(true)}
+            className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-900"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            สำคัดกรอง
+          </Button>
+          
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700" 
+            onClick={() => setShowReportDialog(true)}
+          >
             <BarChart3 className="w-4 h-4 mr-2" />
             สร้างรายงาน
           </Button>
@@ -451,29 +459,46 @@ export default function Audit() {
         </TabsContent>
 
         <TabsContent value="compliance" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                รายงานการปฏิบัติตาม
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>ระบบรายงานการปฏิบัติตามจะพัฒนาในเวอร์ชันถัดไป</p>
-                <p className="text-sm mt-2">
-                  จะรวมถึงรายงานการควบคุมการเข้าถึง ความสมบูรณ์ของข้อมูล และการจัดการการเปลี่ยนแปลง
-                </p>
-                <Button className="mt-4" onClick={handleGenerateComplianceReport}>
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  สร้างรายงานตัวอย่าง
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">การปฏิบัติตามมาตรฐาน</h2>
+              <p className="text-muted-foreground">
+                ติดตามและประเมินการปฏิบัติตามข้อกำหนดและมาตรฐานต่างๆ
+              </p>
+            </div>
+            <Button 
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => setShowComplianceReportDialog(true)}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              สร้างรายงานการปฏิบัติตาม
+            </Button>
+          </div>
+          
+          <ComplianceOverview statistics={statistics} />
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <SecurityIncidentsDialog
+        open={showSecurityDialog}
+        onOpenChange={setShowSecurityDialog}
+      />
+      
+      <AuditFilterDialog
+        open={showFilterDialog}
+        onOpenChange={setShowFilterDialog}
+      />
+      
+      <GenerateAuditReportDialog
+        open={showReportDialog}
+        onOpenChange={setShowReportDialog}
+      />
+      
+      <ComplianceReportDialog
+        open={showComplianceReportDialog}
+        onOpenChange={setShowComplianceReportDialog}
+      />
     </div>
   );
 }

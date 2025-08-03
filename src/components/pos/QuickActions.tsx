@@ -40,10 +40,10 @@ export function QuickActions({
             className="flex flex-col items-center gap-2 h-auto py-3"
           >
             <RotateCcw className="w-5 h-5" />
-            <span className="text-xs">Clear Cart</span>
+            <span className="text-xs">ล้างตะกร้า</span>
             {cartItemCount > 0 && (
               <Badge variant="destructive" className="text-xs">
-                {cartItemCount} items
+                {cartItemCount} รายการ
               </Badge>
             )}
           </Button>
@@ -54,7 +54,7 @@ export function QuickActions({
             className="flex flex-col items-center gap-2 h-auto py-3"
           >
             <Users className="w-5 h-5" />
-            <span className="text-xs">Customers</span>
+            <span className="text-xs">ลูกค้า</span>
           </Button>
 
           <Button
@@ -63,7 +63,7 @@ export function QuickActions({
             className="flex flex-col items-center gap-2 h-auto py-3"
           >
             <History className="w-5 h-5" />
-            <span className="text-xs">Sales History</span>
+            <span className="text-xs">ประวัติการขาย</span>
           </Button>
 
           <Button
@@ -72,7 +72,7 @@ export function QuickActions({
             className="flex flex-col items-center gap-2 h-auto py-3"
           >
             <Calculator className="w-5 h-5" />
-            <span className="text-xs">Calculator</span>
+            <span className="text-xs">เครื่องคิดเลข</span>
           </Button>
 
           <Button
@@ -81,7 +81,7 @@ export function QuickActions({
             className="flex flex-col items-center gap-2 h-auto py-3"
           >
             <Scan className="w-5 h-5" />
-            <span className="text-xs">Barcode</span>
+            <span className="text-xs">บาร์โค้ด</span>
           </Button>
 
           <Button
@@ -90,7 +90,7 @@ export function QuickActions({
             className="flex flex-col items-center gap-2 h-auto py-3"
           >
             <Settings className="w-5 h-5" />
-            <span className="text-xs">Settings</span>
+            <span className="text-xs">การตั้งค่า</span>
           </Button>
         </div>
       </CardContent>

@@ -7,6 +7,9 @@ import { useAccounting } from '@/hooks/useAccounting';
 import { AccountingOverview } from '@/components/accounting/AccountingOverview';
 import { ChartOfAccounts } from '@/components/accounting/ChartOfAccounts';
 import { JournalEntries } from '@/components/accounting/JournalEntries';
+import { CreateJournalEntryDialog } from '@/components/accounting/CreateJournalEntryDialog';
+import { PendingApprovalDialog } from '@/components/accounting/PendingApprovalDialog';
+import { ClearFiltersDialog } from '@/components/accounting/ClearFiltersDialog';
 import { exportAccountsToCSV, exportJournalEntriesToCSV, exportTransactionsToCSV } from '@/utils/accountingHelpers';
 import { 
   Calculator, 
@@ -49,6 +52,9 @@ export default function Accounting() {
   } = useAccounting();
 
   const { toast } = useToast();
+  const [createJournalEntryOpen, setCreateJournalEntryOpen] = useState(false);
+  const [pendingApprovalOpen, setPendingApprovalOpen] = useState(false);
+  const [clearFiltersOpen, setClearFiltersOpen] = useState(false);
 
   const handleExportAccounts = () => {
     const csv = exportAccountsToCSV(accounts);
@@ -130,9 +136,32 @@ export default function Accounting() {
   };
 
   const handleCreateJournalEntry = () => {
+    setCreateJournalEntryOpen(true);
+  };
+
+  const handleJournalEntryCreated = (entry: any) => {
+    createJournalEntry(entry);
     toast({
-      title: "สร้างรายการบัญชี",
-      description: "ฟีเจอร์สร้างรายการบัญชีจะพัฒนาในเวอร์ชันถัดไป",
+      title: "สร้างรายการบัญชีสำเร็จ",
+      description: `รายการ ${entry.entryNumber} ถูกสร้างและรอการอนุมัติ`,
+    });
+  };
+
+  const handleShowPendingApproval = () => {
+    setPendingApprovalOpen(true);
+  };
+
+  const handleShowClearFilters = () => {
+    setClearFiltersOpen(true);
+  };
+
+  const handleClearAllFilters = () => {
+    clearAccountFilter();
+    clearJournalEntryFilter();
+    clearTransactionFilter();
+    toast({
+      title: "ล้างตัวกรองสำเร็จ",
+      description: "ตัวกรองทั้งหมดถูกล้างแล้ว",
     });
   };
 
@@ -154,6 +183,7 @@ export default function Accounting() {
             <Button 
               variant="outline" 
               className="relative"
+              onClick={handleShowPendingApproval}
             >
               <AlertTriangle className="w-4 h-4 mr-2" />
               รออนุมัติ
@@ -162,7 +192,7 @@ export default function Accounting() {
               </span>
             </Button>
           )}
-          <Button onClick={() => clearAccountFilter()} variant="outline">
+          <Button onClick={handleShowClearFilters} variant="outline">
             <Settings className="w-4 h-4 mr-2" />
             ล้างตัวกรอง
           </Button>
@@ -388,6 +418,38 @@ export default function Accounting() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Create Journal Entry Dialog */}
+      <CreateJournalEntryDialog
+        open={createJournalEntryOpen}
+        onOpenChange={setCreateJournalEntryOpen}
+        accounts={accounts}
+        onCreateEntry={handleJournalEntryCreated}
+      />
+
+      {/* Pending Approval Dialog */}
+      <PendingApprovalDialog
+        open={pendingApprovalOpen}
+        onOpenChange={setPendingApprovalOpen}
+        pendingEntries={pendingEntries}
+        onApprove={handleApproveJournalEntry}
+        onReject={handleRejectJournalEntry}
+      />
+
+      {/* Clear Filters Dialog */}
+      <ClearFiltersDialog
+        open={clearFiltersOpen}
+        onOpenChange={setClearFiltersOpen}
+        currentFilters={{
+          accounts: accountFilter,
+          journalEntries: journalEntryFilter,
+          transactions: transactionFilter
+        }}
+        onClearAllFilters={handleClearAllFilters}
+        onClearAccountFilter={clearAccountFilter}
+        onClearJournalEntryFilter={clearJournalEntryFilter}
+        onClearTransactionFilter={clearTransactionFilter}
+      />
     </div>
   );
 }

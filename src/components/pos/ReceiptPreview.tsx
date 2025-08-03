@@ -54,14 +54,14 @@ export function ReceiptPreview({ state, saleNumber = "INV-001" }: ReceiptPreview
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Receipt className="w-5 h-5" />
-            Receipt Preview
+            ตัวอย่างใบเสร็จ
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12 text-muted-foreground">
             <Receipt className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Receipt preview will appear here</p>
-            <p className="text-sm">Add items to cart to see preview</p>
+            <p>ตัวอย่างใบเสร็จจะแสดงที่นี่</p>
+            <p className="text-sm">เพิ่มสินค้าลงตะกร้าเพื่อดูตัวอย่าง</p>
           </div>
         </CardContent>
       </Card>
@@ -74,12 +74,12 @@ export function ReceiptPreview({ state, saleNumber = "INV-001" }: ReceiptPreview
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Receipt className="w-5 h-5" />
-            Receipt Preview
+            ตัวอย่างใบเสร็จ
           </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handlePrint}>
               <Printer className="w-4 h-4 mr-2" />
-              Print
+              พิมพ์
             </Button>
             <Button variant="outline" size="sm" onClick={handleDownload}>
               <Download className="w-4 h-4 mr-2" />
@@ -106,22 +106,22 @@ export function ReceiptPreview({ state, saleNumber = "INV-001" }: ReceiptPreview
             {/* Sale Info */}
             <div className="mb-4 space-y-1">
               <div className="flex justify-between">
-                <span>Receipt No:</span>
+                <span>เลขที่ใบเสร็จ:</span>
                 <span className="font-bold">{saleNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span>Date:</span>
+                <span>วันที่:</span>
                 <span>{currentDate}</span>
               </div>
               {state.customer && (
                 <>
                   <div className="flex justify-between">
-                    <span>Customer:</span>
+                    <span>ลูกค้า:</span>
                     <span>{state.customer.name}</span>
                   </div>
                   {state.customer.phone && (
                     <div className="flex justify-between">
-                      <span>Phone:</span>
+                      <span>โทรศัพท์:</span>
                       <span>{state.customer.phone}</span>
                     </div>
                   )}
@@ -129,7 +129,7 @@ export function ReceiptPreview({ state, saleNumber = "INV-001" }: ReceiptPreview
               )}
               {state.paymentMethod && (
                 <div className="flex justify-between">
-                  <span>Payment:</span>
+                  <span>การชำระเงิน:</span>
                   <span>{state.paymentMethod.name}</span>
                 </div>
               )}
@@ -140,10 +140,10 @@ export function ReceiptPreview({ state, saleNumber = "INV-001" }: ReceiptPreview
             {/* Items */}
             <div className="mb-4">
               <div className="grid grid-cols-12 gap-1 font-bold border-b pb-1 mb-2">
-                <div className="col-span-6">Item</div>
-                <div className="col-span-2 text-center">Qty</div>
-                <div className="col-span-2 text-right">Price</div>
-                <div className="col-span-2 text-right">Total</div>
+                <div className="col-span-6">รายการ</div>
+                <div className="col-span-2 text-center">จำนวน</div>
+                <div className="col-span-2 text-right">ราคา</div>
+                <div className="col-span-2 text-right">รวม</div>
               </div>
 
               {state.cart.map((item, index) => (
@@ -174,35 +174,35 @@ export function ReceiptPreview({ state, saleNumber = "INV-001" }: ReceiptPreview
             {/* Totals */}
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span>Subtotal:</span>
+                <span>ยอดรวมย่อย:</span>
                 <span>{formatPrice(state.subtotal)}</span>
               </div>
               
               {state.discount > 0 && (
                 <div className="flex justify-between">
-                  <span>Discount:</span>
+                  <span>ส่วนลด:</span>
                   <span>-{formatPrice(state.discount)}</span>
                 </div>
               )}
               
               <div className="flex justify-between">
-                <span>VAT (7%):</span>
+                <span>ภาษีมูลค่าเพิ่ม (7%):</span>
                 <span>{formatPrice(state.tax)}</span>
               </div>
               
               <Separator className="my-2" />
               
               <div className="flex justify-between font-bold text-lg">
-                <span>TOTAL:</span>
+                <span>ยอดรวมทั้งสิ้น:</span>
                 <span>{formatPrice(state.total)}</span>
               </div>
             </div>
 
             {/* Footer */}
             <div className="text-center mt-6 text-xs">
-              <p>Thank you for your purchase!</p>
-              <p>Please keep this receipt for warranty claims</p>
-              <p className="mt-2">Return Policy: 7 days with receipt</p>
+              <p>ขอบคุณที่ใช้บริการ!</p>
+              <p>กรุณาเก็บใบเสร็จนี้ไว้สำหรับการรับประกัน</p>
+              <p className="mt-2">นโยบายการคืนสินค้า: 7 วัน พร้อมใบเสร็จ</p>
             </div>
           </div>
         </div>

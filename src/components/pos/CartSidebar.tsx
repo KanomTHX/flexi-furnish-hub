@@ -39,7 +39,7 @@ export function CartSidebar({
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
           <ShoppingCart className="w-5 h-5" />
-          Cart ({state.cart.length} items)
+          ตะกร้า ({state.cart.length} รายการ)
         </CardTitle>
       </CardHeader>
 
@@ -49,8 +49,8 @@ export function CartSidebar({
           {state.cart.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <ShoppingCart className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Your cart is empty</p>
-              <p className="text-sm">Add products to get started</p>
+              <p>ตะกร้าของคุณว่างเปล่า</p>
+              <p className="text-sm">เพิ่มสินค้าเพื่อเริ่มต้น</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -117,10 +117,10 @@ export function CartSidebar({
           <div className="border-t p-6 space-y-4">
             {/* Discount Input */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Discount</label>
+              <label className="text-sm font-medium">ส่วนลด</label>
               <Input
                 type="number"
-                placeholder="Enter discount amount"
+                placeholder="ใส่จำนวนส่วนลด"
                 value={state.discount || ''}
                 onChange={(e) => handleDiscountChange(e.target.value)}
                 min="0"
@@ -133,26 +133,26 @@ export function CartSidebar({
             {/* Totals */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Subtotal:</span>
+                <span>ยอดรวมย่อย:</span>
                 <span>{formatPrice(state.subtotal)}</span>
               </div>
               
               {state.discount > 0 && (
                 <div className="flex justify-between text-sm text-success">
-                  <span>Discount:</span>
+                  <span>ส่วนลด:</span>
                   <span>-{formatPrice(state.discount)}</span>
                 </div>
               )}
               
               <div className="flex justify-between text-sm">
-                <span>Tax (7%):</span>
+                <span>ภาษี (7%):</span>
                 <span>{formatPrice(state.tax)}</span>
               </div>
               
               <Separator />
               
               <div className="flex justify-between font-bold text-lg">
-                <span>Total:</span>
+                <span>ยอดรวมทั้งสิ้น:</span>
                 <span className="text-primary">{formatPrice(state.total)}</span>
               </div>
             </div>
@@ -160,7 +160,7 @@ export function CartSidebar({
             {/* Customer Info */}
             {state.customer && (
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm font-medium">Customer:</p>
+                <p className="text-sm font-medium">ลูกค้า:</p>
                 <p className="text-sm">{state.customer.name}</p>
                 {state.customer.phone && (
                   <p className="text-xs text-muted-foreground">{state.customer.phone}</p>
@@ -185,7 +185,7 @@ export function CartSidebar({
               disabled={state.cart.length === 0}
             >
               <Receipt className="w-4 h-4 mr-2" />
-              Proceed to Checkout
+              ดำเนินการชำระเงิน
             </Button>
           </div>
         )}

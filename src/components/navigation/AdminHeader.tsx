@@ -32,7 +32,7 @@ export function AdminHeader() {
           <div className="relative w-96 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search products, customers, or invoices..."
+              placeholder="ค้นหาสินค้า ลูกค้า หรือใบแจ้งหนี้..."
               className="pl-10 bg-background"
             />
           </div>
@@ -53,7 +53,7 @@ export function AdminHeader() {
           {/* Branch Selector */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="w-2 h-2 bg-success rounded-full"></div>
-            <span>Main Branch</span>
+            <span>สาขาหลัก</span>
           </div>
 
           {/* User Menu */}
@@ -64,22 +64,22 @@ export function AdminHeader() {
                   <User className="w-4 h-4" />
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className="text-xs text-muted-foreground">Administrator</p>
+                  <p className="text-sm font-medium">ผู้ดูแลระบบ</p>
+                  <p className="text-xs text-muted-foreground">ผู้จัดการ</p>
                 </div>
                 <ChevronDown className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>บัญชีของฉัน</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <User className="w-4 h-4 mr-2" />
-                Profile
+                โปรไฟล์
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="w-4 h-4 mr-2" />
-                Settings
+                การตั้งค่า
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={handleLogout}>

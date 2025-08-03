@@ -32,8 +32,8 @@ export default function POS() {
   const handleAddToCart = (product: Product) => {
     if (product.stock <= 0) {
       toast({
-        title: "Out of Stock",
-        description: `${product.name} is currently out of stock.`,
+        title: "สินค้าหมด",
+        description: `${product.name} ไม่มีสต็อกในขณะนี้`,
         variant: "destructive"
       });
       return;
@@ -41,16 +41,16 @@ export default function POS() {
 
     actions.addToCart(product);
     toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your cart.`,
+      title: "เพิ่มลงตะกร้าแล้ว",
+      description: `${product.name} ได้ถูกเพิ่มลงในตะกร้าของคุณแล้ว`,
     });
   };
 
   const handleCheckout = () => {
     if (state.cart.length === 0) {
       toast({
-        title: "Empty Cart",
-        description: "Please add items to cart before checkout.",
+        title: "ตะกร้าว่าง",
+        description: "กรุณาเพิ่มสินค้าลงตะกร้าก่อนชำระเงิน",
         variant: "destructive"
       });
       return;
@@ -62,8 +62,8 @@ export default function POS() {
     const sale = actions.completeCashSale();
     if (sale) {
       toast({
-        title: "Sale Completed!",
-        description: `Sale ${sale.saleNumber} has been completed successfully.`,
+        title: "ขายสำเร็จ!",
+        description: `การขาย ${sale.saleNumber} เสร็จสิ้นเรียบร้อยแล้ว`,
       });
       setCheckoutOpen(false);
     }
@@ -73,8 +73,8 @@ export default function POS() {
     if (state.cart.length > 0) {
       actions.clearCart();
       toast({
-        title: "Cart Cleared",
-        description: "All items have been removed from cart.",
+        title: "ล้างตะกร้าแล้ว",
+        description: "สินค้าทั้งหมดถูกลบออกจากตะกร้าแล้ว",
       });
     }
   };
@@ -102,8 +102,8 @@ export default function POS() {
   const handleProductFoundByBarcode = (product: Product) => {
     handleAddToCart(product);
     toast({
-      title: "Product Found!",
-      description: `${product.name} added to cart via barcode scan.`,
+      title: "พบสินค้าแล้ว!",
+      description: `${product.name} ถูกเพิ่มลงตะกร้าผ่านการสแกนบาร์โค้ด`,
     });
   };
 
@@ -120,21 +120,21 @@ export default function POS() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">POS Sales</h1>
-          <p className="text-muted-foreground">Point of Sale - Cash transactions and receipt generation</p>
+          <h1 className="text-3xl font-bold text-foreground">ระบบขาย POS</h1>
+          <p className="text-muted-foreground">จุดขาย - ธุรกรรมเงินสดและการออกใบเสร็จ</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={handleBarcodeScanner}>
             <Scan className="w-4 h-4 mr-2" />
-            Scan Barcode
+            สแกนบาร์โค้ด
           </Button>
           <Button variant="outline" onClick={handleClearCart} disabled={state.cart.length === 0}>
             <RotateCcw className="w-4 h-4 mr-2" />
-            Clear Cart
+            ล้างตะกร้า
           </Button>
           <Button variant="admin" onClick={handleCheckout}>
             <ShoppingCart className="w-4 h-4 mr-2" />
-            Checkout ({state.cart.length})
+            ชำระเงิน ({state.cart.length})
           </Button>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function POS() {
         <div className="xl:col-span-2">
           <Card className="border-0 shadow-md">
             <CardHeader>
-              <CardTitle>Product Selection</CardTitle>
+              <CardTitle>เลือกสินค้า</CardTitle>
             </CardHeader>
             <CardContent>
               <ProductGrid onAddToCart={handleAddToCart} />

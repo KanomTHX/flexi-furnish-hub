@@ -36,7 +36,7 @@ export default function Dashboard() {
   }, []);
   const stats = [
     {
-      title: "Today's Sales",
+      title: "ยอดขายวันนี้",
       value: "$12,450",
       change: "+8.2%",
       icon: DollarSign,
@@ -44,7 +44,7 @@ export default function Dashboard() {
       bgColor: "bg-success/10"
     },
     {
-      title: "Active Installments",
+      title: "สัญญาผ่อนชำระที่ใช้งาน",
       value: "156",
       change: "+12",
       icon: CreditCard,
@@ -52,7 +52,7 @@ export default function Dashboard() {
       bgColor: "bg-info/10"
     },
     {
-      title: "Low Stock Items",
+      title: "สินค้าสต็อกต่ำ",
       value: "23",
       change: "+5",
       icon: Package,
@@ -60,7 +60,7 @@ export default function Dashboard() {
       bgColor: "bg-warning/10"
     },
     {
-      title: "Pending Claims",
+      title: "คำร้องที่รอดำเนินการ",
       value: "8",
       change: "-2",
       icon: AlertCircle,
@@ -70,10 +70,10 @@ export default function Dashboard() {
   ];
 
   const recentSales = [
-    { id: "#INV-001", customer: "John Smith", amount: "$450", status: "completed", time: "2 hours ago" },
-    { id: "#INV-002", customer: "Sarah Johnson", amount: "$1,200", status: "pending", time: "3 hours ago" },
-    { id: "#INV-003", customer: "Mike Wilson", amount: "$750", status: "completed", time: "5 hours ago" },
-    { id: "#INV-004", customer: "Lisa Brown", amount: "$980", status: "processing", time: "6 hours ago" },
+    { id: "#INV-001", customer: "สมชาย ใจดี", amount: "$450", status: "completed", time: "2 ชั่วโมงที่แล้ว" },
+    { id: "#INV-002", customer: "สมหญิง รักดี", amount: "$1,200", status: "pending", time: "3 ชั่วโมงที่แล้ว" },
+    { id: "#INV-003", customer: "สมศักดิ์ มั่นคง", amount: "$750", status: "completed", time: "5 ชั่วโมงที่แล้ว" },
+    { id: "#INV-004", customer: "สมใจ สุขใส", amount: "$980", status: "processing", time: "6 ชั่วโมงที่แล้ว" },
   ];
 
   const lowStockItems = [
@@ -89,6 +89,15 @@ export default function Dashboard() {
       case "pending": return "bg-warning text-warning-foreground";
       case "processing": return "bg-info text-info-foreground";
       default: return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "completed": return "เสร็จสิ้น";
+      case "pending": return "รอดำเนินการ";
+      case "processing": return "กำลังดำเนินการ";
+      default: return status;
     }
   };
 
@@ -139,9 +148,9 @@ export default function Dashboard() {
 
   // System notifications
   const notifications = [
-    { id: 1, type: 'warning', message: '23 items running low on stock', action: 'View Stock', handler: handleManageStock },
-    { id: 2, type: 'info', message: '8 pending claims need attention', action: 'View Claims', handler: () => navigate('/claims') },
-    { id: 3, type: 'success', message: 'Daily sales target achieved!', action: 'View Reports', handler: handleReports },
+    { id: 1, type: 'warning', message: 'สินค้า 23 รายการมีสต็อกต่ำ', action: 'ดูสต็อก', handler: handleManageStock },
+    { id: 2, type: 'info', message: 'คำร้อง 8 รายการรอการดำเนินการ', action: 'ดูคำร้อง', handler: () => navigate('/claims') },
+    { id: 3, type: 'success', message: 'บรรลุเป้าหมายยอดขายประจำวัน!', action: 'ดูรายงาน', handler: handleReports },
   ];
 
   const getNotificationColor = (type: string) => {
@@ -169,23 +178,23 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">แดชบอร์ด</h1>
           <div className="flex items-center gap-2">
-            <p className="text-muted-foreground">Welcome back! Here's what's happening at your store today.</p>
+            <p className="text-muted-foreground">ยินดีต้อนรับกลับมา! นี่คือสิ่งที่เกิดขึ้นในร้านของคุณวันนี้</p>
             <Badge variant="outline" className="text-xs">
               <Clock className="w-3 h-3 mr-1" />
-              Updated {lastUpdated.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+              อัปเดต {lastUpdated.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
             </Badge>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={handleViewReports}>
             <Eye className="w-4 h-4 mr-2" />
-            View Reports
+            ดูรายงาน
           </Button>
           <Button variant="admin" size="sm" onClick={handleNewSale}>
             <ShoppingCart className="w-4 h-4 mr-2" />
-            New Sale
+            ขายใหม่
           </Button>
         </div>
       </div>
@@ -220,7 +229,7 @@ export default function Dashboard() {
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                   <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                   <p className={`text-sm ${stat.change.startsWith('+') ? 'text-success' : 'text-destructive'}`}>
-                    {stat.change} from yesterday
+                    {stat.change} จากเมื่อวาน
                   </p>
                 </div>
                 <div className={`p-3 rounded-lg ${stat.bgColor}`}>
@@ -240,11 +249,11 @@ export default function Dashboard() {
             <CardHeader className="bg-card-header rounded-t-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Recent Sales</CardTitle>
-                  <CardDescription>Latest transactions from all branches</CardDescription>
+                  <CardTitle className="text-lg">ยอดขายล่าสุด</CardTitle>
+                  <CardDescription>ธุรกรรมล่าสุดจากทุกสาขา</CardDescription>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleViewAllSales}>
-                  View All
+                  ดูทั้งหมด
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
@@ -266,7 +275,7 @@ export default function Dashboard() {
                       <p className="font-semibold text-foreground">{sale.amount}</p>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className={getStatusColor(sale.status)}>
-                          {sale.status}
+                          {getStatusText(sale.status)}
                         </Badge>
                         <span className="text-xs text-muted-foreground">{sale.time}</span>
                       </div>
@@ -285,8 +294,8 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-warning" />
                 <div>
-                  <CardTitle className="text-lg">Low Stock Alert</CardTitle>
-                  <CardDescription>Items that need restocking</CardDescription>
+                  <CardTitle className="text-lg">แจ้งเตือนสต็อกต่ำ</CardTitle>
+                  <CardDescription>สินค้าที่ต้องเติมสต็อก</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -300,7 +309,7 @@ export default function Dashboard() {
                         variant="outline" 
                         className={item.stock === 0 ? "border-destructive text-destructive" : "border-warning text-warning"}
                       >
-                        {item.stock === 0 ? "Out of Stock" : "Low Stock"}
+                        {item.stock === 0 ? "สินค้าหมด" : "สต็อกต่ำ"}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -319,7 +328,7 @@ export default function Dashboard() {
               <div className="p-4 border-t">
                 <Button variant="outline" size="sm" className="w-full" onClick={handleManageStock}>
                   <Package className="w-4 h-4 mr-2" />
-                  Manage Stock
+                  จัดการสต็อก
                 </Button>
               </div>
             </CardContent>
@@ -333,8 +342,8 @@ export default function Dashboard() {
       {/* Additional Quick Actions */}
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-card-header rounded-t-lg">
-          <CardTitle className="text-lg">More Actions</CardTitle>
-          <CardDescription>Additional management tools</CardDescription>
+          <CardTitle className="text-lg">การดำเนินการเพิ่มเติม</CardTitle>
+          <CardDescription>เครื่องมือจัดการเพิ่มเติม</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -346,8 +355,8 @@ export default function Dashboard() {
                 <div className="w-10 h-10 bg-purple/10 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-purple/20 transition-colors">
                   <Users className="w-5 h-5 text-purple-600" />
                 </div>
-                <h4 className="font-medium text-foreground text-sm mb-1">Employees</h4>
-                <p className="text-xs text-muted-foreground">Manage staff</p>
+                <h4 className="font-medium text-foreground text-sm mb-1">พนักงาน</h4>
+                <p className="text-xs text-muted-foreground">จัดการพนักงาน</p>
               </div>
             </div>
 
@@ -359,8 +368,8 @@ export default function Dashboard() {
                 <div className="w-10 h-10 bg-blue/10 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-blue/20 transition-colors">
                   <DollarSign className="w-5 h-5 text-blue-600" />
                 </div>
-                <h4 className="font-medium text-foreground text-sm mb-1">Accounting</h4>
-                <p className="text-xs text-muted-foreground">Financial records</p>
+                <h4 className="font-medium text-foreground text-sm mb-1">บัญชี</h4>
+                <p className="text-xs text-muted-foreground">บันทึกทางการเงิน</p>
               </div>
             </div>
 
@@ -372,8 +381,8 @@ export default function Dashboard() {
                 <div className="w-10 h-10 bg-red/10 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-red/20 transition-colors">
                   <AlertCircle className="w-5 h-5 text-red-600" />
                 </div>
-                <h4 className="font-medium text-foreground text-sm mb-1">Claims</h4>
-                <p className="text-xs text-muted-foreground">Handle claims</p>
+                <h4 className="font-medium text-foreground text-sm mb-1">คำร้อง</h4>
+                <p className="text-xs text-muted-foreground">จัดการคำร้อง</p>
               </div>
             </div>
 
@@ -385,8 +394,8 @@ export default function Dashboard() {
                 <div className="w-10 h-10 bg-orange/10 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-orange/20 transition-colors">
                   <Warehouse className="w-5 h-5 text-orange-600" />
                 </div>
-                <h4 className="font-medium text-foreground text-sm mb-1">Warehouses</h4>
-                <p className="text-xs text-muted-foreground">Manage locations</p>
+                <h4 className="font-medium text-foreground text-sm mb-1">คลังสินค้า</h4>
+                <p className="text-xs text-muted-foreground">จัดการสถานที่</p>
               </div>
             </div>
 
@@ -398,8 +407,8 @@ export default function Dashboard() {
                 <div className="w-10 h-10 bg-indigo/10 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-indigo/20 transition-colors">
                   <Eye className="w-5 h-5 text-indigo-600" />
                 </div>
-                <h4 className="font-medium text-foreground text-sm mb-1">Audit</h4>
-                <p className="text-xs text-muted-foreground">System logs</p>
+                <h4 className="font-medium text-foreground text-sm mb-1">ตรวจสอบ</h4>
+                <p className="text-xs text-muted-foreground">บันทึกระบบ</p>
               </div>
             </div>
 
@@ -411,8 +420,8 @@ export default function Dashboard() {
                 <div className="w-10 h-10 bg-gray/10 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-gray/20 transition-colors">
                   <Clock className="w-5 h-5 text-gray-600" />
                 </div>
-                <h4 className="font-medium text-foreground text-sm mb-1">Settings</h4>
-                <p className="text-xs text-muted-foreground">System config</p>
+                <h4 className="font-medium text-foreground text-sm mb-1">การตั้งค่า</h4>
+                <p className="text-xs text-muted-foreground">กำหนดค่าระบบ</p>
               </div>
             </div>
           </div>

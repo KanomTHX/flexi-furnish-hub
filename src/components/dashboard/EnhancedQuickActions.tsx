@@ -1,24 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  ShoppingCart, 
-  CreditCard, 
-  Warehouse, 
+import {
+  ShoppingCart,
+  CreditCard,
+  Warehouse,
   Activity,
-  Users,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
   TrendingUp,
   Package,
   UserCheck,
-  Calendar,
   DollarSign,
-  BarChart3
+  BarChart3,
+  RefreshCw,
+  Bell
 } from 'lucide-react';
 
 interface QuickActionItem {
@@ -35,22 +31,109 @@ interface QuickActionItem {
     variant: 'default' | 'destructive' | 'secondary' | 'outline';
   };
   priority: 'high' | 'medium' | 'low';
+  shortcut?: string;
 }
 
 export function EnhancedQuickActions() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [employeeCheckOpen, setEmployeeCheckOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshError, setLastRefreshError] = useState<string | null>(null);
 
-  // Mock data for demonstration
-  const [stats] = useState({
+  // Mock data for demonstration - in real app, this would come from API
+  const [stats, setStats] = useState({
     pendingOrders: 5,
     lowStockItems: 12,
     employeesPresent: 8,
     totalEmployees: 10,
     todaySales: 15,
-    overduePayments: 3
+    overduePayments: 3,
+    lastUpdated: new Date()
   });
+
+  // Auto-refresh stats every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshStats();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key) {
+          case '1':
+            event.preventDefault();
+            handleNewSale();
+            break;
+          case '2':
+            event.preventDefault();
+            handleAddStock();
+            break;
+          case '3':
+            event.preventDefault();
+            handleEmployeeCheck();
+            break;
+          case '4':
+            event.preventDefault();
+            handleInstallment();
+            break;
+          case 'r':
+            event.preventDefault();
+            refreshStats();
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
+  const refreshStats = async () => {
+    setIsRefreshing(true);
+    setLastRefreshError(null);
+
+    try {
+      // Simulate API call with potential error
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Simulate 10% chance of error
+          if (Math.random() < 0.1) {
+            reject(new Error('เกิดข้อผิดพลาดในการเชื่อมต่อ'));
+          } else {
+            resolve(true);
+          }
+        }, 1000);
+      });
+
+      setStats(prev => ({
+        ...prev,
+        lastUpdated: new Date(),
+        // Simulate some changes
+        todaySales: prev.todaySales + Math.floor(Math.random() * 3),
+        employeesPresent: Math.min(prev.totalEmployees, prev.employeesPresent + Math.floor(Math.random() * 2))
+      }));
+
+      toast({
+        title: "อัปเดตข้อมูลแล้ว",
+        description: "ข้อมูลสถิติได้รับการอัปเดตล่าสุด",
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ';
+      setLastRefreshError(errorMessage);
+      toast({
+        title: "ไม่สามารถอัปเดตข้อมูลได้",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleNewSale = () => {
     navigate('/pos');
@@ -104,38 +187,38 @@ export function EnhancedQuickActions() {
   const quickActions: QuickActionItem[] = [
     {
       id: 'new-sale',
-      title: 'New Sale',
-      description: 'Create new POS transaction',
+      title: 'ขายใหม่',
+      description: 'สร้างธุรกรรมขายใหม่ (Ctrl+1)',
       icon: ShoppingCart,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       hoverColor: 'hover:border-green-500 hover:bg-green-50',
       action: handleNewSale,
       badge: stats.todaySales > 0 ? {
-        text: `${stats.todaySales} today`,
+        text: `${stats.todaySales} วันนี้`,
         variant: 'secondary'
       } : undefined,
       priority: 'high'
     },
     {
       id: 'add-stock',
-      title: 'Add Stock',
-      description: 'Receive new inventory',
+      title: 'เพิ่มสต็อก',
+      description: 'รับสินค้าเข้าคลัง (Ctrl+2)',
       icon: Warehouse,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
       hoverColor: 'hover:border-orange-500 hover:bg-orange-50',
       action: handleAddStock,
       badge: stats.lowStockItems > 0 ? {
-        text: `${stats.lowStockItems} low`,
+        text: `${stats.lowStockItems} ต่ำ`,
         variant: 'destructive'
       } : undefined,
       priority: 'high'
     },
     {
       id: 'employee-check',
-      title: 'Employee Check',
-      description: 'Check staff attendance',
+      title: 'ตรวจสอบพนักงาน',
+      description: 'ตรวจสอบการเข้างาน (Ctrl+3)',
       icon: UserCheck,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
@@ -149,23 +232,23 @@ export function EnhancedQuickActions() {
     },
     {
       id: 'installment',
-      title: 'Installment',
-      description: 'Setup payment plan',
+      title: 'ผ่อนชำระ',
+      description: 'ตั้งค่าแผนการชำระเงิน (Ctrl+4)',
       icon: CreditCard,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
       hoverColor: 'hover:border-purple-500 hover:bg-purple-50',
       action: handleInstallment,
       badge: stats.overduePayments > 0 ? {
-        text: `${stats.overduePayments} overdue`,
+        text: `${stats.overduePayments} เกินกำหนด`,
         variant: 'destructive'
       } : undefined,
       priority: 'medium'
     },
     {
       id: 'reports',
-      title: 'Reports',
-      description: 'View analytics & insights',
+      title: 'รายงาน',
+      description: 'ดูการวิเคราะห์และข้อมูลเชิงลึก',
       icon: BarChart3,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
@@ -175,8 +258,8 @@ export function EnhancedQuickActions() {
     },
     {
       id: 'accounting',
-      title: 'Accounting',
-      description: 'Financial management',
+      title: 'บัญชี',
+      description: 'จัดการทางการเงิน',
       icon: DollarSign,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
@@ -195,8 +278,45 @@ export function EnhancedQuickActions() {
   const highPriorityActions = sortedActions.filter(action => action.priority === 'high');
   const otherActions = sortedActions.filter(action => action.priority !== 'high');
 
+  // Get urgent notifications count
+  const urgentCount = (stats.lowStockItems > 0 ? 1 : 0) +
+    (stats.overduePayments > 0 ? 1 : 0) +
+    (stats.employeesPresent < stats.totalEmployees ? 1 : 0);
+
   return (
     <div className="space-y-6">
+      {/* Urgent Notifications Banner */}
+      {urgentCount > 0 && (
+        <Card className="border-l-4 border-l-red-500 bg-red-50/50 shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <Bell className="w-4 h-4 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-red-800">แจ้งเตือนด่วน</h3>
+                  <p className="text-sm text-red-700">
+                    มี {urgentCount} รายการที่ต้องดำเนินการ
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {stats.lowStockItems > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    สต็อกต่ำ {stats.lowStockItems}
+                  </Badge>
+                )}
+                {stats.overduePayments > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    เกินกำหนด {stats.overduePayments}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {/* High Priority Quick Actions */}
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-lg">
@@ -204,22 +324,41 @@ export function EnhancedQuickActions() {
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Activity className="w-5 h-5 text-blue-600" />
-                Quick Actions
+                การดำเนินการด่วน
               </CardTitle>
-              <CardDescription>Fast access to essential daily tasks</CardDescription>
+              <CardDescription>เข้าถึงงานสำคัญประจำวันได้อย่างรวดเร็ว</CardDescription>
             </div>
-            <Badge variant="outline" className="text-xs">
-              Priority Actions
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                การดำเนินการสำคัญ
+              </Badge>
+              <button
+                onClick={refreshStats}
+                disabled={isRefreshing}
+                className="p-1 hover:bg-white/50 rounded-full transition-colors"
+                title="รีเฟรชข้อมูล"
+              >
+                <RefreshCw className={`w-4 h-4 text-blue-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {highPriorityActions.map((action) => (
-              <div 
+              <div
                 key={action.id}
-                className={`group relative p-4 border rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer ${action.hoverColor}`}
+                className={`group relative p-4 border rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${action.hoverColor}`}
                 onClick={action.action}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    action.action();
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`${action.title}: ${action.description}`}
               >
                 <div className="text-center">
                   <div className={`w-14 h-14 ${action.bgColor} rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
@@ -227,7 +366,7 @@ export function EnhancedQuickActions() {
                   </div>
                   <h3 className="font-semibold text-foreground mb-1">{action.title}</h3>
                   <p className="text-sm text-muted-foreground mb-2">{action.description}</p>
-                  
+
                   {action.badge && (
                     <Badge variant={action.badge.variant} className="text-xs">
                       {action.badge.text}
@@ -235,8 +374,11 @@ export function EnhancedQuickActions() {
                   )}
                 </div>
 
-                {/* Priority indicator */}
-                <div className="absolute top-2 right-2">
+                {/* Priority indicator with notification */}
+                <div className="absolute top-2 right-2 flex items-center gap-1">
+                  {action.badge?.variant === 'destructive' && (
+                    <Bell className="w-3 h-3 text-red-500 animate-pulse" />
+                  )}
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
@@ -250,17 +392,26 @@ export function EnhancedQuickActions() {
         <CardHeader className="bg-card-header rounded-t-lg">
           <CardTitle className="text-lg flex items-center gap-2">
             <Package className="w-5 h-5 text-gray-600" />
-            More Actions
+            การดำเนินการเพิ่มเติม
           </CardTitle>
-          <CardDescription>Additional management tools and features</CardDescription>
+          <CardDescription>เครื่องมือและฟีเจอร์จัดการเพิ่มเติม</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {otherActions.map((action) => (
-              <div 
+              <div
                 key={action.id}
-                className={`group p-4 border rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer ${action.hoverColor}`}
+                className={`group p-4 border rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${action.hoverColor}`}
                 onClick={action.action}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    action.action();
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`${action.title}: ${action.description}`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 ${action.bgColor} rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform`}>
@@ -285,29 +436,100 @@ export function EnhancedQuickActions() {
       {/* Quick Stats Summary */}
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-lg">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-600" />
-            Today's Summary
-          </CardTitle>
-          <CardDescription>Quick overview of today's key metrics</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+                สรุปวันนี้
+              </CardTitle>
+              <CardDescription>ภาพรวมด่วนของตัวชี้วัดสำคัญวันนี้</CardDescription>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {lastRefreshError ? (
+                <span className="text-red-500 flex items-center gap-1">
+                  <span>⚠</span> {lastRefreshError}
+                </span>
+              ) : (
+                <>
+                  อัปเดตล่าสุด: {stats.lastUpdated.toLocaleTimeString('th-TH', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{stats.todaySales}</div>
-              <div className="text-xs text-green-700">Sales Today</div>
+            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100 hover:shadow-md transition-shadow">
+              <div className="text-2xl font-bold text-green-600 mb-1">{stats.todaySales}</div>
+              <div className="text-xs text-green-700 font-medium">ยอดขายวันนี้</div>
+              <div className="text-xs text-green-600 mt-1">รายการ</div>
             </div>
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{stats.employeesPresent}/{stats.totalEmployees}</div>
-              <div className="text-xs text-blue-700">Staff Present</div>
+            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow">
+              <div className="text-2xl font-bold text-blue-600 mb-1">{stats.employeesPresent}/{stats.totalEmployees}</div>
+              <div className="text-xs text-blue-700 font-medium">พนักงานมาทำงาน</div>
+              <div className="text-xs text-blue-600 mt-1">
+                {((stats.employeesPresent / stats.totalEmployees) * 100).toFixed(0)}% เข้างาน
+              </div>
             </div>
-            <div className="text-center p-3 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">{stats.lowStockItems}</div>
-              <div className="text-xs text-orange-700">Low Stock</div>
+            <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-100 hover:shadow-md transition-shadow">
+              <div className="text-2xl font-bold text-orange-600 mb-1">{stats.lowStockItems}</div>
+              <div className="text-xs text-orange-700 font-medium">สต็อกต่ำ</div>
+              <div className="text-xs text-orange-600 mt-1">รายการ</div>
             </div>
-            <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{stats.overduePayments}</div>
-              <div className="text-xs text-red-700">Overdue</div>
+            <div className="text-center p-4 bg-red-50 rounded-lg border border-red-100 hover:shadow-md transition-shadow">
+              <div className="text-2xl font-bold text-red-600 mb-1">{stats.overduePayments}</div>
+              <div className="text-xs text-red-700 font-medium">เกินกำหนด</div>
+              <div className="text-xs text-red-600 mt-1">ค้างชำระ</div>
+            </div>
+          </div>
+
+          {/* Quick Action Buttons for Stats */}
+          <div className="mt-4 flex flex-wrap gap-2 justify-center">
+            {stats.lowStockItems > 0 && (
+              <button
+                onClick={handleAddStock}
+                className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs hover:bg-orange-200 transition-colors"
+              >
+                เติมสต็อกด่วน
+              </button>
+            )}
+            {stats.overduePayments > 0 && (
+              <button
+                onClick={handleInstallment}
+                className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs hover:bg-red-200 transition-colors"
+              >
+                ตรวจสอบค้างชำระ
+              </button>
+            )}
+            {stats.employeesPresent < stats.totalEmployees && (
+              <button
+                onClick={handleEmployeeCheck}
+                className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors"
+              >
+                ตรวจสอบการเข้างาน
+              </button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Keyboard Shortcuts Help */}
+      <Card className="border-0 shadow-sm bg-gray-50/50">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+                <span className="text-xs font-mono">⌨</span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                คีย์ลัด: Ctrl+1 ขาย | Ctrl+2 สต็อก | Ctrl+3 พนักงาน | Ctrl+4 ผ่อน | Ctrl+R รีเฟรช
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              กดคีย์ลัดเพื่อเข้าถึงฟีเจอร์ได้อย่างรวดเร็ว
             </div>
           </div>
         </CardContent>

@@ -6,6 +6,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useClaims } from '@/hooks/useClaims';
 import { ClaimsOverview } from '@/components/claims/ClaimsOverview';
 import { ClaimsList } from '@/components/claims/ClaimsList';
+import { PendingClaimsDialog } from '@/components/claims/PendingClaimsDialog';
+import { OverdueClaimsDialog } from '@/components/claims/OverdueClaimsDialog';
+import { CreateClaimDialog } from '@/components/claims/CreateClaimDialog';
+import { ClearClaimsFiltersDialog } from '@/components/claims/ClearClaimsFiltersDialog';
 import { exportClaimsToCSV, exportCustomersToCSV, exportProductsToCSV } from '@/utils/claimsHelpers';
 import { 
   Shield, 
@@ -38,6 +42,10 @@ export default function Claims() {
   } = useClaims();
 
   const { toast } = useToast();
+  const [pendingClaimsOpen, setPendingClaimsOpen] = useState(false);
+  const [overdueClaimsOpen, setOverdueClaimsOpen] = useState(false);
+  const [createClaimOpen, setCreateClaimOpen] = useState(false);
+  const [clearFiltersOpen, setClearFiltersOpen] = useState(false);
 
   const handleExportClaims = () => {
     const csv = exportClaimsToCSV(claims);
@@ -110,9 +118,27 @@ export default function Claims() {
   };
 
   const handleCreateClaim = () => {
+    setCreateClaimOpen(true);
+  };
+
+  const handleShowPendingClaims = () => {
+    setPendingClaimsOpen(true);
+  };
+
+  const handleShowOverdueClaims = () => {
+    setOverdueClaimsOpen(true);
+  };
+
+  const handleShowClearFilters = () => {
+    setClearFiltersOpen(true);
+  };
+
+  const handleClaimCreated = (claim: any) => {
+    // In real app, this would add to the claims list
+    console.log('New claim created:', claim);
     toast({
-      title: "สร้างเคลมใหม่",
-      description: "ฟีเจอร์สร้างเคลมใหม่จะพัฒนาในเวอร์ชันถัดไป",
+      title: "สร้างเคลมสำเร็จ",
+      description: `เคลม ${claim.claimNumber} ถูกสร้างและรอการดำเนินการ`,
     });
   };
 
@@ -135,6 +161,7 @@ export default function Claims() {
             <Button 
               variant="outline" 
               className="relative"
+              onClick={handleShowPendingClaims}
             >
               <Clock className="w-4 h-4 mr-2" />
               รอดำเนินการ
@@ -147,6 +174,7 @@ export default function Claims() {
             <Button 
               variant="outline" 
               className="relative"
+              onClick={handleShowOverdueClaims}
             >
               <AlertTriangle className="w-4 h-4 mr-2" />
               เกินกำหนด
@@ -155,7 +183,7 @@ export default function Claims() {
               </span>
             </Button>
           )}
-          <Button onClick={() => clearClaimFilter()} variant="outline">
+          <Button onClick={handleShowClearFilters} variant="outline">
             <Settings className="w-4 h-4 mr-2" />
             ล้างตัวกรอง
           </Button>
@@ -416,6 +444,41 @@ export default function Claims() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Pending Claims Dialog */}
+      <PendingClaimsDialog
+        open={pendingClaimsOpen}
+        onOpenChange={setPendingClaimsOpen}
+        pendingClaims={pendingClaims}
+        onUpdateStatus={handleUpdateClaimStatus}
+        onAssignClaim={handleAssignClaim}
+      />
+
+      {/* Overdue Claims Dialog */}
+      <OverdueClaimsDialog
+        open={overdueClaimsOpen}
+        onOpenChange={setOverdueClaimsOpen}
+        overdueClaims={overdueClaims}
+        onUpdateStatus={handleUpdateClaimStatus}
+        onAssignClaim={handleAssignClaim}
+      />
+
+      {/* Create Claim Dialog */}
+      <CreateClaimDialog
+        open={createClaimOpen}
+        onOpenChange={setCreateClaimOpen}
+        customers={customers}
+        products={products}
+        onCreateClaim={handleClaimCreated}
+      />
+
+      {/* Clear Filters Dialog */}
+      <ClearClaimsFiltersDialog
+        open={clearFiltersOpen}
+        onOpenChange={setClearFiltersOpen}
+        currentFilter={claimFilter}
+        onClearFilter={clearClaimFilter}
+      />
     </div>
   );
 }

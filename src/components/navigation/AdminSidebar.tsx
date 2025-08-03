@@ -39,67 +39,67 @@ import {
 
 const navigationItems = [
   {
-    title: "Dashboard",
+    title: "แดชบอร์ด",
     url: "/",
     icon: LayoutDashboard,
     badge: null
   },
   {
-    title: "POS Sales",
+    title: "ระบบขาย POS",
     url: "/pos",
     icon: ShoppingCart,
     badge: null
   },
   {
-    title: "Installments",
+    title: "ผ่อนชำระ",
     url: "/installments",
     icon: CreditCard,
     badge: null
   },
   {
-    title: "Stock Management",
+    title: "จัดการสต็อก",
     url: "/stock",
     icon: Package,
     badge: "12"
   },
   {
-    title: "Warehouses",
+    title: "คลังสินค้า",
     url: "/warehouses",
     icon: Warehouse,
     badge: null
   },
   {
-    title: "Accounting",
+    title: "บัญชี",
     url: "/accounting",
     icon: BarChart3,
     badge: null
   },
   {
-    title: "Claims & Warranty",
+    title: "คำร้องและการรับประกัน",
     url: "/claims",
     icon: AlertCircle,
     badge: "3"
   },
   {
-    title: "Employees",
+    title: "พนักงาน",
     url: "/employees",
     icon: Users,
     badge: null
   },
   {
-    title: "Audit Logs",
+    title: "บันทึกการตรวจสอบ",
     url: "/audit",
     icon: Activity,
     badge: null
   },
   {
-    title: "Reports",
+    title: "รายงาน",
     url: "/reports",
     icon: TrendingUp,
     badge: null
   },
   {
-    title: "Settings",
+    title: "การตั้งค่า",
     url: "/settings",
     icon: Settings,
     badge: null
@@ -138,7 +138,7 @@ export function AdminSidebar() {
             {!collapsed && (
               <div>
                 <h2 className="text-lg font-bold text-sidebar-foreground">FurniStore</h2>
-                <p className="text-xs text-sidebar-foreground/60">Admin Portal</p>
+                <p className="text-xs text-sidebar-foreground/60">ระบบจัดการ</p>
               </div>
             )}
           </div>
@@ -147,7 +147,7 @@ export function AdminSidebar() {
         {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-wide text-xs font-semibold">
-            {!collapsed && "Main Navigation"}
+            {!collapsed && "เมนูหลัก"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -177,7 +177,7 @@ export function AdminSidebar() {
         {/* Enhanced Quick Actions */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-wide text-xs font-semibold">
-            {!collapsed && "Quick Actions"}
+            {!collapsed && "การดำเนินการด่วน"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <div className="px-2">
@@ -191,15 +191,15 @@ export function AdminSidebar() {
           {!collapsed && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
-                <span>System Status</span>
+                <span>สถานะระบบ</span>
                 <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
               </div>
               <div className="text-xs text-sidebar-foreground/80">
-                Main Branch • Online
+                สาขาหลัก • ออนไลน์
               </div>
               <div className="flex items-center gap-1 text-xs text-sidebar-foreground/60 mt-1">
                 <Clock className="w-3 h-3" />
-                <span>Last updated: {new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>อัปเดตล่าสุด: {new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
           )}

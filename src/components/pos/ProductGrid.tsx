@@ -14,12 +14,12 @@ interface ProductGridProps {
 
 export function ProductGrid({ onAddToCart }: ProductGridProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [selectedCategory, setSelectedCategory] = useState('หมวดหมู่ทั้งหมด');
 
   const filteredProducts = mockProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All Categories' || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'หมวดหมู่ทั้งหมด' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -38,7 +38,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Search products by name or SKU..."
+            placeholder="ค้นหาสินค้าตามชื่อหรือ SKU..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -90,7 +90,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                       variant={product.stock > 10 ? "default" : product.stock > 0 ? "secondary" : "destructive"}
                       className="text-xs"
                     >
-                      Stock: {product.stock}
+                      สต็อก: {product.stock}
                     </Badge>
                   </div>
                 </div>
@@ -103,7 +103,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                   size="sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add to Cart
+                  เพิ่มลงตะกร้า
                 </Button>
               </div>
             </CardContent>
@@ -114,7 +114,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
       {filteredProducts.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No products found matching your criteria</p>
+          <p>ไม่พบสินค้าที่ตรงกับเงื่อนไขการค้นหา</p>
         </div>
       )}
     </div>

@@ -43,13 +43,13 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
   const quickActions: QuickAction[] = [
     {
       id: 'new-sale',
-      title: 'New Sale',
+      title: 'ขายใหม่',
       icon: Receipt,
       color: 'text-green-600',
       bgColor: 'hover:bg-green-50',
       badge: stats.todaySales.toString(),
       badgeColor: 'bg-green-100 text-green-800',
-      description: 'Create new POS transaction',
+      description: 'สร้างธุรกรรมขายใหม่',
       priority: 'high',
       action: () => {
         navigate('/pos');
@@ -61,13 +61,13 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
     },
     {
       id: 'add-stock',
-      title: 'Add Stock',
+      title: 'เพิ่มสต็อก',
       icon: Plus,
       color: 'text-orange-600',
       bgColor: 'hover:bg-orange-50',
       badge: stats.lowStockItems.toString(),
       badgeColor: 'bg-orange-100 text-orange-800',
-      description: 'Manage inventory',
+      description: 'จัดการสินค้าคงคลัง',
       priority: 'high',
       action: () => {
         navigate('/stock');
@@ -79,7 +79,7 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
     },
     {
       id: 'employee-check',
-      title: 'Employee Check',
+      title: 'ตรวจสอบพนักงาน',
       icon: UserCheck,
       color: 'text-blue-600',
       bgColor: 'hover:bg-blue-50',
@@ -87,7 +87,7 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
       badgeColor: stats.employeesPresent === stats.totalEmployees 
         ? 'bg-green-100 text-green-800' 
         : 'bg-blue-100 text-blue-800',
-      description: 'Check staff attendance',
+      description: 'ตรวจสอบการเข้างาน',
       priority: 'high',
       action: () => {
         setEmployeeCheckOpen(true);
@@ -165,24 +165,24 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
       <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-medium text-blue-900">Today's Summary</span>
+          <span className="text-sm font-medium text-blue-900">สรุปวันนี้</span>
         </div>
         
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-blue-700">Sales:</span>
+            <span className="text-blue-700">ยอดขาย:</span>
             <span className="font-medium text-blue-900">{stats.todaySales}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-blue-700">Staff:</span>
+            <span className="text-blue-700">พนักงาน:</span>
             <span className="font-medium text-blue-900">{stats.employeesPresent}/{stats.totalEmployees}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-orange-700">Low Stock:</span>
+            <span className="text-orange-700">สต็อกต่ำ:</span>
             <span className="font-medium text-orange-900">{stats.lowStockItems}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-red-700">Overdue:</span>
+            <span className="text-red-700">เกินกำหนด:</span>
             <span className="font-medium text-red-900">{stats.overduePayments}</span>
           </div>
         </div>
@@ -193,17 +193,17 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
         <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="w-3 h-3 text-yellow-600" />
-            <span className="text-xs font-medium text-yellow-800">Alerts</span>
+            <span className="text-xs font-medium text-yellow-800">แจ้งเตือน</span>
           </div>
           <div className="space-y-1">
             {stats.lowStockItems > 10 && (
               <div className="text-xs text-yellow-700">
-                • {stats.lowStockItems} items need restocking
+                • สินค้า {stats.lowStockItems} รายการต้องเติมสต็อก
               </div>
             )}
             {stats.overduePayments > 0 && (
               <div className="text-xs text-yellow-700">
-                • {stats.overduePayments} overdue payments
+                • การชำระเงิน {stats.overduePayments} รายการเกินกำหนด
               </div>
             )}
           </div>
