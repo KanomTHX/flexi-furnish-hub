@@ -14,6 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          balance: number | null
+          category: Database["public"]["Enums"]["account_category"]
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          type: Database["public"]["Enums"]["account_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          balance?: number | null
+          category: Database["public"]["Enums"]["account_category"]
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          type: Database["public"]["Enums"]["account_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          balance?: number | null
+          category?: Database["public"]["Enums"]["account_category"]
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          type?: Database["public"]["Enums"]["account_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance: {
+        Row: {
+          approved_by: string | null
+          break_end: string | null
+          break_start: string | null
+          check_in: string | null
+          check_out: string | null
+          created_at: string | null
+          date: string
+          employee_id: string
+          id: string
+          location: string | null
+          notes: string | null
+          overtime_hours: number | null
+          status: Database["public"]["Enums"]["attendance_status"] | null
+          total_hours: number | null
+        }
+        Insert: {
+          approved_by?: string | null
+          break_end?: string | null
+          break_start?: string | null
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string | null
+          date: string
+          employee_id: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          overtime_hours?: number | null
+          status?: Database["public"]["Enums"]["attendance_status"] | null
+          total_hours?: number | null
+        }
+        Update: {
+          approved_by?: string | null
+          break_end?: string | null
+          break_start?: string | null
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          overtime_hours?: number | null
+          status?: Database["public"]["Enums"]["attendance_status"] | null
+          total_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -145,6 +254,83 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          budget: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          manager_id: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          manager_id?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          manager_id?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      employee_documents: {
+        Row: {
+          employee_id: string
+          expiry_date: string | null
+          id: string
+          is_required: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["document_type"]
+          uploaded_at: string | null
+          url: string
+        }
+        Insert: {
+          employee_id: string
+          expiry_date?: string | null
+          id?: string
+          is_required?: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["document_type"]
+          uploaded_at?: string | null
+          url: string
+        }
+        Update: {
+          employee_id?: string
+          expiry_date?: string | null
+          id?: string
+          is_required?: boolean | null
+          name?: string
+          type?: Database["public"]["Enums"]["document_type"]
+          uploaded_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_profiles: {
         Row: {
           branch_id: string | null
@@ -188,6 +374,93 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          address: string | null
+          avatar: string | null
+          bank_account: Json | null
+          created_at: string | null
+          created_by: string
+          date_of_birth: string | null
+          department_id: string | null
+          email: string | null
+          emergency_contact: Json | null
+          employee_id: string
+          first_name: string
+          hire_date: string
+          id: string
+          last_name: string
+          phone: string | null
+          position_id: string | null
+          salary: number
+          status: Database["public"]["Enums"]["employee_status"] | null
+          updated_at: string | null
+          updated_by: string
+          work_schedule: Json | null
+        }
+        Insert: {
+          address?: string | null
+          avatar?: string | null
+          bank_account?: Json | null
+          created_at?: string | null
+          created_by: string
+          date_of_birth?: string | null
+          department_id?: string | null
+          email?: string | null
+          emergency_contact?: Json | null
+          employee_id: string
+          first_name: string
+          hire_date: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          position_id?: string | null
+          salary: number
+          status?: Database["public"]["Enums"]["employee_status"] | null
+          updated_at?: string | null
+          updated_by: string
+          work_schedule?: Json | null
+        }
+        Update: {
+          address?: string | null
+          avatar?: string | null
+          bank_account?: Json | null
+          created_at?: string | null
+          created_by?: string
+          date_of_birth?: string | null
+          department_id?: string | null
+          email?: string | null
+          emergency_contact?: Json | null
+          employee_id?: string
+          first_name?: string
+          hire_date?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          position_id?: string | null
+          salary?: number
+          status?: Database["public"]["Enums"]["employee_status"] | null
+          updated_at?: string | null
+          updated_by?: string
+          work_schedule?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
             referencedColumns: ["id"]
           },
         ]
@@ -300,6 +573,271 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      journal_entries: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          attachments: string[] | null
+          created_at: string | null
+          created_by: string
+          date: string
+          description: string
+          entry_number: string
+          id: string
+          reference: string | null
+          status: Database["public"]["Enums"]["journal_entry_status"] | null
+          total_credit: number
+          total_debit: number
+          updated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          created_by: string
+          date: string
+          description: string
+          entry_number: string
+          id?: string
+          reference?: string | null
+          status?: Database["public"]["Enums"]["journal_entry_status"] | null
+          total_credit?: number
+          total_debit?: number
+          updated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          created_by?: string
+          date?: string
+          description?: string
+          entry_number?: string
+          id?: string
+          reference?: string | null
+          status?: Database["public"]["Enums"]["journal_entry_status"] | null
+          total_credit?: number
+          total_debit?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      journal_entry_lines: {
+        Row: {
+          account_id: string
+          created_at: string | null
+          credit_amount: number | null
+          debit_amount: number | null
+          description: string | null
+          id: string
+          journal_entry_id: string
+          reference: string | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string | null
+          credit_amount?: number | null
+          debit_amount?: number | null
+          description?: string | null
+          id?: string
+          journal_entry_id: string
+          reference?: string | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string | null
+          credit_amount?: number | null
+          debit_amount?: number | null
+          description?: string | null
+          id?: string
+          journal_entry_id?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entry_lines_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leaves: {
+        Row: {
+          applied_at: string | null
+          approved_at: string | null
+          approved_by: string | null
+          days: number
+          documents: string[] | null
+          employee_id: string
+          end_date: string
+          id: string
+          reason: string
+          rejected_reason: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["leave_status"] | null
+          type: Database["public"]["Enums"]["leave_type"]
+        }
+        Insert: {
+          applied_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          days: number
+          documents?: string[] | null
+          employee_id: string
+          end_date: string
+          id?: string
+          reason: string
+          rejected_reason?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["leave_status"] | null
+          type: Database["public"]["Enums"]["leave_type"]
+        }
+        Update: {
+          applied_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          days?: number
+          documents?: string[] | null
+          employee_id?: string
+          end_date?: string
+          id?: string
+          reason?: string
+          rejected_reason?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["leave_status"] | null
+          type?: Database["public"]["Enums"]["leave_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaves_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payrolls: {
+        Row: {
+          allowances: Json | null
+          base_salary: number
+          bonus: number | null
+          created_at: string | null
+          deductions: Json | null
+          employee_id: string
+          end_date: string
+          gross_pay: number
+          id: string
+          net_pay: number
+          overtime: number | null
+          paid_at: string | null
+          period_month: number
+          period_year: number
+          social_security: number | null
+          start_date: string
+          status: Database["public"]["Enums"]["payroll_status"] | null
+          tax: number | null
+        }
+        Insert: {
+          allowances?: Json | null
+          base_salary: number
+          bonus?: number | null
+          created_at?: string | null
+          deductions?: Json | null
+          employee_id: string
+          end_date: string
+          gross_pay: number
+          id?: string
+          net_pay: number
+          overtime?: number | null
+          paid_at?: string | null
+          period_month: number
+          period_year: number
+          social_security?: number | null
+          start_date: string
+          status?: Database["public"]["Enums"]["payroll_status"] | null
+          tax?: number | null
+        }
+        Update: {
+          allowances?: Json | null
+          base_salary?: number
+          bonus?: number | null
+          created_at?: string | null
+          deductions?: Json | null
+          employee_id?: string
+          end_date?: string
+          gross_pay?: number
+          id?: string
+          net_pay?: number
+          overtime?: number | null
+          paid_at?: string | null
+          period_month?: number
+          period_year?: number
+          social_security?: number | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["payroll_status"] | null
+          tax?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payrolls_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      positions: {
+        Row: {
+          base_salary: number
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          level: number | null
+          name: string
+          permissions: string[] | null
+          requirements: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_salary: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: number | null
+          name: string
+          permissions?: string[] | null
+          requirements?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_salary?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: number | null
+          name?: string
+          permissions?: string[] | null
+          requirements?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       product_categories: {
         Row: {
@@ -625,6 +1163,114 @@ export type Database = {
           },
         ]
       }
+      training_participants: {
+        Row: {
+          certificate: string | null
+          completed_at: string | null
+          employee_id: string
+          enrolled_at: string | null
+          feedback: string | null
+          id: string
+          score: number | null
+          status: Database["public"]["Enums"]["participant_status"] | null
+          training_id: string
+        }
+        Insert: {
+          certificate?: string | null
+          completed_at?: string | null
+          employee_id: string
+          enrolled_at?: string | null
+          feedback?: string | null
+          id?: string
+          score?: number | null
+          status?: Database["public"]["Enums"]["participant_status"] | null
+          training_id: string
+        }
+        Update: {
+          certificate?: string | null
+          completed_at?: string | null
+          employee_id?: string
+          enrolled_at?: string | null
+          feedback?: string | null
+          id?: string
+          score?: number | null
+          status?: Database["public"]["Enums"]["participant_status"] | null
+          training_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_participants_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_participants_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainings: {
+        Row: {
+          cost: number | null
+          created_at: string | null
+          description: string | null
+          duration: number
+          end_date: string
+          id: string
+          instructor: string
+          location: string
+          materials: string[] | null
+          max_participants: number | null
+          requirements: string[] | null
+          start_date: string
+          status: Database["public"]["Enums"]["training_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["training_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          duration: number
+          end_date: string
+          id?: string
+          instructor: string
+          location: string
+          materials?: string[] | null
+          max_participants?: number | null
+          requirements?: string[] | null
+          start_date: string
+          status?: Database["public"]["Enums"]["training_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["training_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          end_date?: string
+          id?: string
+          instructor?: string
+          location?: string
+          materials?: string[] | null
+          max_participants?: number | null
+          requirements?: string[] | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["training_status"] | null
+          title?: string
+          type?: Database["public"]["Enums"]["training_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -636,9 +1282,71 @@ export type Database = {
       }
     }
     Enums: {
+      account_category:
+        | "current_asset"
+        | "fixed_asset"
+        | "intangible_asset"
+        | "current_liability"
+        | "long_term_liability"
+        | "owner_equity"
+        | "retained_earnings"
+        | "sales_revenue"
+        | "other_revenue"
+        | "cost_of_goods_sold"
+        | "operating_expense"
+        | "other_expense"
+      account_type: "asset" | "liability" | "equity" | "revenue" | "expense"
+      attendance_status:
+        | "present"
+        | "absent"
+        | "late"
+        | "half-day"
+        | "overtime"
+        | "holiday"
       claim_status: "pending" | "in_repair" | "resolved" | "rejected"
+      document_type:
+        | "id-card"
+        | "passport"
+        | "resume"
+        | "certificate"
+        | "contract"
+        | "medical"
+        | "background-check"
+        | "other"
+      employee_status:
+        | "active"
+        | "inactive"
+        | "terminated"
+        | "on-leave"
+        | "probation"
+      journal_entry_status: "draft" | "pending" | "approved" | "rejected"
+      leave_status: "pending" | "approved" | "rejected" | "cancelled"
+      leave_type:
+        | "annual"
+        | "sick"
+        | "maternity"
+        | "paternity"
+        | "emergency"
+        | "unpaid"
+        | "study"
+        | "other"
+      participant_status:
+        | "enrolled"
+        | "attending"
+        | "completed"
+        | "dropped"
+        | "failed"
       payment_status: "pending" | "completed" | "overdue" | "cancelled"
+      payroll_status: "draft" | "calculated" | "approved" | "paid" | "cancelled"
       product_status: "available" | "sold" | "reserved" | "damaged" | "returned"
+      training_status: "planned" | "ongoing" | "completed" | "cancelled"
+      training_type:
+        | "orientation"
+        | "skill-development"
+        | "compliance"
+        | "leadership"
+        | "technical"
+        | "soft-skills"
       transaction_type: "cash" | "installment"
       user_role: "admin" | "manager" | "staff"
     }
@@ -768,9 +1476,78 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_category: [
+        "current_asset",
+        "fixed_asset",
+        "intangible_asset",
+        "current_liability",
+        "long_term_liability",
+        "owner_equity",
+        "retained_earnings",
+        "sales_revenue",
+        "other_revenue",
+        "cost_of_goods_sold",
+        "operating_expense",
+        "other_expense",
+      ],
+      account_type: ["asset", "liability", "equity", "revenue", "expense"],
+      attendance_status: [
+        "present",
+        "absent",
+        "late",
+        "half-day",
+        "overtime",
+        "holiday",
+      ],
       claim_status: ["pending", "in_repair", "resolved", "rejected"],
+      document_type: [
+        "id-card",
+        "passport",
+        "resume",
+        "certificate",
+        "contract",
+        "medical",
+        "background-check",
+        "other",
+      ],
+      employee_status: [
+        "active",
+        "inactive",
+        "terminated",
+        "on-leave",
+        "probation",
+      ],
+      journal_entry_status: ["draft", "pending", "approved", "rejected"],
+      leave_status: ["pending", "approved", "rejected", "cancelled"],
+      leave_type: [
+        "annual",
+        "sick",
+        "maternity",
+        "paternity",
+        "emergency",
+        "unpaid",
+        "study",
+        "other",
+      ],
+      participant_status: [
+        "enrolled",
+        "attending",
+        "completed",
+        "dropped",
+        "failed",
+      ],
       payment_status: ["pending", "completed", "overdue", "cancelled"],
+      payroll_status: ["draft", "calculated", "approved", "paid", "cancelled"],
       product_status: ["available", "sold", "reserved", "damaged", "returned"],
+      training_status: ["planned", "ongoing", "completed", "cancelled"],
+      training_type: [
+        "orientation",
+        "skill-development",
+        "compliance",
+        "leadership",
+        "technical",
+        "soft-skills",
+      ],
       transaction_type: ["cash", "installment"],
       user_role: ["admin", "manager", "staff"],
     },
