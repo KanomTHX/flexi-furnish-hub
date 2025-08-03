@@ -35,6 +35,7 @@ export interface JournalEntry {
   approvedBy?: string;
   approvedAt?: string;
   entries: JournalEntryLine[];
+  lines?: JournalEntryLine[]; // Alias for backward compatibility
   attachments?: string[];
   createdAt: string;
   updatedAt: string;

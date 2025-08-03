@@ -26,30 +26,7 @@ import {
   Edit,
   ArrowRight
 } from 'lucide-react';
-
-interface Claim {
-  id: string;
-  claimNumber: string;
-  customer: {
-    id: string;
-    name: string;
-    phone: string;
-    email: string;
-  };
-  product: {
-    id: string;
-    name: string;
-    model: string;
-    serialNumber: string;
-  };
-  issueDescription: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'pending' | 'in-progress' | 'resolved' | 'closed';
-  createdAt: string;
-  dueDate: string;
-  assignedTo?: string;
-  category: string;
-}
+import { Claim } from '@/types/claims';
 
 interface PendingClaimsDialogProps {
   open: boolean;

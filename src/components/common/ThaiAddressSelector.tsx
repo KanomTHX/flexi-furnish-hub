@@ -186,7 +186,7 @@ export function ThaiAddressSelector({ onAddressChange, disabled = false, require
         <div className="mt-4 p-3 bg-muted rounded-lg">
           <Label className="text-sm font-medium text-muted-foreground">ที่อยู่เต็ม:</Label>
           <p className="text-sm mt-1">
-            {getFullAddress().fullAddress}
+            {getFullAddress()?.fullAddress}
           </p>
         </div>
       )}

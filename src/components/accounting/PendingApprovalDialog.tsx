@@ -28,21 +28,7 @@ import {
   ThumbsUp,
   ThumbsDown
 } from 'lucide-react';
-
-interface JournalEntry {
-  id: string;
-  entryNumber: string;
-  date: string;
-  description: string;
-  reference?: string;
-  totalDebit: number;
-  totalCredit: number;
-  status: 'pending' | 'approved' | 'rejected';
-  createdBy: string;
-  createdAt: string;
-  lines: any[];
-  notes?: string;
-}
+import { JournalEntry } from '@/types/accounting';
 
 interface PendingApprovalDialogProps {
   open: boolean;
@@ -312,15 +298,15 @@ export function PendingApprovalDialog({
                       {selectedEntry.lines?.map((line, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 text-sm py-2 border-b">
                           <div className="col-span-4">
-                            <div className="font-medium">{line.accountName}</div>
-                            <div className="text-xs text-muted-foreground">{line.accountCode}</div>
+                            <div className="font-medium">{line.account?.name || 'N/A'}</div>
+                            <div className="text-xs text-muted-foreground">{line.account?.code || line.accountId}</div>
                           </div>
                           <div className="col-span-4">{line.description}</div>
                           <div className="col-span-2 text-right">
-                            {line.debit > 0 ? line.debit.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '-'}
+                            {line.debitAmount > 0 ? line.debitAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '-'}
                           </div>
                           <div className="col-span-2 text-right">
-                            {line.credit > 0 ? line.credit.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '-'}
+                            {line.creditAmount > 0 ? line.creditAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '-'}
                           </div>
                         </div>
                       ))}

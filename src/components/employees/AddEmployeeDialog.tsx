@@ -313,7 +313,7 @@ export const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         return {
           ...prev,
           [keys[0]]: {
-            ...prev[keys[0] as keyof EmployeeFormData],
+            ...(prev[keys[0] as keyof EmployeeFormData] as any || {}),
             [keys[1]]: value
           }
         };

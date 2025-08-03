@@ -119,7 +119,7 @@ export function useAddressSelector() {
   };
 
   const getFullAddress = () => {
-    if (!selectedProvince || !selectedAmphure || !selectedTambon) return '';
+    if (!selectedProvince || !selectedAmphure || !selectedTambon) return null;
     
     return {
       province: selectedProvince.name_th,

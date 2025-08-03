@@ -458,7 +458,21 @@ export default function Claims() {
       <OverdueClaimsDialog
         open={overdueClaimsOpen}
         onOpenChange={setOverdueClaimsOpen}
-        overdueClaims={overdueClaims}
+        overdueClaims={overdueClaims.map(claim => ({
+          ...claim,
+          dueDate: claim.dueDate || claim.createdAt,
+          priority: claim.priority === 'urgent' ? 'high' : claim.priority as 'low' | 'medium' | 'high',
+          status: claim.status === 'submitted' ? 'pending' : 
+                 claim.status === 'under_review' ? 'in-progress' :
+                 claim.status === 'approved' ? 'resolved' :
+                 claim.status === 'completed' ? 'resolved' :
+                 claim.status === 'cancelled' ? 'closed' :
+                 claim.status as 'pending' | 'in-progress' | 'resolved' | 'closed',
+          product: {
+            ...claim.product,
+            serialNumber: claim.product.serialNumber || 'N/A'
+          }
+        }))}
         onUpdateStatus={handleUpdateClaimStatus}
         onAssignClaim={handleAssignClaim}
       />

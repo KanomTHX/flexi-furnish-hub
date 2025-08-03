@@ -27,6 +27,7 @@ export interface Claim {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  dueDate?: string; // Add dueDate for backward compatibility
 }
 
 export type ClaimType = 'warranty' | 'defect' | 'damage' | 'missing_parts' | 'installation' | 'other';
