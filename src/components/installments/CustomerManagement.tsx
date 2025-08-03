@@ -39,6 +39,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { Customer } from '@/types/pos';
+import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
 
 interface CustomerData extends Customer {
   creditScore: number;
@@ -74,6 +75,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -126,6 +128,32 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       resetForm();
     } catch (error) {
       setErrors(['เกิดข้อผิดพลาดในการสร้างลูกค้า']);
+    }
+  };
+
+  const handleAddCustomerFromDialog = async (customer: any) => {
+    try {
+      await onCreateCustomer({
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        address: customer.address.fullAddress,
+        idCard: customer.taxId || '',
+        occupation: 'พนักงานบริษัท', // Default value
+        monthlyIncome: 30000, // Default value
+        notes: customer.notes || '',
+        creditScore: calculateCreditScore(30000, 'พนักงานบริษัท'),
+        totalContracts: 0,
+        activeContracts: 0,
+        totalFinanced: 0,
+        totalPaid: 0,
+        overdueAmount: 0,
+        lastPaymentDate: new Date(),
+        riskLevel: 'low'
+      });
+      setAddCustomerOpen(false);
+    } catch (error) {
+      console.error('Error creating customer:', error);
     }
   };
 
@@ -240,137 +268,143 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             จัดการข้อมูลลูกค้า ประเมินความเสี่ยง และติดตามประวัติการชำระ
           </p>
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()}>
-              <Plus className="h-4 w-4 mr-2" />
-              เพิ่มลูกค้าใหม่
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>เพิ่มลูกค้าใหม่</DialogTitle>
-              <DialogDescription>
-                กรอกข้อมูลลูกค้าใหม่ที่ต้องการเพิ่มเข้าระบบ
-              </DialogDescription>
-            </DialogHeader>
-            
-            {errors.length > 0 && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded">
-                <ul className="text-sm text-red-800 space-y-1">
-                  {errors.map((error, index) => (
-                    <li key={index}>• {error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        <div className="flex gap-2">
+          <Button onClick={() => setAddCustomerOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            เพิ่มลูกค้าใหม่ (ที่อยู่ไทย)
+          </Button>
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => resetForm()}>
+                <Plus className="h-4 w-4 mr-2" />
+                เพิ่มลูกค้า (แบบเดิม)
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>เพิ่มลูกค้าใหม่ (แบบเดิม)</DialogTitle>
+                <DialogDescription>
+                  กรอกข้อมูลลูกค้าใหม่ที่ต้องการเพิ่มเข้าระบบ
+                </DialogDescription>
+              </DialogHeader>
+              
+              {errors.length > 0 && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded">
+                  <ul className="text-sm text-red-800 space-y-1">
+                    {errors.map((error, index) => (
+                      <li key={index}>• {error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">ชื่อ-นามสกุล *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="ชื่อ-นามสกุล"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">เบอร์โทรศัพท์ *</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="081-234-5678"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="email">อีเมล</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="customer@example.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="idCard">เลขบัตรประชาชน *</Label>
+                    <Input
+                      id="idCard"
+                      value={formData.idCard}
+                      onChange={(e) => setFormData(prev => ({ ...prev, idCard: e.target.value }))}
+                      placeholder="1-2345-67890-12-3"
+                    />
+                  </div>
+                </div>
+                
                 <div>
-                  <Label htmlFor="name">ชื่อ-นามสกุล *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="ชื่อ-นามสกุล"
+                  <Label htmlFor="address">ที่อยู่</Label>
+                  <Textarea
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                    placeholder="ที่อยู่ลูกค้า"
+                    rows={2}
                   />
                 </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="occupation">อาชีพ</Label>
+                    <Select value={formData.occupation} onValueChange={(value) => setFormData(prev => ({ ...prev, occupation: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="เลือกอาชีพ" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="พนักงานบริษัท">พนักงานบริษัท</SelectItem>
+                        <SelectItem value="ข้าราชการ">ข้าราชการ</SelectItem>
+                        <SelectItem value="ค้าขาย">ค้าขาย</SelectItem>
+                        <SelectItem value="อิสระ">อิสระ</SelectItem>
+                        <SelectItem value="เกษตรกร">เกษตรกร</SelectItem>
+                        <SelectItem value="อื่นๆ">อื่นๆ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="monthlyIncome">รายได้ต่อเดือน (บาท) *</Label>
+                    <Input
+                      id="monthlyIncome"
+                      type="number"
+                      value={formData.monthlyIncome}
+                      onChange={(e) => setFormData(prev => ({ ...prev, monthlyIncome: Number(e.target.value) }))}
+                      placeholder="30000"
+                    />
+                  </div>
+                </div>
+                
                 <div>
-                  <Label htmlFor="phone">เบอร์โทรศัพท์ *</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="081-234-5678"
+                  <Label htmlFor="notes">หมายเหตุ</Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="หมายเหตุเพิ่มเติม"
+                    rows={2}
                   />
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email">อีเมล</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="customer@example.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="idCard">เลขบัตรประชาชน *</Label>
-                  <Input
-                    id="idCard"
-                    value={formData.idCard}
-                    onChange={(e) => setFormData(prev => ({ ...prev, idCard: e.target.value }))}
-                    placeholder="1-2345-67890-12-3"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="address">ที่อยู่</Label>
-                <Textarea
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="ที่อยู่ลูกค้า"
-                  rows={2}
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="occupation">อาชีพ</Label>
-                  <Select value={formData.occupation} onValueChange={(value) => setFormData(prev => ({ ...prev, occupation: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="เลือกอาชีพ" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="พนักงานบริษัท">พนักงานบริษัท</SelectItem>
-                      <SelectItem value="ข้าราชการ">ข้าราชการ</SelectItem>
-                      <SelectItem value="ค้าขาย">ค้าขาย</SelectItem>
-                      <SelectItem value="อิสระ">อิสระ</SelectItem>
-                      <SelectItem value="เกษตรกร">เกษตรกร</SelectItem>
-                      <SelectItem value="อื่นๆ">อื่นๆ</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="monthlyIncome">รายได้ต่อเดือน (บาท) *</Label>
-                  <Input
-                    id="monthlyIncome"
-                    type="number"
-                    value={formData.monthlyIncome}
-                    onChange={(e) => setFormData(prev => ({ ...prev, monthlyIncome: Number(e.target.value) }))}
-                    placeholder="30000"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="notes">หมายเหตุ</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="หมายเหตุเพิ่มเติม"
-                  rows={2}
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                ยกเลิก
-              </Button>
-              <Button onClick={handleCreateCustomer} disabled={loading}>
-                {loading ? 'กำลังสร้าง...' : 'สร้างลูกค้า'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                  ยกเลิก
+                </Button>
+                <Button onClick={handleCreateCustomer} disabled={loading}>
+                  {loading ? 'กำลังสร้าง...' : 'สร้างลูกค้า'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats */}
@@ -692,6 +726,35 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Customer Dialog with Thai Address */}
+      <AddCustomerDialog
+        open={addCustomerOpen}
+        onOpenChange={setAddCustomerOpen}
+        onCustomerAdded={(customer) => {
+          // Convert AddCustomerDialog customer to CustomerData format
+          const customerData = {
+            name: customer.name,
+            phone: customer.phone,
+            email: customer.email,
+            address: customer.address.fullAddress,
+            idCard: customer.taxId || '',
+            occupation: 'พนักงานบริษัท', // Default value
+            monthlyIncome: 30000, // Default value
+            notes: customer.notes || ''
+          };
+          
+          handleCreateCustomer();
+          setAddCustomerOpen(false);
+        }}
+      />
+
+      {/* Add Customer Dialog with Thai Address */}
+      <AddCustomerDialog
+        open={addCustomerOpen}
+        onOpenChange={setAddCustomerOpen}
+        onCustomerAdded={handleAddCustomerFromDialog}
+      />
     </div>
   );
 };

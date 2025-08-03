@@ -2,36 +2,58 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Claim, ClaimFilter, Customer, Product } from '@/types/claims';
+import { Textarea } from '@/components/ui/textarea';
 import { 
-  formatCurrency, 
-  formatDate, 
-  formatDuration,
-  claimTypeLabels, 
-  claimStatusLabels, 
-  claimPriorityLabels,
-  getStatusColor,
-  getPriorityColor,
-  getWarrantyStatusColor,
-  isClaimOverdue
-} from '@/utils/claimsHelpers';
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Claim, ClaimFilter, Customer, Product, ClaimStatus, ClaimPriority } from '@/types/claims';
+import { formatCurrency, formatDate, claimStatusLabels, claimPriorityLabels, claimTypeLabels } from '@/utils/claimsHelpers';
 import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Eye, 
-  Edit, 
-  Clock, 
+  Search,
+  Filter,
+  Plus,
   Download,
-  Shield,
+  Eye,
+  Edit,
+  MessageSquare,
+  Clock,
+  CheckCircle,
   AlertTriangle,
   User,
   Package,
   Calendar,
-  Star
+  MoreHorizontal,
+  FileText,
+  Shield
 } from 'lucide-react';
 
 interface ClaimsListProps {
@@ -42,7 +64,7 @@ interface ClaimsListProps {
   onFilterChange: (filter: ClaimFilter) => void;
   onExport: () => void;
   onCreateClaim: () => void;
-  onUpdateStatus: (claimId: string, status: string) => void;
+  onUpdateStatus: (claimId: string, status: ClaimStatus) => void;
   onAssignClaim: (claimId: string, assignedTo: string) => void;
 }
 
@@ -57,469 +79,595 @@ export function ClaimsList({
   onUpdateStatus,
   onAssignClaim
 }: ClaimsListProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-
-  const filteredClaims = claims.filter(claim => {
-    const matchesSearch = claim.claimNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         claim.issueDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         claim.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         claim.product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+  const [formData, setFormData] = useState({
+    customerId: '',
+    productId: '',
+    type: 'warranty' as const,
+    priority: 'medium' as ClaimPriority,
+    issueDescription: '',
+    purchaseDate: ''
   });
 
-  const handleViewDetail = (claim: Claim) => {
+  const getStatusBadge = (status: ClaimStatus) => {
+    const variants = {
+      submitted: 'secondary',
+      under_review: 'outline',
+      approved: 'default',
+      rejected: 'destructive',
+      in_progress: 'default',
+      waiting_parts: 'outline',
+      completed: 'default',
+      cancelled: 'destructive'
+    } as const;
+
+    const colors = {
+      submitted: 'bg-gray-100 text-gray-800',
+      under_review: 'bg-blue-100 text-blue-800',
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+      in_progress: 'bg-yellow-100 text-yellow-800',
+      waiting_parts: 'bg-orange-100 text-orange-800',
+      completed: 'bg-green-100 text-green-800',
+      cancelled: 'bg-red-100 text-red-800'
+    };
+
+    return (
+      <Badge className={colors[status]}>
+        {claimStatusLabels[status]}
+      </Badge>
+    );
+  };
+
+  const getPriorityBadge = (priority: ClaimPriority) => {
+    const colors = {
+      low: 'bg-gray-100 text-gray-800',
+      medium: 'bg-blue-100 text-blue-800',
+      high: 'bg-orange-100 text-orange-800',
+      urgent: 'bg-red-100 text-red-800'
+    };
+
+    return (
+      <Badge className={colors[priority]}>
+        {claimPriorityLabels[priority]}
+      </Badge>
+    );
+  };
+
+  const getWarrantyBadge = (warrantyInfo: any) => {
+    if (warrantyInfo.isUnderWarranty) {
+      return (
+        <Badge className="bg-green-100 text-green-800">
+          <Shield className="w-3 h-3 mr-1" />
+          ในประกัน
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge className="bg-red-100 text-red-800">
+          หมดประกัน
+        </Badge>
+      );
+    }
+  };
+
+  const filteredClaims = claims.filter(claim => {
+    if (filter.status && claim.status !== filter.status) return false;
+    if (filter.type && claim.type !== filter.type) return false;
+    if (filter.priority && claim.priority !== filter.priority) return false;
+    if (filter.customerId && claim.customerId !== filter.customerId) return false;
+    if (filter.assignedTo && claim.assignedTo !== filter.assignedTo) return false;
+    if (filter.search) {
+      const searchLower = filter.search.toLowerCase();
+      return claim.claimNumber.toLowerCase().includes(searchLower) ||
+             claim.customer.name.toLowerCase().includes(searchLower) ||
+             claim.product.name.toLowerCase().includes(searchLower) ||
+             claim.issueDescription.toLowerCase().includes(searchLower);
+    }
+    return true;
+  });
+
+  const handleCreateClaim = () => {
+    // In a real app, this would create the claim via API
+    console.log('Creating claim:', formData);
+    setShowCreateDialog(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setFormData({
+      customerId: '',
+      productId: '',
+      type: 'warranty',
+      priority: 'medium',
+      issueDescription: '',
+      purchaseDate: ''
+    });
+  };
+
+  const openDetailDialog = (claim: Claim) => {
     setSelectedClaim(claim);
     setShowDetailDialog(true);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">รายการเคลม</h2>
-          <p className="text-muted-foreground">
-            จัดการและติดตามการเคลมทั้งหมด
+          <h2 className="text-xl font-semibold">รายการเคลม</h2>
+          <p className="text-sm text-muted-foreground">
+            จัดการและติดตามการเคลมทั้งหมด ({filteredClaims.length} รายการ)
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onExport}>
             <Download className="w-4 h-4 mr-2" />
             ส่งออก
           </Button>
-          <Button onClick={onCreateClaim}>
-            <Plus className="w-4 h-4 mr-2" />
-            สร้างเคลมใหม่
-          </Button>
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="w-4 h-4 mr-2" />
+                สร้างเคลมใหม่
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>สร้างเคลมใหม่</DialogTitle>
+                <DialogDescription>
+                  กรอกข้อมูลการเคลมใหม่
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="customer">ลูกค้า</Label>
+                    <Select 
+                      value={formData.customerId} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, customerId: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="เลือกลูกค้า" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customers.map(customer => (
+                          <SelectItem key={customer.id} value={customer.id}>
+                            {customer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="product">สินค้า</Label>
+                    <Select 
+                      value={formData.productId} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, productId: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="เลือกสินค้า" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map(product => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} - {product.model}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="type">ประเภทเคลม</Label>
+                    <Select 
+                      value={formData.type} 
+                      onValueChange={(value: any) => setFormData(prev => ({ ...prev, type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="warranty">การรับประกัน</SelectItem>
+                        <SelectItem value="defect">ของเสีย</SelectItem>
+                        <SelectItem value="damage">ความเสียหาย</SelectItem>
+                        <SelectItem value="missing_parts">ชิ้นส่วนหาย</SelectItem>
+                        <SelectItem value="installation">การติดตั้ง</SelectItem>
+                        <SelectItem value="other">อื่นๆ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="priority">ความสำคัญ</Label>
+                    <Select 
+                      value={formData.priority} 
+                      onValueChange={(value: ClaimPriority) => setFormData(prev => ({ ...prev, priority: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">ต่ำ</SelectItem>
+                        <SelectItem value="medium">ปานกลาง</SelectItem>
+                        <SelectItem value="high">สูง</SelectItem>
+                        <SelectItem value="urgent">เร่งด่วน</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="purchaseDate">วันที่ซื้อ</Label>
+                  <Input
+                    id="purchaseDate"
+                    type="date"
+                    value={formData.purchaseDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, purchaseDate: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="issueDescription">รายละเอียดปัญหา</Label>
+                  <Textarea
+                    id="issueDescription"
+                    value={formData.issueDescription}
+                    onChange={(e) => setFormData(prev => ({ ...prev, issueDescription: e.target.value }))}
+                    placeholder="อธิบายปัญหาที่พบ..."
+                    rows={4}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                  ยกเลิก
+                </Button>
+                <Button onClick={handleCreateClaim}>
+                  สร้างเคลม
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            ตัวกรองและค้นหา
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="ค้นหาเคลม..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={filter.search || ''}
+                onChange={(e) => onFilterChange({ ...filter, search: e.target.value })}
                 className="pl-10"
               />
             </div>
-
-            <Select
-              value={filter.status || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, status: value === 'all' ? undefined : value as any })}
+            <Select 
+              value={filter.status || 'all'} 
+              onValueChange={(value) => 
+                onFilterChange({ ...filter, status: value === 'all' ? undefined : value as ClaimStatus })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="สถานะ" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทั้งหมด</SelectItem>
-                <SelectItem value="submitted">ส่งคำขอแล้ว</SelectItem>
+                <SelectItem value="submitted">ส่งแล้ว</SelectItem>
                 <SelectItem value="under_review">กำลังตรวจสอบ</SelectItem>
                 <SelectItem value="approved">อนุมัติแล้ว</SelectItem>
                 <SelectItem value="in_progress">กำลังดำเนินการ</SelectItem>
                 <SelectItem value="completed">เสร็จสิ้น</SelectItem>
               </SelectContent>
             </Select>
-
-            <Select
-              value={filter.type || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, type: value === 'all' ? undefined : value as any })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="ประเภท" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทั้งหมด</SelectItem>
-                <SelectItem value="warranty">การรับประกัน</SelectItem>
-                <SelectItem value="defect">ข้อบกพร่อง</SelectItem>
-                <SelectItem value="damage">ความเสียหาย</SelectItem>
-                <SelectItem value="installation">การติดตั้ง</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filter.priority || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, priority: value === 'all' ? undefined : value as any })}
+            <Select 
+              value={filter.priority || 'all'} 
+              onValueChange={(value) => 
+                onFilterChange({ ...filter, priority: value === 'all' ? undefined : value as ClaimPriority })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="ความสำคัญ" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทั้งหมด</SelectItem>
-                <SelectItem value="urgent">เร่งด่วน</SelectItem>
-                <SelectItem value="high">สูง</SelectItem>
-                <SelectItem value="medium">ปานกลาง</SelectItem>
                 <SelectItem value="low">ต่ำ</SelectItem>
+                <SelectItem value="medium">ปานกลาง</SelectItem>
+                <SelectItem value="high">สูง</SelectItem>
+                <SelectItem value="urgent">เร่งด่วน</SelectItem>
               </SelectContent>
             </Select>
-
-            <Select
-              value={filter.warrantyStatus || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, warrantyStatus: value === 'all' ? undefined : value as any })}
+            <Select 
+              value={filter.customerId || 'all'} 
+              onValueChange={(value) => 
+                onFilterChange({ ...filter, customerId: value === 'all' ? undefined : value })
+              }
             >
               <SelectTrigger>
-                <SelectValue placeholder="สถานะประกัน" />
+                <SelectValue placeholder="ลูกค้า" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทั้งหมด</SelectItem>
-                <SelectItem value="under_warranty">ยังอยู่ในประกัน</SelectItem>
-                <SelectItem value="expired">หมดประกันแล้ว</SelectItem>
+                {customers.map(customer => (
+                  <SelectItem key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-
+            <Input
+              type="date"
+              placeholder="วันที่เริ่มต้น"
+              value={filter.dateFrom || ''}
+              onChange={(e) => onFilterChange({ ...filter, dateFrom: e.target.value || undefined })}
+            />
             <Button 
               variant="outline" 
-              onClick={() => {
-                onFilterChange({});
-                setSearchTerm('');
-              }}
+              onClick={() => onFilterChange({})}
+              className="w-full"
             >
+              <Filter className="w-4 h-4 mr-2" />
               ล้างตัวกรอง
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Claims List */}
-      <div className="space-y-4">
-        {filteredClaims.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">ไม่พบเคลมที่ตรงกับเงื่อนไขการค้นหา</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredClaims.map((claim) => (
-            <Card key={claim.id} className={`hover:shadow-md transition-shadow ${
-              isClaimOverdue(claim) ? 'border-red-200 bg-red-50' : ''
-            }`}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold">{claim.claimNumber}</h3>
-                      <Badge className={getStatusColor(claim.status)}>
-                        {claimStatusLabels[claim.status]}
-                      </Badge>
-                      <Badge className={getPriorityColor(claim.priority)}>
-                        {claimPriorityLabels[claim.priority]}
-                      </Badge>
-                      <Badge className={getWarrantyStatusColor(
-                        claim.warrantyInfo.isUnderWarranty, 
-                        claim.warrantyInfo.remainingDays
-                      )}>
-                        {claim.warrantyInfo.isUnderWarranty ? 'ยังอยู่ในประกัน' : 'หมดประกันแล้ว'}
-                      </Badge>
-                      {isClaimOverdue(claim) && (
-                        <Badge variant="destructive">
-                          <Clock className="w-3 h-3 mr-1" />
-                          เกินกำหนด
-                        </Badge>
+      {/* Claims Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>เลขที่เคลม</TableHead>
+                <TableHead>ลูกค้า</TableHead>
+                <TableHead>สินค้า</TableHead>
+                <TableHead>ประเภท</TableHead>
+                <TableHead>สถานะ</TableHead>
+                <TableHead>ความสำคัญ</TableHead>
+                <TableHead>การรับประกัน</TableHead>
+                <TableHead>วันที่สร้าง</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClaims.map((claim) => (
+                <TableRow key={claim.id} className="hover:bg-muted/50">
+                  <TableCell>
+                    <div className="font-medium">{claim.claimNumber}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {claim.assignedTo && (
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          {claim.assignedTo}
+                        </span>
                       )}
                     </div>
-                    
-                    <p className="text-muted-foreground mb-3 line-clamp-2">
-                      {claim.issueDescription}
-                    </p>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{claim.customer.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <span>{claim.product.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatDate(claim.claimDate)}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {claim.warrantyInfo.isUnderWarranty 
-                            ? `เหลือ ${formatDuration(claim.warrantyInfo.remainingDays)}`
-                            : 'หมดประกันแล้ว'
-                          }
-                        </span>
-                      </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium">{claim.customer.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {claim.customer.phone}
                     </div>
-
-                    {claim.assignedTo && (
-                      <div className="mt-2 text-sm text-blue-600">
-                        ผู้รับผิดชอบ: {claim.assignedTo}
-                      </div>
-                    )}
-
-                    {(claim.estimatedCost || claim.actualCost) && (
-                      <div className="mt-2 text-sm">
-                        <span className="text-muted-foreground">ค่าใช้จ่าย: </span>
-                        <span className="font-medium">
-                          {formatCurrency(claim.actualCost || claim.estimatedCost || 0)}
-                        </span>
-                        {claim.actualCost && claim.estimatedCost && claim.actualCost !== claim.estimatedCost && (
-                          <span className="text-muted-foreground ml-2">
-                            (ประมาณการ: {formatCurrency(claim.estimatedCost)})
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewDetail(claim)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      ดูรายละเอียด
-                    </Button>
-                    
-                    {claim.status !== 'completed' && claim.status !== 'cancelled' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        แก้ไข
-                      </Button>
-                    )}
-
-                    {claim.status === 'submitted' && (
-                      <Button
-                        size="sm"
-                        onClick={() => onUpdateStatus(claim.id, 'under_review')}
-                      >
-                        ตรวจสอบ
-                      </Button>
-                    )}
-
-                    {claim.status === 'under_review' && (
-                      <Button
-                        size="sm"
-                        onClick={() => onUpdateStatus(claim.id, 'approved')}
-                      >
-                        อนุมัติ
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Progress Timeline */}
-                <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>อัปเดตล่าสุด: {formatDate(claim.updatedAt.split('T')[0])}</span>
-                    {claim.timeline.length > 0 && (
-                      <>
-                        <span>•</span>
-                        <span>{claim.timeline[claim.timeline.length - 1].description}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>สรุปรายการเคลม</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-blue-600">
-                {claims.filter(c => c.status === 'submitted').length}
-              </div>
-              <div className="text-sm text-muted-foreground">ส่งคำขอแล้ว</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium">{claim.product.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {claim.product.model} - {claim.product.brand}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {claimTypeLabels[claim.type]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {getStatusBadge(claim.status)}
+                  </TableCell>
+                  <TableCell>
+                    {getPriorityBadge(claim.priority)}
+                  </TableCell>
+                  <TableCell>
+                    {getWarrantyBadge(claim.warrantyInfo)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(claim.createdAt)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openDetailDialog(claim)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          ดูรายละเอียด
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onUpdateStatus(claim.id, 'in_progress')}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          เริ่มดำเนินการ
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onUpdateStatus(claim.id, 'completed')}>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          ทำเสร็จแล้ว
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          
+          {filteredClaims.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>ไม่พบเคลมที่ตรงกับเงื่อนไข</p>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-orange-600">
-                {claims.filter(c => ['under_review', 'approved', 'in_progress'].includes(c.status)).length}
-              </div>
-              <div className="text-sm text-muted-foreground">กำลังดำเนินการ</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-600">
-                {claims.filter(c => c.status === 'completed').length}
-              </div>
-              <div className="text-sm text-muted-foreground">เสร็จสิ้น</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-red-600">
-                {claims.filter(c => isClaimOverdue(c)).length}
-              </div>
-              <div className="text-sm text-muted-foreground">เกินกำหนด</div>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Claim Detail Dialog */}
-      {selectedClaim && (
-        <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>รายละเอียดเคลม {selectedClaim.claimNumber}</DialogTitle>
-            </DialogHeader>
-            <ClaimDetailView claim={selectedClaim} />
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
-  );
-}
-
-// Claim Detail View Component
-function ClaimDetailView({ claim }: { claim: Claim }) {
-  return (
-    <div className="space-y-6">
-      {/* Basic Info */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-medium text-muted-foreground">เลขที่เคลม</label>
-          <div className="text-lg font-semibold">{claim.claimNumber}</div>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-muted-foreground">สถานะ</label>
-          <div>
-            <Badge className={getStatusColor(claim.status)}>
-              {claimStatusLabels[claim.status]}
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      {/* Customer & Product Info */}
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-medium mb-2">ข้อมูลลูกค้า</h3>
-          <div className="space-y-1 text-sm">
-            <div><strong>ชื่อ:</strong> {claim.customer.name}</div>
-            <div><strong>อีเมล:</strong> {claim.customer.email}</div>
-            <div><strong>เบอร์โทร:</strong> {claim.customer.phone}</div>
-          </div>
-        </div>
-        <div>
-          <h3 className="font-medium mb-2">ข้อมูลสินค้า</h3>
-          <div className="space-y-1 text-sm">
-            <div><strong>ชื่อสินค้า:</strong> {claim.product.name}</div>
-            <div><strong>รุ่น:</strong> {claim.product.model}</div>
-            <div><strong>ยี่ห้อ:</strong> {claim.product.brand}</div>
-            <div><strong>วันที่ซื้อ:</strong> {formatDate(claim.purchaseDate)}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Issue Description */}
-      <div>
-        <h3 className="font-medium mb-2">รายละเอียดปัญหา</h3>
-        <div className="p-3 bg-muted rounded-lg text-sm">
-          {claim.issueDescription}
-        </div>
-      </div>
-
-      {/* Warranty Info */}
-      <div>
-        <h3 className="font-medium mb-2">ข้อมูลการรับประกัน</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <strong>สถานะ:</strong> 
-            <Badge className={`${getWarrantyStatusColor(
-              claim.warrantyInfo.isUnderWarranty, 
-              claim.warrantyInfo.remainingDays
-            )} ml-2`}>
-              {claim.warrantyInfo.isUnderWarranty ? 'ยังอยู่ในประกัน' : 'หมดประกันแล้ว'}
-            </Badge>
-          </div>
-          <div>
-            <strong>วันหมดประกัน:</strong> {formatDate(claim.warrantyInfo.warrantyEndDate)}
-          </div>
-        </div>
-      </div>
-
-      {/* Timeline */}
-      <div>
-        <h3 className="font-medium mb-2">ประวัติการดำเนินการ</h3>
-        <div className="space-y-2">
-          {claim.timeline.map((entry) => (
-            <div key={entry.id} className="flex gap-3 text-sm">
-              <div className="text-muted-foreground min-w-[120px]">
-                {formatDate(entry.timestamp.split('T')[0])}
+      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
+        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>รายละเอียดเคลม</DialogTitle>
+            <DialogDescription>
+              {selectedClaim?.claimNumber}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedClaim && (
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">ลูกค้า</Label>
+                  <div className="text-lg">{selectedClaim.customer.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {selectedClaim.customer.phone} | {selectedClaim.customer.email}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">สินค้า</Label>
+                  <div className="text-lg">{selectedClaim.product.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {selectedClaim.product.model} - {selectedClaim.product.brand}
+                  </div>
+                </div>
               </div>
-              <div className="flex-1">
-                <strong>{entry.description}</strong>
-                <div className="text-muted-foreground">โดย {entry.performedBy}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Resolution (if completed) */}
-      {claim.resolution && (
-        <div>
-          <h3 className="font-medium mb-2">การแก้ไขปัญหา</h3>
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-2 text-sm">
-            <div><strong>ประเภท:</strong> {claim.resolution.type}</div>
-            <div><strong>รายละเอียด:</strong> {claim.resolution.description}</div>
-            <div><strong>การดำเนินการ:</strong> {claim.resolution.actionTaken}</div>
-            <div><strong>ค่าใช้จ่าย:</strong> {formatCurrency(claim.resolution.totalCost)}</div>
-            <div><strong>แก้ไขโดย:</strong> {claim.resolution.resolvedBy}</div>
-            <div><strong>วันที่แก้ไข:</strong> {formatDate(claim.resolution.resolvedAt.split('T')[0])}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Customer Satisfaction */}
-      {claim.customerSatisfaction && (
-        <div>
-          <h3 className="font-medium mb-2">ความพึงพอใจของลูกค้า</h3>
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <strong>คะแนน:</strong>
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star 
-                    key={star} 
-                    className={`w-4 h-4 ${
-                      star <= claim.customerSatisfaction!.rating 
-                        ? 'text-yellow-500 fill-current' 
-                        : 'text-gray-300'
-                    }`} 
-                  />
-                ))}
+              {/* Status and Priority */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">สถานะ</Label>
+                  <div className="mt-1">
+                    {getStatusBadge(selectedClaim.status)}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">ความสำคัญ</Label>
+                  <div className="mt-1">
+                    {getPriorityBadge(selectedClaim.priority)}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">การรับประกัน</Label>
+                  <div className="mt-1">
+                    {getWarrantyBadge(selectedClaim.warrantyInfo)}
+                  </div>
+                </div>
               </div>
-              <span>({claim.customerSatisfaction.rating}/5)</span>
+
+              {/* Issue Description */}
+              <div>
+                <Label className="text-sm font-medium">รายละเอียดปัญหา</Label>
+                <div className="mt-1 p-3 bg-muted rounded-md">
+                  {selectedClaim.issueDescription}
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">วันที่ซื้อ</Label>
+                  <div>{formatDate(selectedClaim.purchaseDate)}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">วันที่เคลม</Label>
+                  <div>{formatDate(selectedClaim.claimDate)}</div>
+                </div>
+              </div>
+
+              {/* Cost Information */}
+              {(selectedClaim.estimatedCost || selectedClaim.actualCost) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedClaim.estimatedCost && (
+                    <div>
+                      <Label className="text-sm font-medium">ค่าใช้จ่ายประเมิน</Label>
+                      <div className="text-lg font-semibold text-blue-600">
+                        {formatCurrency(selectedClaim.estimatedCost)}
+                      </div>
+                    </div>
+                  )}
+                  {selectedClaim.actualCost && (
+                    <div>
+                      <Label className="text-sm font-medium">ค่าใช้จ่ายจริง</Label>
+                      <div className="text-lg font-semibold text-green-600">
+                        {formatCurrency(selectedClaim.actualCost)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Resolution */}
+              {selectedClaim.resolution && (
+                <div>
+                  <Label className="text-sm font-medium">การแก้ไข</Label>
+                  <div className="mt-1 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div className="font-medium">{selectedClaim.resolution.type}</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {selectedClaim.resolution.description}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      แก้ไขโดย: {selectedClaim.resolution.resolvedBy} 
+                      เมื่อ {formatDate(selectedClaim.resolution.resolvedAt)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Customer Satisfaction */}
+              {selectedClaim.customerSatisfaction && (
+                <div>
+                  <Label className="text-sm font-medium">ความพึงพอใจของลูกค้า</Label>
+                  <div className="mt-1 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span
+                            key={star}
+                            className={`text-lg ${
+                              star <= selectedClaim.customerSatisfaction!.rating
+                                ? 'text-yellow-500'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      <span className="font-medium">
+                        {selectedClaim.customerSatisfaction.rating}/5
+                      </span>
+                    </div>
+                    {selectedClaim.customerSatisfaction.feedback && (
+                      <div className="text-sm text-muted-foreground mt-2">
+                        "{selectedClaim.customerSatisfaction.feedback}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            {claim.customerSatisfaction.feedback && (
-              <div><strong>ความคิดเห็น:</strong> {claim.customerSatisfaction.feedback}</div>
-            )}
-            <div>
-              <strong>แนะนำให้ผู้อื่น:</strong> {claim.customerSatisfaction.wouldRecommend ? 'ใช่' : 'ไม่'}
-            </div>
-          </div>
-        </div>
-      )}
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDetailDialog(false)}>
+              ปิด
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -17,8 +17,12 @@ import {
   BarChart3,
   ClipboardList,
   UserCheck,
-  Bell
+  Bell,
+  Plus,
+  Clock
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { SidebarQuickActions } from "./SidebarQuickActions";
 
 import {
   Sidebar,
@@ -102,26 +106,7 @@ const navigationItems = [
   }
 ];
 
-const quickActions = [
-  {
-    title: "New Sale",
-    url: "/pos/new",
-    icon: Receipt,
-    color: "text-success"
-  },
-  {
-    title: "Add Stock",
-    url: "/stock/add",
-    icon: ClipboardList,
-    color: "text-info"
-  },
-  {
-    title: "Employee Check",
-    url: "/employees/check",
-    icon: UserCheck,
-    color: "text-warning"
-  }
-];
+
 
 export function AdminSidebar() {
   const { state } = useSidebar();
@@ -189,28 +174,17 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Quick Actions */}
-        {!collapsed && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-wide text-xs font-semibold">
-              Quick Actions
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {quickActions.map((action) => (
-                  <SidebarMenuItem key={action.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={action.url} className="w-full justify-start text-sm hover:bg-sidebar-accent">
-                        <action.icon className={`w-4 h-4 ${action.color}`} />
-                        <span>{action.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        {/* Enhanced Quick Actions */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-wide text-xs font-semibold">
+            {!collapsed && "Quick Actions"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <div className="px-2">
+              <SidebarQuickActions collapsed={collapsed} />
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         {/* Status Bar */}
         <div className="mt-auto p-4 border-t border-sidebar-border">
@@ -218,15 +192,20 @@ export function AdminSidebar() {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
                 <span>System Status</span>
-                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
               </div>
               <div className="text-xs text-sidebar-foreground/80">
                 Main Branch • Online
+              </div>
+              <div className="flex items-center gap-1 text-xs text-sidebar-foreground/60 mt-1">
+                <Clock className="w-3 h-3" />
+                <span>Last updated: {new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
           )}
         </div>
       </SidebarContent>
+
     </Sidebar>
   );
 }

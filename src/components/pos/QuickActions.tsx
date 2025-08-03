@@ -15,6 +15,8 @@ interface QuickActionsProps {
   onShowCustomers: () => void;
   onShowHistory: () => void;
   onBarcodeScanner: () => void;
+  onShowCalculator: () => void;
+  onShowSettings: () => void;
   cartItemCount: number;
 }
 
@@ -23,6 +25,8 @@ export function QuickActions({
   onShowCustomers, 
   onShowHistory,
   onBarcodeScanner,
+  onShowCalculator,
+  onShowSettings,
   cartItemCount 
 }: QuickActionsProps) {
   return (
@@ -64,6 +68,7 @@ export function QuickActions({
 
           <Button
             variant="outline"
+            onClick={onShowCalculator}
             className="flex flex-col items-center gap-2 h-auto py-3"
           >
             <Calculator className="w-5 h-5" />
@@ -81,6 +86,7 @@ export function QuickActions({
 
           <Button
             variant="outline"
+            onClick={onShowSettings}
             className="flex flex-col items-center gap-2 h-auto py-3"
           >
             <Settings className="w-5 h-5" />

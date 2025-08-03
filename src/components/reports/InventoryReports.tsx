@@ -13,12 +13,14 @@ import {
 import { 
   Package, 
   Download, 
+  AlertTriangle,
   Search,
   Filter,
-  AlertTriangle,
   TrendingDown,
-  BarChart3,
-  Archive
+  TrendingUp,
+  Clock,
+  DollarSign,
+  BarChart3
 } from 'lucide-react';
 import { InventoryReport } from '@/types/reports';
 import { formatCurrency, formatNumber } from '@/utils/reportHelpers';
@@ -41,99 +43,71 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
   const [statusFilter, setStatusFilter] = useState('all');
 
   // Mock inventory data
-  const inventoryStats = {
-    totalProducts: 150,
-    totalValue: 2500000,
-    lowStockItems: 5,
-    outOfStockItems: 2,
-    slowMovingItems: 8
+  const inventorySummary = {
+    totalProducts: 1250,
+    totalValue: 2850000,
+    lowStockItems: 45,
+    outOfStockItems: 12,
+    slowMovingItems: 28,
+    fastMovingItems: 156
   };
 
-  const stockByCategory = [
-    { category: 'โซฟา', stock: 45, value: 450000, percentage: 30 },
-    { category: 'เตียง', stock: 32, value: 320000, percentage: 21 },
-    { category: 'ตู้', stock: 28, value: 280000, percentage: 19 },
-    { category: 'โต๊ะ', stock: 35, value: 175000, percentage: 23 },
-    { category: 'เก้าอี้', stock: 60, value: 180000, percentage: 40 }
-  ];
-
   const lowStockItems = [
-    { 
-      id: 'prod-001', 
-      name: 'เก้าอี้ทำงาน Ergonomic', 
-      currentStock: 3, 
-      minStock: 10, 
-      category: 'เก้าอี้',
-      lastOrder: '2024-01-15',
-      supplier: 'ABC Furniture'
-    },
-    { 
-      id: 'prod-002', 
-      name: 'โต๊ะกาแฟ Glass Top', 
-      currentStock: 2, 
-      minStock: 8, 
-      category: 'โต๊ะ',
-      lastOrder: '2024-01-10',
-      supplier: 'Modern Living'
-    },
-    { 
-      id: 'prod-003', 
-      name: 'โซฟา 2 ที่นั่ง Compact', 
-      currentStock: 1, 
-      minStock: 5, 
-      category: 'โซฟา',
-      lastOrder: '2024-01-08',
-      supplier: 'Comfort Zone'
-    }
+    { name: 'โซฟา 2 ที่นั่ง Classic', currentStock: 2, minStock: 5, reorderLevel: 10, value: 45000 },
+    { name: 'เตียงนอน Queen Size', currentStock: 1, minStock: 3, reorderLevel: 8, value: 28000 },
+    { name: 'ตู้เสื้อผ้า 3 บาน', currentStock: 3, minStock: 5, reorderLevel: 12, value: 36000 },
+    { name: 'โต๊ะกาแฟ Glass Top', currentStock: 4, minStock: 8, reorderLevel: 15, value: 18000 },
+    { name: 'เก้าอี้ผู้บริหาร', currentStock: 2, minStock: 6, reorderLevel: 10, value: 25000 }
   ];
 
   const slowMovingItems = [
-    {
-      id: 'prod-004',
-      name: 'ตู้โชว์ Vintage',
-      currentStock: 5,
-      lastSaleDate: '2023-11-15',
-      daysWithoutSale: 47,
-      category: 'ตู้',
-      value: 25000
-    },
-    {
-      id: 'prod-005',
-      name: 'โคมไฟตั้งพื้น Classic',
-      currentStock: 8,
-      lastSaleDate: '2023-12-01',
-      daysWithoutSale: 31,
-      category: 'อุปกรณ์ตแต่ง',
-      value: 12000
-    }
+    { name: 'ตู้โชว์ไม้สัก', lastSaleDate: '2024-01-15', daysWithoutSale: 45, currentStock: 8, value: 120000 },
+    { name: 'โซฟาหนัง 3 ที่นั่ง', lastSaleDate: '2024-01-20', daysWithoutSale: 40, currentStock: 5, value: 85000 },
+    { name: 'เตียงไม้แท้ King Size', lastSaleDate: '2024-01-25', daysWithoutSale: 35, currentStock: 3, value: 95000 },
+    { name: 'โต๊ะทำงานไม้โอ๊ค', lastSaleDate: '2024-02-01', daysWithoutSale: 28, currentStock: 6, value: 45000 }
   ];
 
   const stockMovements = [
-    {
-      date: '2024-01-01',
-      product: 'โซฟา 3 ที่นั่ง Modern',
-      type: 'OUT',
-      quantity: 2,
-      reason: 'ขายให้ลูกค้า',
-      reference: 'SO-001'
-    },
-    {
-      date: '2024-01-01',
-      product: 'เตียงเด็ก Safety',
-      type: 'IN',
-      quantity: 10,
-      reason: 'รับสินค้าใหม่',
-      reference: 'PO-001'
-    },
-    {
-      date: '2024-01-01',
-      product: 'ตู้เสื้อผ้า 4 บาน',
-      type: 'ADJUSTMENT',
-      quantity: -1,
-      reason: 'สินค้าเสียหาย',
-      reference: 'ADJ-001'
-    }
+    { product: 'โซฟา Modern 3 ที่นั่ง', type: 'IN', quantity: 10, date: '2024-02-28', reason: 'รับสินค้าจากผู้จัดจำหน่าย' },
+    { product: 'เตียงนอน King Size', type: 'OUT', quantity: 2, date: '2024-02-28', reason: 'ขายให้ลูกค้า' },
+    { product: 'ตู้เสื้อผ้า 4 บาน', type: 'OUT', quantity: 1, date: '2024-02-27', reason: 'ขายให้ลูกค้า' },
+    { product: 'โต๊ะกาแฟ Marble', type: 'ADJUSTMENT', quantity: -1, date: '2024-02-27', reason: 'สินค้าชำรุด' },
+    { product: 'เก้าอี้ทำงาน Ergonomic', type: 'IN', quantity: 15, date: '2024-02-26', reason: 'รับสินค้าจากผู้จัดจำหน่าย' }
   ];
+
+  const categoryBreakdown = [
+    { category: 'โซฟา', products: 45, value: 850000, percentage: 30, trend: 5.2 },
+    { category: 'เตียง', products: 32, value: 720000, percentage: 25, trend: 8.1 },
+    { category: 'ตู้', products: 28, value: 680000, percentage: 24, trend: -2.3 },
+    { category: 'โต๊ะ', products: 38, value: 420000, percentage: 15, trend: 12.5 },
+    { category: 'เก้าอี้', products: 25, value: 180000, percentage: 6, trend: 3.8 }
+  ];
+
+  const getMovementIcon = (type: string) => {
+    switch (type) {
+      case 'IN':
+        return <TrendingUp className="h-4 w-4 text-green-600" />;
+      case 'OUT':
+        return <TrendingDown className="h-4 w-4 text-red-600" />;
+      case 'ADJUSTMENT':
+        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      default:
+        return <Package className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const getMovementColor = (type: string) => {
+    switch (type) {
+      case 'IN':
+        return 'bg-green-100 text-green-800';
+      case 'OUT':
+        return 'bg-red-100 text-red-800';
+      case 'ADJUSTMENT':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -178,7 +152,7 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
                 <SelectValue placeholder="หมวดหมู่" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="sofa">โซฟา</SelectItem>
                 <SelectItem value="bed">เตียง</SelectItem>
                 <SelectItem value="cabinet">ตู้</SelectItem>
@@ -188,14 +162,15 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
+                <AlertTriangle className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="สถานะสต็อก" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">ทุกสถานะ</SelectItem>
-                <SelectItem value="normal">ปกติ</SelectItem>
-                <SelectItem value="low">ใกล้หมด</SelectItem>
-                <SelectItem value="out">หมด</SelectItem>
-                <SelectItem value="slow">ไม่เคลื่อนไหว</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
+                <SelectItem value="in_stock">มีสต็อก</SelectItem>
+                <SelectItem value="low_stock">สต็อกต่ำ</SelectItem>
+                <SelectItem value="out_of_stock">หมดสต็อก</SelectItem>
+                <SelectItem value="slow_moving">เคลื่อนไหวช้า</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -203,7 +178,7 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
       </Card>
 
       {/* Inventory Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -211,11 +186,9 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
                 <p className="text-sm font-medium text-muted-foreground">
                   สินค้าทั้งหมด
                 </p>
-                <p className="text-2xl font-bold">{formatNumber(inventoryStats.totalProducts)}</p>
+                <p className="text-2xl font-bold">{formatNumber(inventorySummary.totalProducts)}</p>
               </div>
-              <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-                <Package className="h-6 w-6" />
-              </div>
+              <Package className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
@@ -227,11 +200,9 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
                 <p className="text-sm font-medium text-muted-foreground">
                   มูลค่ารวม
                 </p>
-                <p className="text-2xl font-bold">{formatCurrency(inventoryStats.totalValue)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(inventorySummary.totalValue)}</p>
               </div>
-              <div className="p-3 rounded-full bg-green-100 text-green-600">
-                <BarChart3 className="h-6 w-6" />
-              </div>
+              <DollarSign className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -241,13 +212,11 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  สินค้าใกล้หมด
+                  สต็อกต่ำ
                 </p>
-                <p className="text-2xl font-bold text-orange-600">{inventoryStats.lowStockItems}</p>
+                <p className="text-2xl font-bold text-orange-600">{inventorySummary.lowStockItems}</p>
               </div>
-              <div className="p-3 rounded-full bg-orange-100 text-orange-600">
-                <AlertTriangle className="h-6 w-6" />
-              </div>
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -257,13 +226,11 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  สินค้าหมด
+                  หมดสต็อก
                 </p>
-                <p className="text-2xl font-bold text-red-600">{inventoryStats.outOfStockItems}</p>
+                <p className="text-2xl font-bold text-red-600">{inventorySummary.outOfStockItems}</p>
               </div>
-              <div className="p-3 rounded-full bg-red-100 text-red-600">
-                <Archive className="h-6 w-6" />
-              </div>
+              <TrendingDown className="h-8 w-8 text-red-600" />
             </div>
           </CardContent>
         </Card>
@@ -273,76 +240,134 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  ไม่เคลื่อนไหว
+                  เคลื่อนไหวช้า
                 </p>
-                <p className="text-2xl font-bold text-purple-600">{inventoryStats.slowMovingItems}</p>
+                <p className="text-2xl font-bold text-yellow-600">{inventorySummary.slowMovingItems}</p>
               </div>
-              <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-                <TrendingDown className="h-6 w-6" />
+              <Clock className="h-8 w-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  เคลื่อนไหวเร็ว
+                </p>
+                <p className="text-2xl font-bold text-purple-600">{inventorySummary.fastMovingItems}</p>
               </div>
+              <TrendingUp className="h-8 w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Stock by Category */}
-        <Card>
-          <CardHeader>
-            <CardTitle>สต็อกตามหมวดหมู่</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {stockByCategory.map((category, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
+      {/* Category Breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            การกระจายตามหมวดหมู่
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {categoryBreakdown.map((category, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
                     <span className="font-medium">{category.category}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {category.stock} ชิ้น
-                    </span>
+                    <Badge variant="outline" className="text-xs">
+                      {category.products} รายการ
+                    </Badge>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full bg-blue-500"
-                      style={{ width: `${(category.stock / 60) * 100}%` }}
-                    ></div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold">{formatCurrency(category.value)}</span>
+                    <div className="flex items-center">
+                      {category.trend > 0 ? (
+                        <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
+                      )}
+                      <span className={`text-xs ${
+                        category.trend > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {category.trend > 0 ? '+' : ''}{category.trend}%
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    มูลค่า: {formatCurrency(category.value)}
-                  </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full" 
+                    style={{ width: `${category.percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Items */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
-              สินค้าใกล้หมด
+            <CardTitle className="flex items-center gap-2 text-orange-600">
+              <AlertTriangle className="h-4 w-4" />
+              สินค้าสต็อกต่ำ
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {lowStockItems.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-orange-50">
                   <div className="flex-1">
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {item.category} • ผู้จำหน่าย: {item.supplier}
-                    </p>
-                    <p className="text-sm text-orange-600">
-                      เหลือ {item.currentStock} ชิ้น (ขั้นต่ำ {item.minStock} ชิ้น)
+                      คงเหลือ: {item.currentStock} | ขั้นต่ำ: {item.minStock}
                     </p>
                   </div>
                   <div className="text-right">
-                    <Badge variant="destructive" className="mb-2">
-                      ต้องสั่งซื้อ
-                    </Badge>
-                    <p className="text-xs text-muted-foreground">
-                      สั่งล่าสุด: {item.lastOrder}
+                    <p className="font-semibold text-orange-600">
+                      ต้องสั่ง {item.reorderLevel - item.currentStock} ชิ้น
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatCurrency(item.value)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Slow Moving Items */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-600">
+              <Clock className="h-4 w-4" />
+              สินค้าเคลื่อนไหวช้า
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {slowMovingItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-yellow-50">
+                  <div className="flex-1">
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      ขายครั้งสุดท้าย: {new Date(item.lastSaleDate).toLocaleDateString('th-TH')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-yellow-600">
+                      {item.daysWithoutSale} วัน
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      คงเหลือ {item.currentStock} ชิ้น
                     </p>
                   </div>
                 </div>
@@ -352,95 +377,36 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
         </Card>
       </div>
 
-      {/* Slow Moving Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingDown className="h-5 w-5 text-purple-600" />
-            สินค้าไม่เคลื่อนไหว
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2">สินค้า</th>
-                  <th className="text-left py-2">หมวดหมู่</th>
-                  <th className="text-right py-2">สต็อกปัจจุบัน</th>
-                  <th className="text-right py-2">ขายล่าสุด</th>
-                  <th className="text-right py-2">วันที่ไม่ขาย</th>
-                  <th className="text-right py-2">มูลค่า</th>
-                </tr>
-              </thead>
-              <tbody>
-                {slowMovingItems.map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-3">
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-muted-foreground">#{item.id}</div>
-                    </td>
-                    <td className="py-3">{item.category}</td>
-                    <td className="text-right py-3">{item.currentStock}</td>
-                    <td className="text-right py-3">
-                      {new Date(item.lastSaleDate).toLocaleDateString('th-TH')}
-                    </td>
-                    <td className="text-right py-3">
-                      <Badge variant="secondary">
-                        {item.daysWithoutSale} วัน
-                      </Badge>
-                    </td>
-                    <td className="text-right py-3">
-                      {formatCurrency(item.value)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stock Movements */}
+      {/* Recent Stock Movements */}
       <Card>
         <CardHeader>
           <CardTitle>การเคลื่อนไหวสต็อกล่าสุด</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {stockMovements.map((movement, index) => (
               <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${
-                    movement.type === 'IN' ? 'bg-green-100 text-green-600' :
-                    movement.type === 'OUT' ? 'bg-blue-100 text-blue-600' :
-                    'bg-orange-100 text-orange-600'
-                  }`}>
-                    <Package className="h-4 w-4" />
-                  </div>
+                  {getMovementIcon(movement.type)}
                   <div>
                     <p className="font-medium">{movement.product}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {movement.reason} • {movement.reference}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{movement.reason}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={
-                      movement.type === 'IN' ? 'default' :
-                      movement.type === 'OUT' ? 'secondary' : 'destructive'
-                    }>
-                      {movement.type === 'IN' ? 'เข้า' :
-                       movement.type === 'OUT' ? 'ออก' : 'ปรับปรุง'}
-                    </Badge>
-                    <span className="font-medium">
-                      {movement.quantity > 0 ? '+' : ''}{movement.quantity}
-                    </span>
+                <div className="flex items-center gap-3">
+                  <Badge className={getMovementColor(movement.type)}>
+                    {movement.type === 'IN' ? 'รับเข้า' : 
+                     movement.type === 'OUT' ? 'จ่ายออก' : 'ปรับปรุง'}
+                  </Badge>
+                  <div className="text-right">
+                    <p className="font-semibold">
+                      {movement.type === 'OUT' || (movement.type === 'ADJUSTMENT' && movement.quantity < 0) ? '-' : '+'}
+                      {Math.abs(movement.quantity)} ชิ้น
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(movement.date).toLocaleDateString('th-TH')}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(movement.date).toLocaleDateString('th-TH')}
-                  </p>
                 </div>
               </div>
             ))}

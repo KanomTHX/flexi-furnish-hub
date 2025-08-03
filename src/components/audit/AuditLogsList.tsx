@@ -3,37 +3,52 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AuditLog, AuditFilter, User } from '@/types/audit';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { AuditLog, AuditFilter, User, AuditAction, AuditResource, SystemModule, AuditSeverity, AuditStatus } from '@/types/audit';
 import { 
   formatDateTime, 
-  getRelativeTime,
   auditActionLabels, 
-  auditResourceLabels,
+  auditResourceLabels, 
   systemModuleLabels,
-  auditSeverityLabels,
-  auditStatusLabels,
   getSeverityColor,
-  getStatusColor,
-  getActionColor,
-  getModuleColor,
-  calculateRiskScore,
-  getRiskLevel
+  getStatusColor
 } from '@/utils/auditHelpers';
 import { 
-  Search, 
-  Filter, 
-  Eye, 
+  Search,
+  Filter,
   Download,
-  Clock,
+  Eye,
+  Calendar,
   User as UserIcon,
-  Shield,
+  Server,
   Activity,
   AlertTriangle,
-  Info,
-  Server,
-  Globe
+  CheckCircle,
+  XCircle,
+  Clock,
+  FileText,
+  Shield
 } from 'lucide-react';
 
 interface AuditLogsListProps {
@@ -51,35 +66,95 @@ export function AuditLogsList({
   onFilterChange,
   onExport
 }: AuditLogsListProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+
+  const getSeverityIcon = (severity: AuditSeverity) => {
+    switch (severity) {
+      case 'critical':
+        return <AlertTriangle className="w-4 h-4 text-red-600" />;
+      case 'high':
+        return <AlertTriangle className="w-4 h-4 text-orange-600" />;
+      case 'medium':
+        return <Activity className="w-4 h-4 text-yellow-600" />;
+      case 'low':
+        return <Activity className="w-4 h-4 text-blue-600" />;
+      default:
+        return <Activity className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getStatusIcon = (status: AuditStatus) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'failed':
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      case 'warning':
+        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
+      case 'error':
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      default:
+        return <Activity className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getActionIcon = (action: AuditAction) => {
+    switch (action) {
+      case 'login':
+      case 'logout':
+        return <UserIcon className="w-4 h-4 text-blue-600" />;
+      case 'create':
+      case 'update':
+      case 'delete':
+        return <FileText className="w-4 h-4 text-purple-600" />;
+      case 'export':
+      case 'import':
+        return <Download className="w-4 h-4 text-green-600" />;
+      case 'system_start':
+      case 'system_stop':
+        return <Server className="w-4 h-4 text-orange-600" />;
+      default:
+        return <Activity className="w-4 h-4 text-gray-600" />;
+    }
+  };
 
   const filteredLogs = logs.filter(log => {
-    const matchesSearch = log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (log.resourceName && log.resourceName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         log.ipAddress.includes(searchTerm);
-    return matchesSearch;
+    if (filter.userId && log.userId !== filter.userId) return false;
+    if (filter.action && log.action !== filter.action) return false;
+    if (filter.resource && log.resource !== filter.resource) return false;
+    if (filter.module && log.module !== filter.module) return false;
+    if (filter.severity && log.severity !== filter.severity) return false;
+    if (filter.status && log.status !== filter.status) return false;
+    if (filter.ipAddress && !log.ipAddress.includes(filter.ipAddress)) return false;
+    if (filter.dateFrom && log.timestamp < filter.dateFrom) return false;
+    if (filter.dateTo && log.timestamp > filter.dateTo) return false;
+    if (filter.search) {
+      const searchLower = filter.search.toLowerCase();
+      return log.description.toLowerCase().includes(searchLower) ||
+             log.user.fullName.toLowerCase().includes(searchLower) ||
+             log.resourceName?.toLowerCase().includes(searchLower) ||
+             log.ipAddress.includes(searchLower);
+    }
+    return true;
   });
 
-  const handleViewDetail = (log: AuditLog) => {
+  const openDetailDialog = (log: AuditLog) => {
     setSelectedLog(log);
     setShowDetailDialog(true);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">บันทึกการตรวจสอบ</h2>
-          <p className="text-muted-foreground">
-            ติดตามและตรวจสอบกิจกรรมทั้งหมดในระบบ
+          <h2 className="text-xl font-semibold">บันทึกการตรวจสอบ</h2>
+          <p className="text-sm text-muted-foreground">
+            ติดตามกิจกรรมทั้งหมดในระบบ ({filteredLogs.length} รายการ)
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onExport}>
             <Download className="w-4 h-4 mr-2" />
             ส่งออก
@@ -89,27 +164,23 @@ export function AuditLogsList({
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            ตัวกรองและค้นหา
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <div className="relative col-span-2">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="ค้นหาบันทึก..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={filter.search || ''}
+                onChange={(e) => onFilterChange({ ...filter, search: e.target.value })}
                 className="pl-10"
               />
             </div>
-
-            <Select
-              value={filter.userId || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, userId: value || undefined })}
+            
+            <Select 
+              value={filter.userId || 'all'} 
+              onValueChange={(value) => 
+                onFilterChange({ ...filter, userId: value === 'all' ? undefined : value })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="ผู้ใช้" />
@@ -118,433 +189,395 @@ export function AuditLogsList({
                 <SelectItem value="all">ทั้งหมด</SelectItem>
                 {users.map(user => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.fullName} (@{user.username})
+                    {user.fullName}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <Select
-              value={filter.action || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, action: value === 'all' ? undefined : value as any })}
+            <Select 
+              value={filter.action || 'all'} 
+              onValueChange={(value) => 
+                onFilterChange({ ...filter, action: value === 'all' ? undefined : value as AuditAction })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="การกระทำ" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทั้งหมด</SelectItem>
-                {Object.entries(auditActionLabels).map(([action, label]) => (
-                  <SelectItem key={action} value={action}>
-                    {label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="login">เข้าสู่ระบบ</SelectItem>
+                <SelectItem value="logout">ออกจากระบบ</SelectItem>
+                <SelectItem value="create">สร้าง</SelectItem>
+                <SelectItem value="update">แก้ไข</SelectItem>
+                <SelectItem value="delete">ลบ</SelectItem>
+                <SelectItem value="export">ส่งออก</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select
-              value={filter.module || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, module: value === 'all' ? undefined : value as any })}
+            <Select 
+              value={filter.module || 'all'} 
+              onValueChange={(value) => 
+                onFilterChange({ ...filter, module: value === 'all' ? undefined : value as SystemModule })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="โมดูล" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทั้งหมด</SelectItem>
-                {Object.entries(systemModuleLabels).map(([module, label]) => (
-                  <SelectItem key={module} value={module}>
-                    {label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="pos">POS</SelectItem>
+                <SelectItem value="inventory">สต็อก</SelectItem>
+                <SelectItem value="accounting">บัญชี</SelectItem>
+                <SelectItem value="claims">เคลม</SelectItem>
+                <SelectItem value="system">ระบบ</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select
-              value={filter.severity || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, severity: value === 'all' ? undefined : value as any })}
+            <Select 
+              value={filter.severity || 'all'} 
+              onValueChange={(value) => 
+                onFilterChange({ ...filter, severity: value === 'all' ? undefined : value as AuditSeverity })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="ความสำคัญ" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทั้งหมด</SelectItem>
-                {Object.entries(auditSeverityLabels).map(([severity, label]) => (
-                  <SelectItem key={severity} value={severity}>
-                    {label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="low">ต่ำ</SelectItem>
+                <SelectItem value="medium">ปานกลาง</SelectItem>
+                <SelectItem value="high">สูง</SelectItem>
+                <SelectItem value="critical">วิกฤต</SelectItem>
               </SelectContent>
             </Select>
 
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                onFilterChange({});
-                setSearchTerm('');
-              }}
-            >
-              ล้างตัวกรอง
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <Input
               type="date"
               placeholder="วันที่เริ่มต้น"
               value={filter.dateFrom || ''}
               onChange={(e) => onFilterChange({ ...filter, dateFrom: e.target.value || undefined })}
             />
-            <Input
-              type="date"
-              placeholder="วันที่สิ้นสุด"
-              value={filter.dateTo || ''}
-              onChange={(e) => onFilterChange({ ...filter, dateTo: e.target.value || undefined })}
-            />
-            <Select
-              value={filter.status || ''}
-              onValueChange={(value) => onFilterChange({ ...filter, status: value === 'all' ? undefined : value as any })}
+
+            <Button 
+              variant="outline" 
+              onClick={() => onFilterChange({})}
+              className="w-full"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="สถานะ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทั้งหมด</SelectItem>
-                {Object.entries(auditStatusLabels).map(([status, label]) => (
-                  <SelectItem key={status} value={status}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Filter className="w-4 h-4 mr-2" />
+              ล้างตัวกรอง
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Audit Logs List */}
-      <div className="space-y-4">
-        {filteredLogs.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">ไม่พบบันทึกที่ตรงกับเงื่อนไขการค้นหา</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredLogs.map((log) => {
-            const riskScore = calculateRiskScore(log);
-            const riskLevel = getRiskLevel(riskScore);
-            
-            return (
-              <Card key={log.id} className={`hover:shadow-md transition-shadow ${
-                log.severity === 'critical' ? 'border-red-200 bg-red-50' :
-                log.severity === 'high' ? 'border-orange-200 bg-orange-50' : ''
-              }`}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            {getRelativeTime(log.timestamp)}
-                          </span>
-                        </div>
-                        <Badge className={getSeverityColor(log.severity)}>
-                          {auditSeverityLabels[log.severity]}
-                        </Badge>
-                        <Badge className={getStatusColor(log.status)}>
-                          {auditStatusLabels[log.status]}
-                        </Badge>
-                        {riskLevel === 'high' || riskLevel === 'critical' && (
-                          <Badge variant="destructive">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
-                            เสี่ยงสูง
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <h3 className="text-lg font-semibold mb-2">{log.description}</h3>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
-                        <div className="flex items-center gap-2">
-                          <UserIcon className="h-4 w-4 text-muted-foreground" />
-                          <span>{log.user.fullName}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Activity className="h-4 w-4 text-muted-foreground" />
-                          <Badge className={getActionColor(log.action)} variant="outline">
-                            {auditActionLabels[log.action]}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Server className="h-4 w-4 text-muted-foreground" />
-                          <Badge className={getModuleColor(log.module)} variant="outline">
-                            {systemModuleLabels[log.module]}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">{log.ipAddress}</span>
-                        </div>
-                      </div>
-
-                      {log.resourceName && (
-                        <div className="text-sm text-muted-foreground mb-2">
-                          <strong>ทรัพยากร:</strong> {auditResourceLabels[log.resource]} - {log.resourceName}
-                        </div>
-                      )}
-
-                      <div className="text-xs text-muted-foreground">
-                        <strong>เซสชัน:</strong> {log.sessionId} | 
-                        <strong> เวลาที่แน่นอน:</strong> {formatDateTime(log.timestamp)}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetail(log)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        รายละเอียด
-                      </Button>
-                      
-                      {riskScore > 5 && (
-                        <div className="text-center">
-                          <div className="text-xs text-muted-foreground">Risk Score</div>
-                          <div className={`text-sm font-bold ${
-                            riskLevel === 'critical' ? 'text-red-600' :
-                            riskLevel === 'high' ? 'text-orange-600' :
-                            riskLevel === 'medium' ? 'text-yellow-600' : 'text-green-600'
-                          }`}>
-                            {riskScore.toFixed(1)}/10
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
-
-      {/* Summary */}
+      {/* Logs Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>สรุปบันทึกการตรวจสอบ</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-green-600">
-                {logs.filter(l => l.status === 'success').length}
-              </div>
-              <div className="text-sm text-muted-foreground">สำเร็จ</div>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>เวลา</TableHead>
+                <TableHead>ผู้ใช้</TableHead>
+                <TableHead>การกระทำ</TableHead>
+                <TableHead>ทรัพยากร</TableHead>
+                <TableHead>โมดูล</TableHead>
+                <TableHead>สถานะ</TableHead>
+                <TableHead>ความสำคัญ</TableHead>
+                <TableHead>IP Address</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLogs.map((log) => (
+                <TableRow key={log.id} className="hover:bg-muted/50">
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3 h-3 text-muted-foreground" />
+                      <div className="text-sm">
+                        <div>{formatDateTime(log.timestamp).split(' ')[0]}</div>
+                        <div className="text-muted-foreground">
+                          {formatDateTime(log.timestamp).split(' ')[1]}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <UserIcon className="w-3 h-3 text-muted-foreground" />
+                      <div>
+                        <div className="font-medium text-sm">{log.user.fullName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          @{log.user.username}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getActionIcon(log.action)}
+                      <span className="text-sm">{auditActionLabels[log.action]}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <div>{auditResourceLabels[log.resource]}</div>
+                      {log.resourceName && (
+                        <div className="text-xs text-muted-foreground">
+                          {log.resourceName}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {systemModuleLabels[log.module]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(log.status)}
+                      <Badge className={getStatusColor(log.status)}>
+                        {log.status === 'success' ? 'สำเร็จ' :
+                         log.status === 'failed' ? 'ล้มเหลว' :
+                         log.status === 'warning' ? 'เตือน' : 'ข้อผิดพลาด'}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getSeverityIcon(log.severity)}
+                      <Badge className={getSeverityColor(log.severity)}>
+                        {log.severity === 'critical' ? 'วิกฤต' :
+                         log.severity === 'high' ? 'สูง' :
+                         log.severity === 'medium' ? 'ปานกลาง' : 'ต่ำ'}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm font-mono">{log.ipAddress}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openDetailDialog(log)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          
+          {filteredLogs.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>ไม่พบบันทึกที่ตรงกับเงื่อนไข</p>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-red-600">
-                {logs.filter(l => l.status === 'failed' || l.status === 'error').length}
-              </div>
-              <div className="text-sm text-muted-foreground">ล้มเหลว</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-orange-600">
-                {logs.filter(l => l.severity === 'critical' || l.severity === 'high').length}
-              </div>
-              <div className="text-sm text-muted-foreground">ความสำคัญสูง</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600">
-                {new Set(logs.map(l => l.userId)).size}
-              </div>
-              <div className="text-sm text-muted-foreground">ผู้ใช้ที่มีกิจกรรม</div>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Log Detail Dialog */}
-      {selectedLog && (
-        <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>รายละเอียดบันทึกการตรวจสอบ</DialogTitle>
-            </DialogHeader>
-            <LogDetailView log={selectedLog} />
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
-  );
-}
-
-// Log Detail View Component
-function LogDetailView({ log }: { log: AuditLog }) {
-  const riskScore = calculateRiskScore(log);
-  const riskLevel = getRiskLevel(riskScore);
-
-  return (
-    <div className="space-y-6">
-      {/* Basic Info */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-medium text-muted-foreground">ID</label>
-          <div className="text-lg font-mono">{log.id}</div>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-muted-foreground">เวลา</label>
-          <div className="text-lg">{formatDateTime(log.timestamp)}</div>
-        </div>
-      </div>
-
-      {/* User & Action Info */}
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-medium mb-2">ข้อมูลผู้ใช้</h3>
-          <div className="space-y-1 text-sm">
-            <div><strong>ชื่อ:</strong> {log.user.fullName}</div>
-            <div><strong>ชื่อผู้ใช้:</strong> {log.user.username}</div>
-            <div><strong>อีเมล:</strong> {log.user.email}</div>
-            <div><strong>บทบาท:</strong> {log.user.role}</div>
-            {log.user.department && (
-              <div><strong>แผนก:</strong> {log.user.department}</div>
-            )}
-          </div>
-        </div>
-        <div>
-          <h3 className="font-medium mb-2">ข้อมูลการกระทำ</h3>
-          <div className="space-y-1 text-sm">
-            <div><strong>การกระทำ:</strong> 
-              <Badge className={`${getActionColor(log.action)} ml-2`}>
-                {auditActionLabels[log.action]}
-              </Badge>
-            </div>
-            <div><strong>ทรัพยากร:</strong> {auditResourceLabels[log.resource]}</div>
-            <div><strong>โมดูล:</strong> 
-              <Badge className={`${getModuleColor(log.module)} ml-2`}>
-                {systemModuleLabels[log.module]}
-              </Badge>
-            </div>
-            <div><strong>ความสำคัญ:</strong> 
-              <Badge className={`${getSeverityColor(log.severity)} ml-2`}>
-                {auditSeverityLabels[log.severity]}
-              </Badge>
-            </div>
-            <div><strong>สถานะ:</strong> 
-              <Badge className={`${getStatusColor(log.status)} ml-2`}>
-                {auditStatusLabels[log.status]}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Description */}
-      <div>
-        <h3 className="font-medium mb-2">คำอธิบาย</h3>
-        <div className="p-3 bg-muted rounded-lg text-sm">
-          {log.description}
-        </div>
-      </div>
-
-      {/* Resource Info */}
-      {log.resourceName && (
-        <div>
-          <h3 className="font-medium mb-2">ข้อมูลทรัพยากร</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div><strong>ID:</strong> {log.resourceId}</div>
-            <div><strong>ชื่อ:</strong> {log.resourceName}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Technical Details */}
-      <div>
-        <h3 className="font-medium mb-2">ข้อมูลทางเทคนิค</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><strong>IP Address:</strong> {log.ipAddress}</div>
-          <div><strong>Session ID:</strong> {log.sessionId}</div>
-          <div><strong>User Agent:</strong> 
-            <div className="text-xs text-muted-foreground mt-1 break-all">
-              {log.userAgent}
-            </div>
-          </div>
-          <div><strong>Risk Score:</strong> 
-            <span className={`ml-2 font-bold ${
-              riskLevel === 'critical' ? 'text-red-600' :
-              riskLevel === 'high' ? 'text-orange-600' :
-              riskLevel === 'medium' ? 'text-yellow-600' : 'text-green-600'
-            }`}>
-              {riskScore.toFixed(1)}/10 ({riskLevel})
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Details */}
-      {log.details && Object.keys(log.details).length > 0 && (
-        <div>
-          <h3 className="font-medium mb-2">รายละเอียดเพิ่มเติม</h3>
-          <div className="space-y-3">
-            {log.details.oldValues && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">ค่าเดิม:</h4>
-                <pre className="text-xs bg-red-50 border border-red-200 rounded p-2 overflow-x-auto">
-                  {JSON.stringify(log.details.oldValues, null, 2)}
-                </pre>
+      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>รายละเอียดบันทึกการตรวจสอบ</DialogTitle>
+            <DialogDescription>
+              ID: {selectedLog?.id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedLog && (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">เวลา</label>
+                  <div className="text-lg">{formatDateTime(selectedLog.timestamp)}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">ผู้ใช้</label>
+                  <div className="text-lg">{selectedLog.user.fullName}</div>
+                  <div className="text-sm text-muted-foreground">
+                    @{selectedLog.user.username} ({selectedLog.user.role})
+                  </div>
+                </div>
               </div>
-            )}
-            {log.details.newValues && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">ค่าใหม่:</h4>
-                <pre className="text-xs bg-green-50 border border-green-200 rounded p-2 overflow-x-auto">
-                  {JSON.stringify(log.details.newValues, null, 2)}
-                </pre>
-              </div>
-            )}
-            {log.details.changedFields && log.details.changedFields.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">ฟิลด์ที่เปลี่ยนแปลง:</h4>
-                <div className="flex flex-wrap gap-1">
-                  {log.details.changedFields.map((field, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {field}
+
+              {/* Action and Resource */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium">การกระทำ</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    {getActionIcon(selectedLog.action)}
+                    <span>{auditActionLabels[selectedLog.action]}</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">ทรัพยากร</label>
+                  <div className="mt-1">
+                    <div>{auditResourceLabels[selectedLog.resource]}</div>
+                    {selectedLog.resourceName && (
+                      <div className="text-sm text-muted-foreground">
+                        {selectedLog.resourceName}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">โมดูล</label>
+                  <div className="mt-1">
+                    <Badge variant="outline">
+                      {systemModuleLabels[selectedLog.module]}
                     </Badge>
-                  ))}
+                  </div>
                 </div>
               </div>
-            )}
-            {log.details.errorMessage && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">ข้อความข้อผิดพลาด:</h4>
-                <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
-                  {log.details.errorMessage}
-                </div>
-              </div>
-            )}
-            {log.details.additionalInfo && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">ข้อมูลเพิ่มเติม:</h4>
-                <pre className="text-xs bg-blue-50 border border-blue-200 rounded p-2 overflow-x-auto">
-                  {JSON.stringify(log.details.additionalInfo, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* Metadata */}
-      {log.metadata && Object.keys(log.metadata).length > 0 && (
-        <div>
-          <h3 className="font-medium mb-2">Metadata</h3>
-          <pre className="text-xs bg-gray-50 border rounded p-2 overflow-x-auto">
-            {JSON.stringify(log.metadata, null, 2)}
-          </pre>
-        </div>
-      )}
+              {/* Status and Severity */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">สถานะ</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    {getStatusIcon(selectedLog.status)}
+                    <Badge className={getStatusColor(selectedLog.status)}>
+                      {selectedLog.status === 'success' ? 'สำเร็จ' :
+                       selectedLog.status === 'failed' ? 'ล้มเหลว' :
+                       selectedLog.status === 'warning' ? 'เตือน' : 'ข้อผิดพลาด'}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">ความสำคัญ</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    {getSeverityIcon(selectedLog.severity)}
+                    <Badge className={getSeverityColor(selectedLog.severity)}>
+                      {selectedLog.severity === 'critical' ? 'วิกฤต' :
+                       selectedLog.severity === 'high' ? 'สูง' :
+                       selectedLog.severity === 'medium' ? 'ปานกลาง' : 'ต่ำ'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="text-sm font-medium">คำอธิบาย</label>
+                <div className="mt-1 p-3 bg-muted rounded-md">
+                  {selectedLog.description}
+                </div>
+              </div>
+
+              {/* Technical Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">IP Address</label>
+                  <div className="font-mono text-sm">{selectedLog.ipAddress}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Session ID</label>
+                  <div className="font-mono text-sm">{selectedLog.sessionId}</div>
+                </div>
+              </div>
+
+              {/* User Agent */}
+              <div>
+                <label className="text-sm font-medium">User Agent</label>
+                <div className="text-sm text-muted-foreground break-all">
+                  {selectedLog.userAgent}
+                </div>
+              </div>
+
+              {/* Details */}
+              {selectedLog.details && (
+                <div>
+                  <label className="text-sm font-medium">รายละเอียดเพิ่มเติม</label>
+                  <div className="mt-1 p-3 bg-muted rounded-md">
+                    {/* Old Values */}
+                    {selectedLog.details.oldValues && (
+                      <div className="mb-3">
+                        <div className="text-sm font-medium text-red-600 mb-1">ค่าเดิม:</div>
+                        <pre className="text-xs bg-red-50 p-2 rounded border">
+                          {JSON.stringify(selectedLog.details.oldValues, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                    
+                    {/* New Values */}
+                    {selectedLog.details.newValues && (
+                      <div className="mb-3">
+                        <div className="text-sm font-medium text-green-600 mb-1">ค่าใหม่:</div>
+                        <pre className="text-xs bg-green-50 p-2 rounded border">
+                          {JSON.stringify(selectedLog.details.newValues, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+
+                    {/* Changed Fields */}
+                    {selectedLog.details.changedFields && selectedLog.details.changedFields.length > 0 && (
+                      <div className="mb-3">
+                        <div className="text-sm font-medium mb-1">ฟิลด์ที่เปลี่ยนแปลง:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedLog.details.changedFields.map((field, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {field}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Error Message */}
+                    {selectedLog.details.errorMessage && (
+                      <div className="mb-3">
+                        <div className="text-sm font-medium text-red-600 mb-1">ข้อผิดพลาด:</div>
+                        <div className="text-sm bg-red-50 p-2 rounded border text-red-800">
+                          {selectedLog.details.errorMessage}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Affected Records */}
+                    {selectedLog.details.affectedRecords && (
+                      <div className="mb-3">
+                        <div className="text-sm font-medium mb-1">จำนวนระเบียนที่ได้รับผลกระทบ:</div>
+                        <div className="text-sm font-semibold text-blue-600">
+                          {selectedLog.details.affectedRecords} ระเบียน
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Info */}
+                    {selectedLog.details.additionalInfo && (
+                      <div>
+                        <div className="text-sm font-medium mb-1">ข้อมูลเพิ่มเติม:</div>
+                        <pre className="text-xs bg-gray-50 p-2 rounded border">
+                          {JSON.stringify(selectedLog.details.additionalInfo, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata */}
+              {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
+                <div>
+                  <label className="text-sm font-medium">Metadata</label>
+                  <div className="mt-1 p-3 bg-muted rounded-md">
+                    <pre className="text-xs">
+                      {JSON.stringify(selectedLog.metadata, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

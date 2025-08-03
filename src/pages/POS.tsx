@@ -13,6 +13,8 @@ import { QuickActions } from "@/components/pos/QuickActions";
 import { BarcodeScanner } from "@/components/pos/BarcodeScanner";
 import { CustomerManagementDialog } from "@/components/pos/CustomerManagementDialog";
 import { SalesHistoryDialog } from "@/components/pos/SalesHistoryDialog";
+import { CalculatorDialog } from "@/components/pos/CalculatorDialog";
+import { SettingsDialog } from "@/components/pos/SettingsDialog";
 import { Product } from "@/types/pos";
 import { generateSaleNumber } from "@/utils/posHelpers";
 
@@ -23,6 +25,8 @@ export default function POS() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [customerManagementOpen, setCustomerManagementOpen] = useState(false);
   const [salesHistoryOpen, setSalesHistoryOpen] = useState(false);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentSaleNumber] = useState(() => generateSaleNumber());
 
   const handleAddToCart = (product: Product) => {
@@ -87,6 +91,14 @@ export default function POS() {
     setScannerOpen(true);
   };
 
+  const handleShowCalculator = () => {
+    setCalculatorOpen(true);
+  };
+
+  const handleShowSettings = () => {
+    setSettingsOpen(true);
+  };
+
   const handleProductFoundByBarcode = (product: Product) => {
     handleAddToCart(product);
     toast({
@@ -133,6 +145,8 @@ export default function POS() {
         onShowCustomers={handleShowCustomers}
         onShowHistory={handleShowHistory}
         onBarcodeScanner={handleBarcodeScanner}
+        onShowCalculator={handleShowCalculator}
+        onShowSettings={handleShowSettings}
         cartItemCount={state.cart.length}
       />
 
@@ -205,6 +219,18 @@ export default function POS() {
             description: "ข้อมูลการขายได้รับการอัปเดตแล้ว",
           });
         }}
+      />
+
+      {/* Calculator Dialog */}
+      <CalculatorDialog
+        open={calculatorOpen}
+        onOpenChange={setCalculatorOpen}
+      />
+
+      {/* Settings Dialog */}
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
       />
     </div>
   );
