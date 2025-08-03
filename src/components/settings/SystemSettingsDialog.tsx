@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useToast } from '@/hooks/use-toast';
+import { SupabaseConnectionManager } from '@/components/settings/SupabaseConnectionManager';
 
 interface SystemSettingsDialogProps {
   open: boolean;
@@ -60,7 +61,7 @@ export const SystemSettingsDialog: React.FC<SystemSettingsDialogProps> = ({
   } = useSystemSettings();
   
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'general' | 'security' | 'audit' | 'notifications' | 'backup' | 'integrations'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'security' | 'audit' | 'notifications' | 'backup' | 'integrations' | 'supabase'>('general');
   const [showPasswords, setShowPasswords] = useState(false);
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
 
@@ -78,7 +79,7 @@ export const SystemSettingsDialog: React.FC<SystemSettingsDialogProps> = ({
     await saveSettings();
   };
 
-  const handleTestConnection = async (type: 'email' | 'ldap' | 'sso') => {
+  const handleTestConnection = async (type: 'email' | 'ldap' | 'sso' | 'supabase') => {
     setTestingConnection(type);
     await testConnection(type);
     setTestingConnection(null);
@@ -110,7 +111,7 @@ export const SystemSettingsDialog: React.FC<SystemSettingsDialogProps> = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               ทั่วไป
@@ -134,6 +135,10 @@ export const SystemSettingsDialog: React.FC<SystemSettingsDialogProps> = ({
             <TabsTrigger value="integrations" className="flex items-center gap-2">
               <Link className="h-4 w-4" />
               การเชื่อมต่อ
+            </TabsTrigger>
+            <TabsTrigger value="supabase" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Supabase
             </TabsTrigger>
           </TabsList>
 
@@ -894,6 +899,16 @@ export const SystemSettingsDialog: React.FC<SystemSettingsDialogProps> = ({
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Supabase Tab */}
+          <TabsContent value="supabase" className="space-y-6">
+            <SupabaseConnectionManager
+              settings={settings}
+              onUpdate={(updates) => updateSettings('integrations', updates)}
+              onTestConnection={() => handleTestConnection('supabase')}
+              isTesting={testingConnection === 'supabase'}
+            />
           </TabsContent>
         </Tabs>
 

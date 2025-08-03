@@ -27,7 +27,8 @@ import {
   CheckCircle,
   XCircle,
   Activity,
-  BarChart3
+  BarChart3,
+  Zap
 } from 'lucide-react';
 
 export default function Settings() {
@@ -157,6 +158,20 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card className="border-purple-200 bg-purple-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Database className="h-8 w-8 text-purple-600" />
+                  <div>
+                    <div className="text-2xl font-bold text-purple-700">
+                      {settings.integrations.supabase.enabled ? 'เปิด' : 'ปิด'}
+                    </div>
+                    <div className="text-sm text-purple-600">Supabase</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Quick Settings Overview */}
@@ -230,6 +245,45 @@ export default function Settings() {
                     <span>2FA</span>
                   </div>
                   {getStatusBadge(settings.security.twoFactorAuth)}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Supabase
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Database className="h-4 w-4 text-gray-500" />
+                    <span>สถานะ</span>
+                  </div>
+                  {getStatusBadge(settings.integrations.supabase.enabled)}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Wifi className="h-4 w-4 text-gray-500" />
+                    <span>URL</span>
+                  </div>
+                  <Badge variant="outline">
+                    {settings.integrations.supabase.url ? 
+                      settings.integrations.supabase.url.replace('https://', '').replace('.supabase.co', '') : 
+                      'ยังไม่กำหนด'
+                    }
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-gray-500" />
+                    <span>Realtime</span>
+                  </div>
+                  {getStatusBadge(settings.integrations.supabase.realtime.enabled)}
                 </div>
               </CardContent>
             </Card>

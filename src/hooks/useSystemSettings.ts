@@ -108,6 +108,22 @@ export interface SystemSettings {
       redirectUri: string;
       issuer: string;
     };
+    supabase: {
+      enabled: boolean;
+      url: string;
+      anonKey: string;
+      serviceRoleKey: string;
+      autoRefreshToken: boolean;
+      persistSession: boolean;
+      storage: 'localStorage' | 'sessionStorage' | 'memory';
+      debug: boolean;
+      realtime: {
+        enabled: boolean;
+        params: {
+          eventsPerSecond: number;
+        };
+      };
+    };
   };
 }
 
@@ -206,6 +222,22 @@ const defaultSettings: SystemSettings = {
       clientSecret: '',
       redirectUri: '',
       issuer: ''
+    },
+    supabase: {
+      enabled: true,
+      url: 'https://hartshwcchbsnmbrjdyn.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhcnRzaHdjY2hic25tYnJqZHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwMzc1NzQsImV4cCI6MjA2OTYxMzU3NH0.A1hn4-J2z9h4iuBXQ7xhh2F5UWXHmTPP92tncJfsF24',
+      serviceRoleKey: '',
+      autoRefreshToken: true,
+      persistSession: true,
+      storage: 'localStorage',
+      debug: false,
+      realtime: {
+        enabled: true,
+        params: {
+          eventsPerSecond: 10
+        }
+      }
     }
   }
 };
@@ -312,11 +344,42 @@ export const useSystemSettings = () => {
     reader.readAsText(file);
   };
 
-  const testConnection = async (type: 'email' | 'ldap' | 'sso') => {
+  const testConnection = async (type: 'email' | 'ldap' | 'sso' | 'supabase') => {
     setIsLoading(true);
     try {
-      // Simulate connection test
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (type === 'supabase') {
+        // Test Supabase connection
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabaseUrl = settings.integrations.supabase.url;
+        const supabaseKey = settings.integrations.supabase.anonKey;
+        
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error('URL หรือ Key ไม่ถูกต้อง');
+        }
+        
+        const testClient = createClient(supabaseUrl, supabaseKey);
+        
+        // Test basic connection by trying to get user session
+        const { data, error } = await testClient.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Test database connection by making a simple query
+        const { error: dbError } = await testClient
+          .from('system_settings')
+          .select('id')
+          .limit(1);
+        
+        // It's okay if this table doesn't exist, we're just testing the connection
+        if (dbError && !dbError.message.includes('does not exist')) {
+          throw dbError;
+        }
+      } else {
+        // Simulate connection test for other types
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
       
       toast({
         title: "ทดสอบการเชื่อมต่อสำเร็จ! ✅",
@@ -324,9 +387,10 @@ export const useSystemSettings = () => {
       });
       return true;
     } catch (error) {
+      console.error('Connection test error:', error);
       toast({
         title: "การทดสอบล้มเหลว",
-        description: `ไม่สามารถเชื่อมต่อ ${type.toUpperCase()} ได้`,
+        description: `ไม่สามารถเชื่อมต่อ ${type.toUpperCase()} ได้: ${error instanceof Error ? error.message : 'ข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`,
         variant: "destructive"
       });
       return false;

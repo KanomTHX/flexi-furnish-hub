@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Employees from "./pages/Employees";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Database from "./pages/Database";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,13 @@ const App = () => (
             <ProtectedRoute>
               <AdminLayout>
                 <Settings />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/database" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <Database />
               </AdminLayout>
             </ProtectedRoute>
           } />
