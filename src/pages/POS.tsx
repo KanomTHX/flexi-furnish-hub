@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, RotateCcw, Scan } from "lucide-react";
+import { ShoppingCart, RotateCcw, Scan, Building2, Eye } from "lucide-react";
 import { usePOS } from "@/hooks/usePOS";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useBranchData } from "../hooks/useBranchData";
+import { BranchSelector } from "../components/branch/BranchSelector";
 import { ProductGrid } from "@/components/pos/ProductGrid";
 import { CartSidebar } from "@/components/pos/CartSidebar";
 import { ReceiptPreview } from "@/components/pos/ReceiptPreview";
@@ -21,6 +23,8 @@ import { generateSaleNumber } from "@/utils/posHelpers";
 export default function POS() {
   const { state, actions } = usePOS();
   const { toast } = useToast();
+  const { currentBranch, currentBranchCustomers } = useBranchData();
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [customerManagementOpen, setCustomerManagementOpen] = useState(false);
@@ -117,13 +121,29 @@ export default function POS() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Branch Info */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">ระบบขาย POS</h1>
-          <p className="text-muted-foreground">จุดขาย - ธุรกรรมเงินสดและการออกใบเสร็จ</p>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">ระบบขาย POS</h1>
+            <p className="text-muted-foreground">จุดขาย - ธุรกรรมเงินสดและการออกใบเสร็จ</p>
+          </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+              <span className="text-xs text-blue-600">({currentBranchCustomers.length} ลูกค้า)</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowBranchSelector(!showBranchSelector)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Eye className="h-4 w-4" />
+            <span>เปลี่ยนสาขา</span>
+          </button>
           <Button variant="outline" onClick={handleBarcodeScanner}>
             <Scan className="w-4 h-4 mr-2" />
             สแกนบาร์โค้ด
@@ -138,6 +158,19 @@ export default function POS() {
           </Button>
         </div>
       </div>
+
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card>
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={false}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <QuickActions

@@ -13,8 +13,9 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const POS = lazy(() => import("./pages/POS"));
 const Installments = lazy(() => import("./pages/Installments"));
-const Stock = lazy(() => import("./pages/Stock"));
+
 const Warehouses = lazy(() => import("./pages/Warehouses"));
+const BranchManagement = lazy(() => import("./pages/BranchManagement"));
 const Accounting = lazy(() => import("./pages/Accounting"));
 const Claims = lazy(() => import("./pages/Claims"));
 const Audit = lazy(() => import("./pages/Audit"));
@@ -76,15 +77,7 @@ const App = () => (
                 </AdminLayout>
               </ProtectedRoute>
             } />
-            <Route path="/stock" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบสต็อก..." />}>
-                    <Stock />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
+
             <Route path="/employees" element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -97,8 +90,17 @@ const App = () => (
             <Route path="/warehouses" element={
               <ProtectedRoute>
                 <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบคลังสินค้า..." />}>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบคลัง & สต็อก..." />}>
                     <Warehouses />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/branches" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบจัดการสาขา..." />}>
+                    <BranchManagement />
                   </SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>

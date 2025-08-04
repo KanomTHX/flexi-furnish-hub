@@ -50,7 +50,7 @@ export function useAdvancedAnalytics() {
   const salesQuery = useSupabaseQuery(
     ['analytics-sales'],
     'sales_transactions',
-    'id, total, created_at, customer_id',
+    'id, total_amount, created_at, customer_id',
     { 
       realtime: true,
       orderBy: { column: 'created_at', ascending: false },
@@ -211,7 +211,7 @@ export function useAdvancedAnalytics() {
 
       return {
         date,
-        sales: daySales.reduce((sum, sale) => sum + (sale.total || 0), 0),
+        sales: daySales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0),
         orders: daySales.length,
         customers: uniqueCustomers.size
       };

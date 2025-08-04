@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useWarehouses } from '@/hooks/useWarehouses';
+import { useWarehouseStock } from '@/hooks/useWarehouseStock';
 import { WarehouseOverview } from '@/components/warehouses/WarehouseOverview';
 import { WarehouseList } from '@/components/warehouses/WarehouseList';
 import { TransferManagement } from '@/components/warehouses/TransferManagement';
 import { TaskManagement } from '@/components/warehouses/TaskManagement';
-import { exportWarehousesToCSV, exportTransfersToCSV, exportTasksToCSV } from '@/utils/warehouseHelpers';
+import { StockOverview } from '@/components/stock/StockOverview';
+import { StockLevelTable } from '@/components/stock/StockLevelTable';
+import { StockMovementHistory } from '@/components/stock/StockMovementHistory';
+import { StockAlertPanel } from '@/components/stock/StockAlertPanel';
 import { 
   Warehouse as WarehouseIcon, 
   Truck, 
@@ -16,171 +19,210 @@ import {
   AlertTriangle,
   BarChart3,
   Settings,
-  Plus
+  Plus,
+  Package,
+  ArrowUpDown,
+  Bell,
+  Boxes,
+  Building2,
+  Eye
 } from 'lucide-react';
+import { useBranchData } from '../hooks/useBranchData';
+import { BranchSelector } from '../components/branch/BranchSelector';
 
 export default function Warehouses() {
+  const { currentBranch } = useBranchData();
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
+  
   const {
+    // Warehouse Data
     warehouses,
     transfers,
-    tasks,
-    alerts,
+    warehouseTasks,
+    warehouseAlerts,
+    
+    // Stock Data
+    stockLevels,
+    stockMovements,
+    stockAlerts,
+    stockAdjustments,
+    stockCounts,
+    
+    // Combined Summary
     summary,
+    
+    // Filters
     warehouseFilter,
     transferFilter,
     taskFilter,
+    stockFilter,
+    movementFilter,
+    alertFilter,
     setWarehouseFilter,
     setTransferFilter,
     setTaskFilter,
-    clearWarehouseFilter,
-    clearTransferFilter,
-    clearTaskFilter,
+    setStockFilter,
+    setMovementFilter,
+    setAlertFilter,
+    
+    // States
+    isLoading,
+    isUpdating,
+    
+    // Actions
+    updateWarehouse,
+    createTransfer,
     approveTransfer,
-    shipTransfer,
-    receiveTransfer,
-    cancelTransfer,
+    adjustStock,
     assignTask,
     startTask,
     completeTask,
-    cancelTask,
     markAlertAsRead,
     resolveAlert,
-    getUnreadAlerts,
-    getCriticalAlerts,
-    getPendingTasks,
-    getActiveTransfers,
-    getOverdueTasks
-  } = useWarehouses();
+    exportWarehouseData,
+    exportStockData
+  } = useWarehouseStock();
 
   const { toast } = useToast();
 
   const handleExportWarehouses = () => {
-    const csv = exportWarehousesToCSV(warehouses);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `warehouses-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+    exportWarehouseData();
     toast({
       title: "ส่งออกข้อมูลสำเร็จ",
       description: "ไฟล์รายงานคลังสินค้าถูกดาวน์โหลดแล้ว",
     });
   };
 
-  const handleExportTransfers = () => {
-    const csv = exportTransfersToCSV(transfers);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `transfers-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+  const handleExportStock = () => {
+    exportStockData();
     toast({
       title: "ส่งออกข้อมูลสำเร็จ",
-      description: "ไฟล์รายงานการโอนย้ายถูกดาวน์โหลดแล้ว",
-    });
-  };
-
-  const handleExportTasks = () => {
-    const csv = exportTasksToCSV(tasks);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `tasks-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast({
-      title: "ส่งออกข้อมูลสำเร็จ",
-      description: "ไฟล์รายงานงานถูกดาวน์โหลดแล้ว",
+      description: "ไฟล์รายงานสต็อกถูกดาวน์โหลดแล้ว",
     });
   };
 
   const handleApproveTransfer = (transferId: string) => {
-    approveTransfer(transferId, 'current-user'); // TODO: ใช้ user ID จริง
+    approveTransfer(transferId, 'current-user');
     toast({
       title: "อนุมัติการโอนย้ายแล้ว",
       description: "การโอนย้ายได้รับการอนุมัติและพร้อมดำเนินการ",
     });
   };
 
-  const handleShipTransfer = (transferId: string) => {
-    shipTransfer(transferId, {
-      carrier: {
-        name: 'บริษัท ขนส่งดี จำกัด',
-        trackingNumber: `TRK-${Date.now()}`,
-        contact: '02-555-1234'
-      },
-      estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
-    });
-    toast({
-      title: "ส่งสินค้าแล้ว",
-      description: "สินค้าได้ถูกส่งออกและกำลังขนส่ง",
-    });
-  };
+  const handleAdjustStock = (productId: string, warehouseId: string, quantity: number, reason: string) => {
+    const adjustment = {
+      adjustmentNumber: `ADJ-${Date.now()}`,
+      warehouseId,
+      warehouse: warehouses.find(w => w.id === warehouseId) || { id: warehouseId, name: 'Unknown', code: 'UNK' },
+      type: quantity > 0 ? 'increase' as const : 'decrease' as const,
+      reason: 'other' as const,
+      status: 'completed' as const,
+      items: [{
+        id: `item-${Date.now()}`,
+        productId,
+        product: stockLevels.find(s => s.productId === productId)?.product || { id: productId, name: 'Unknown', sku: 'UNK', category: 'Unknown' },
+        zoneId: 'default-zone',
+        systemQuantity: stockLevels.find(s => s.productId === productId && s.warehouseId === warehouseId)?.quantity || 0,
+        adjustedQuantity: (stockLevels.find(s => s.productId === productId && s.warehouseId === warehouseId)?.quantity || 0) + quantity,
+        variance: quantity,
+        unitCost: stockLevels.find(s => s.productId === productId && s.warehouseId === warehouseId)?.averageCost || 0,
+        totalCost: quantity * (stockLevels.find(s => s.productId === productId && s.warehouseId === warehouseId)?.averageCost || 0),
+        reason,
+        notes: `ปรับปรุงโดยผู้ใช้: ${reason}`
+      }],
+      totalItems: 1,
+      totalVariance: quantity,
+      totalValue: quantity * (stockLevels.find(s => s.productId === productId && s.warehouseId === warehouseId)?.averageCost || 0),
+      requiresApproval: false,
+      description: reason,
+      createdBy: 'current-user'
+    };
 
-  const handleReceiveTransfer = (transferId: string) => {
-    const transfer = transfers.find(t => t.id === transferId);
-    if (transfer) {
-      const receivedItems = transfer.items.map(item => ({
-        itemId: item.id,
-        receivedQuantity: item.shippedQuantity
-      }));
-      receiveTransfer(transferId, 'current-user', receivedItems);
-      toast({
-        title: "รับสินค้าแล้ว",
-        description: "การโอนย้ายเสร็จสมบูรณ์",
-      });
-    }
-  };
-
-  const handleCancelTransfer = (transferId: string) => {
-    cancelTransfer(transferId, 'ยกเลิกโดยผู้ใช้');
+    adjustStock(adjustment);
     toast({
-      title: "ยกเลิกการโอนย้ายแล้ว",
-      description: "การโอนย้ายถูกยกเลิก",
-      variant: "destructive"
+      title: "ปรับปรุงสต็อกแล้ว",
+      description: `${quantity > 0 ? 'เพิ่ม' : 'ลด'}สต็อก ${Math.abs(quantity)} ชิ้น`,
     });
   };
 
   const handleCompleteTask = (taskId: string) => {
-    completeTask(taskId, 'งานเสร็จสมบูรณ์');
+    completeTask(taskId, 120, 'งานเสร็จสมบูรณ์');
     toast({
       title: "งานเสร็จสิ้น",
       description: "งานได้ถูกทำเครื่องหมายว่าเสร็จสิ้นแล้ว",
     });
   };
 
-  const handleAlertClick = (alertId: string) => {
-    markAlertAsRead(alertId);
+  const handleAlertClick = (alertId: string, isWarehouseAlert: boolean = true) => {
+    markAlertAsRead(alertId, isWarehouseAlert);
   };
 
-  const unreadAlerts = getUnreadAlerts();
-  const criticalAlerts = getCriticalAlerts();
-  const pendingTasks = getPendingTasks();
-  const activeTransfers = getActiveTransfers();
-  const overdueTasks = getOverdueTasks();
+  // Combined alerts
+  const safeWarehouseAlerts = warehouseAlerts || [];
+  const safeStockAlerts = stockAlerts || [];
+  const safeWarehouseTasks = warehouseTasks || [];
+  const safeTransfers = transfers || [];
+  
+  const allAlerts = [...safeWarehouseAlerts, ...safeStockAlerts];
+  const unreadAlerts = allAlerts.filter(a => a && !a.isRead);
+  const criticalAlerts = allAlerts.filter(a => a && a.severity === 'critical');
+  const pendingTasks = safeWarehouseTasks.filter(t => t && t.status === 'pending');
+  const activeTransfers = safeTransfers.filter(t => t && t.status === 'in_transit');
+  const overdueTasks = safeWarehouseTasks.filter(t => {
+    if (!t || !t.dueDate) return false;
+    const dueDate = new Date(t.dueDate);
+    const now = new Date();
+    return t.status !== 'completed' && dueDate < now;
+  });
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Branch Info */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-3xl font-bold">คลัง & สต็อก</h1>
+            <p className="text-muted-foreground">
+              จัดการคลังสินค้าและระบบสต็อก
+            </p>
+          </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowBranchSelector(!showBranchSelector)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Eye className="h-4 w-4" />
+            <span>เปลี่ยนสาขา</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card>
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={false}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Original Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">การจัดการคลังสินค้า</h1>
+          <h1 className="text-3xl font-bold text-foreground">การจัดการคลังสินค้าและสต็อก</h1>
           <p className="text-muted-foreground">
-            จัดการคลังสินค้า การโอนย้าย งาน และการแจ้งเตือน
+            จัดการคลังสินค้า สต็อก การโอนย้าย งาน และการแจ้งเตือนแบบครบวงจร
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -196,7 +238,7 @@ export default function Warehouses() {
               </span>
             </Button>
           )}
-          <Button onClick={() => clearWarehouseFilter()} variant="outline">
+          <Button onClick={() => setWarehouseFilter({})} variant="outline">
             <Settings className="w-4 h-4 mr-2" />
             ล้างตัวกรอง
           </Button>
@@ -219,7 +261,7 @@ export default function Warehouses() {
               <div 
                 key={alert.id}
                 className="text-sm text-red-600 cursor-pointer hover:underline"
-                onClick={() => handleAlertClick(alert.id)}
+                onClick={() => handleAlertClick(alert.id, 'warehouse' in alert)}
               >
                 • {alert.warehouse.name}: {alert.message}
               </div>
@@ -288,7 +330,7 @@ export default function Warehouses() {
 
       {/* เนื้อหาหลัก */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             ภาพรวม
@@ -297,22 +339,37 @@ export default function Warehouses() {
             <WarehouseIcon className="w-4 h-4" />
             คลังสินค้า ({warehouses.length})
           </TabsTrigger>
+          <TabsTrigger value="stock" className="flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            สต็อก ({stockLevels.length})
+          </TabsTrigger>
+          <TabsTrigger value="movements" className="flex items-center gap-2">
+            <ArrowUpDown className="w-4 h-4" />
+            การเคลื่อนไหว ({stockMovements.length})
+          </TabsTrigger>
           <TabsTrigger value="transfers" className="flex items-center gap-2">
             <Truck className="w-4 h-4" />
             การโอนย้าย ({transfers.length})
           </TabsTrigger>
           <TabsTrigger value="tasks" className="flex items-center gap-2">
             <CheckSquare className="w-4 h-4" />
-            งาน ({tasks.length})
+            งาน ({warehouseTasks.length})
+          </TabsTrigger>
+          <TabsTrigger value="adjustments" className="flex items-center gap-2">
+            <Boxes className="w-4 h-4" />
+            ปรับปรุง ({stockAdjustments.length})
           </TabsTrigger>
           <TabsTrigger value="alerts" className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
+            <Bell className="w-4 h-4" />
             แจ้งเตือน ({unreadAlerts.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <WarehouseOverview summary={summary} alerts={alerts} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <WarehouseOverview summary={summary} alerts={warehouseAlerts} />
+            <StockOverview summary={summary} alerts={stockAlerts} />
+          </div>
         </TabsContent>
 
         <TabsContent value="warehouses" className="space-y-6">
@@ -324,149 +381,99 @@ export default function Warehouses() {
           />
         </TabsContent>
 
+        <TabsContent value="stock" className="space-y-6">
+          <StockLevelTable
+            stockLevels={stockLevels}
+            warehouses={warehouses}
+            filter={stockFilter}
+            onFilterChange={setStockFilter}
+            onExport={handleExportStock}
+            onAdjustStock={handleAdjustStock}
+          />
+        </TabsContent>
+
+        <TabsContent value="movements" className="space-y-6">
+          <StockMovementHistory
+            movements={stockMovements}
+            warehouses={warehouses}
+            filter={movementFilter}
+            onFilterChange={setMovementFilter}
+            onExport={handleExportStock}
+          />
+        </TabsContent>
+
         <TabsContent value="transfers" className="space-y-6">
           <TransferManagement
             transfers={transfers}
             warehouses={warehouses}
             filter={transferFilter}
             onFilterChange={setTransferFilter}
-            onExport={handleExportTransfers}
+            onExport={handleExportWarehouses}
             onApproveTransfer={handleApproveTransfer}
-            onShipTransfer={handleShipTransfer}
-            onReceiveTransfer={handleReceiveTransfer}
-            onCancelTransfer={handleCancelTransfer}
+            onShipTransfer={() => {}}
+            onReceiveTransfer={() => {}}
+            onCancelTransfer={() => {}}
           />
         </TabsContent>
 
         <TabsContent value="tasks" className="space-y-6">
           <TaskManagement
-            tasks={tasks}
+            tasks={warehouseTasks}
             filter={taskFilter}
             onFilterChange={setTaskFilter}
-            onExport={handleExportTasks}
+            onExport={handleExportWarehouses}
             onAssignTask={assignTask}
             onStartTask={startTask}
             onCompleteTask={handleCompleteTask}
-            onCancelTask={cancelTask}
+            onCancelTask={() => {}}
           />
         </TabsContent>
 
-        <TabsContent value="alerts" className="space-y-6">
+        <TabsContent value="adjustments" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  การแจ้งเตือน
-                </CardTitle>
-                <div className="flex gap-2">
-                  {unreadAlerts.length > 0 && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        unreadAlerts.forEach(alert => markAlertAsRead(alert.id));
-                        toast({
-                          title: "อ่านแจ้งเตือนทั้งหมดแล้ว",
-                          description: `อ่านแจ้งเตือน ${unreadAlerts.length} รายการแล้ว`,
-                        });
-                      }}
-                    >
-                      อ่านทั้งหมด
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <Boxes className="h-4 w-4" />
+                การปรับปรุงสต็อก
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {alerts.length === 0 ? (
+                {stockAdjustments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>ไม่มีการแจ้งเตือน</p>
+                    <Boxes className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>ไม่มีการปรับปรุงสต็อก</p>
                   </div>
                 ) : (
-                  alerts.map((alert) => (
-                    <div 
-                      key={alert.id}
-                      className={`p-4 rounded-lg border ${
-                        alert.isRead 
-                          ? 'bg-gray-50 border-gray-200' 
-                          : alert.severity === 'critical'
-                          ? 'bg-red-50 border-red-200'
-                          : alert.severity === 'error'
-                          ? 'bg-orange-50 border-orange-200'
-                          : 'bg-yellow-50 border-yellow-200'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              alert.severity === 'critical' 
-                                ? 'bg-red-100 text-red-700'
-                                : alert.severity === 'error'
-                                ? 'bg-orange-100 text-orange-700'
-                                : alert.severity === 'warning'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-blue-100 text-blue-700'
-                            }`}>
-                              {alert.severity === 'critical' ? 'วิกฤต' : 
-                               alert.severity === 'error' ? 'ข้อผิดพลาด' :
-                               alert.severity === 'warning' ? 'คำเตือน' : 'ข้อมูล'}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {alert.warehouse.name}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(alert.createdAt).toLocaleDateString('th-TH')}
-                            </span>
-                            {!alert.isRead && (
-                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                            )}
-                          </div>
-                          <h4 className={`font-medium mb-1 ${alert.isRead ? 'text-muted-foreground' : ''}`}>
-                            {alert.title}
-                          </h4>
-                          <p className={`text-sm ${alert.isRead ? 'text-muted-foreground' : ''}`}>
-                            {alert.message}
-                          </p>
-                          {alert.isResolved && alert.resolution && (
-                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
-                              <div className="font-medium text-green-800">แก้ไขแล้ว:</div>
-                              <div className="text-green-700">{alert.resolution}</div>
-                              <div className="text-xs text-green-600 mt-1">
-                                โดย {alert.resolvedBy} เมื่อ {alert.resolvedAt && new Date(alert.resolvedAt).toLocaleString('th-TH')}
-                              </div>
-                            </div>
-                          )}
+                  stockAdjustments.map((adjustment) => (
+                    <div key={adjustment.id} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{adjustment.adjustmentNumber}</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            adjustment.status === 'completed' 
+                              ? 'bg-green-100 text-green-700'
+                              : adjustment.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}>
+                            {adjustment.status === 'completed' ? 'เสร็จสิ้น' : 
+                             adjustment.status === 'pending' ? 'รอดำเนินการ' : 'ร่าง'}
+                          </span>
                         </div>
-                        <div className="flex gap-2">
-                          {!alert.isRead && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleAlertClick(alert.id)}
-                            >
-                              อ่านแล้ว
-                            </Button>
-                          )}
-                          {!alert.isResolved && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                resolveAlert(alert.id, 'แก้ไขปัญหาแล้ว', 'current-user');
-                                toast({
-                                  title: "แก้ไขปัญหาแล้ว",
-                                  description: "การแจ้งเตือนได้รับการแก้ไข",
-                                });
-                              }}
-                            >
-                              แก้ไข
-                            </Button>
-                          )}
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(adjustment.createdAt).toLocaleDateString('th-TH')}
                         </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-2">
+                        {adjustment.warehouse.name} • {adjustment.description}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span>รายการ: {adjustment.totalItems}</span>
+                        <span className={adjustment.totalVariance >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          ผลต่าง: {adjustment.totalVariance > 0 ? '+' : ''}{adjustment.totalVariance}
+                        </span>
+                        <span>มูลค่า: ฿{adjustment.totalValue.toLocaleString()}</span>
                       </div>
                     </div>
                   ))
@@ -474,6 +481,154 @@ export default function Warehouses() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="alerts" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Warehouse Alerts */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <WarehouseIcon className="h-4 w-4" />
+                    แจ้งเตือนคลังสินค้า
+                  </CardTitle>
+                  <span className="text-sm text-muted-foreground">
+                    {warehouseAlerts.filter(a => !a.isRead).length} ใหม่
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {warehouseAlerts.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <WarehouseIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">ไม่มีการแจ้งเตือน</p>
+                    </div>
+                  ) : (
+                    warehouseAlerts.slice(0, 5).map((alert) => (
+                      <div 
+                        key={alert.id}
+                        className={`p-3 rounded-lg border text-sm ${
+                          alert.isRead 
+                            ? 'bg-gray-50 border-gray-200' 
+                            : alert.severity === 'critical'
+                            ? 'bg-red-50 border-red-200'
+                            : 'bg-yellow-50 border-yellow-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            alert.severity === 'critical' 
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {alert.severity === 'critical' ? 'วิกฤต' : 'คำเตือน'}
+                          </span>
+                          {!alert.isRead && (
+                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          )}
+                        </div>
+                        <div className="font-medium mb-1">{alert.title}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {alert.warehouse.name} • {new Date(alert.createdAt).toLocaleDateString('th-TH')}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stock Alerts */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-4 w-4" />
+                    แจ้งเตือนสต็อก
+                  </CardTitle>
+                  <span className="text-sm text-muted-foreground">
+                    {stockAlerts.filter(a => !a.isRead).length} ใหม่
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stockAlerts.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">ไม่มีการแจ้งเตือน</p>
+                    </div>
+                  ) : (
+                    stockAlerts.slice(0, 5).map((alert) => (
+                      <div 
+                        key={alert.id}
+                        className={`p-3 rounded-lg border text-sm ${
+                          alert.isRead 
+                            ? 'bg-gray-50 border-gray-200' 
+                            : alert.severity === 'critical'
+                            ? 'bg-red-50 border-red-200'
+                            : alert.severity === 'high'
+                            ? 'bg-orange-50 border-orange-200'
+                            : 'bg-yellow-50 border-yellow-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            alert.severity === 'critical' 
+                              ? 'bg-red-100 text-red-700'
+                              : alert.severity === 'high'
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {alert.severity === 'critical' ? 'วิกฤต' : 
+                             alert.severity === 'high' ? 'สูง' : 'ปานกลาง'}
+                          </span>
+                          {!alert.isRead && (
+                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          )}
+                        </div>
+                        <div className="font-medium mb-1">{alert.title}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {alert.warehouse.name} • สต็อก: {alert.currentStock} • {new Date(alert.createdAt).toLocaleDateString('th-TH')}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Combined Alert Actions */}
+          {unreadAlerts.length > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    มีการแจ้งเตือนที่ยังไม่ได้อ่าน {unreadAlerts.length} รายการ
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      unreadAlerts.forEach(alert => {
+                        const isWarehouseAlert = 'warehouse' in alert;
+                        markAlertAsRead(alert.id, isWarehouseAlert);
+                      });
+                      toast({
+                        title: "อ่านแจ้งเตือนทั้งหมดแล้ว",
+                        description: `อ่านแจ้งเตือน ${unreadAlerts.length} รายการแล้ว`,
+                      });
+                    }}
+                  >
+                    อ่านทั้งหมด
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>

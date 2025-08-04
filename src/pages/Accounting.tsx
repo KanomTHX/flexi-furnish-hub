@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAccounting } from '@/hooks/useAccounting';
+import { useBranchData } from '../hooks/useBranchData';
+import { BranchSelector } from '../components/branch/BranchSelector';
 import { AccountingOverview } from '@/components/accounting/AccountingOverview';
 import { ChartOfAccounts } from '@/components/accounting/ChartOfAccounts';
 import { JournalEntries } from '@/components/accounting/JournalEntries';
@@ -20,7 +22,9 @@ import {
   Settings,
   Plus,
   AlertTriangle,
-  Activity
+  Activity,
+  Building2,
+  Eye
 } from 'lucide-react';
 
 export default function Accounting() {
@@ -51,7 +55,9 @@ export default function Accounting() {
     getRecentTransactions
   } = useAccounting();
 
+  const { currentBranch, selectedBranchesAnalytics } = useBranchData();
   const { toast } = useToast();
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [createJournalEntryOpen, setCreateJournalEntryOpen] = useState(false);
   const [pendingApprovalOpen, setPendingApprovalOpen] = useState(false);
   const [clearFiltersOpen, setClearFiltersOpen] = useState(false);
@@ -170,15 +176,35 @@ export default function Accounting() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Branch Info */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">ระบบบัญชี</h1>
-          <p className="text-muted-foreground">
-            จัดการบัญชี รายการบัญชี และรายงานทางการเงิน
-          </p>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">ระบบบัญชี</h1>
+            <p className="text-muted-foreground">
+              จัดการบัญชี รายการบัญชี และรายงานทางการเงิน
+            </p>
+          </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+              {selectedBranchesAnalytics.length > 0 && (
+                <span className="text-xs text-blue-600">
+                  (รายได้ {selectedBranchesAnalytics[0]?.financial.totalRevenue.toLocaleString()} บาท)
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowBranchSelector(!showBranchSelector)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Eye className="h-4 w-4" />
+            <span>เปลี่ยนสาขา</span>
+          </button>
           {pendingEntries.length > 0 && (
             <Button 
               variant="outline" 
@@ -202,6 +228,19 @@ export default function Accounting() {
           </Button>
         </div>
       </div>
+
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card>
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={false}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pending Approvals Alert */}
       {pendingEntries.length > 0 && (

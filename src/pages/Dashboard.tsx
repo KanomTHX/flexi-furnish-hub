@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { usePerformance, useBundleAnalytics } from "@/hooks/usePerformance";
-import React from "react";
+import { useState, useEffect } from "react";
 import { 
   DollarSign, 
   Users, 
@@ -17,24 +17,29 @@ import {
   Clock,
   Eye,
   ChevronRight,
-  Activity
+  Activity,
+  Building2
 } from "lucide-react";
 import { EnhancedQuickActions } from "@/components/dashboard/EnhancedQuickActions";
 import { RealTimeStats } from "@/components/dashboard/RealTimeStats";
 import { ConnectionDetails } from "@/components/ui/connection-status";
+import { useBranchData } from "../hooks/useBranchData";
+import { BranchSelector } from "../components/branch/BranchSelector";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { currentBranch } = useBranchData();
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
   
   // Performance monitoring
   const performanceMetrics = usePerformance('Dashboard');
   useBundleAnalytics();
 
   // Real-time data refresh
-  const [lastUpdated, setLastUpdated] = React.useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   
-  React.useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setLastUpdated(new Date());
     }, 30000); // Update every 30 seconds
@@ -182,19 +187,34 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Page Header with Branch Info */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">แดชบอร์ด</h1>
-          <div className="flex items-center gap-2">
-            <p className="text-muted-foreground">ยินดีต้อนรับกลับมา! นี่คือสิ่งที่เกิดขึ้นในร้านของคุณวันนี้</p>
-            <Badge variant="outline" className="text-xs">
-              <Clock className="w-3 h-3 mr-1" />
-              อัปเดต {lastUpdated.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
-            </Badge>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">แดชบอร์ด</h1>
+            <div className="flex items-center gap-2">
+              <p className="text-muted-foreground">ยินดีต้อนรับกลับมา! นี่คือสิ่งที่เกิดขึ้นในร้านของคุณวันนี้</p>
+              <Badge variant="outline" className="text-xs">
+                <Clock className="w-3 h-3 mr-1" />
+                อัปเดต {lastUpdated.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+              </Badge>
+            </div>
           </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowBranchSelector(!showBranchSelector)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Eye className="h-4 w-4" />
+            <span>เปลี่ยนสาขา</span>
+          </button>
           <Button variant="outline" size="sm" onClick={handleViewReports}>
             <Eye className="w-4 h-4 mr-2" />
             ดูรายงาน
@@ -205,6 +225,19 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card>
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={false}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* System Notifications - Bubble Style */}
       {notifications.length > 0 && (

@@ -57,16 +57,17 @@ const navigationItems = [
     icon: CreditCard,
     badge: null
   },
+
   {
-    title: "จัดการสต็อก",
-    url: "/stock",
-    icon: Package,
-    badge: "12"
-  },
-  {
-    title: "คลังสินค้า",
+    title: "คลัง & สต็อก",
     url: "/warehouses",
     icon: Warehouse,
+    badge: null
+  },
+  {
+    title: "จัดการสาขา",
+    url: "/branches",
+    icon: Store,
     badge: null
   },
   {
