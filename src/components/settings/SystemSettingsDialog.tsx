@@ -906,7 +906,7 @@ export const SystemSettingsDialog: React.FC<SystemSettingsDialogProps> = ({
             <SupabaseConnectionManager
               settings={settings}
               onUpdate={(updates) => updateSettings('integrations', updates)}
-              onTestConnection={() => handleTestConnection('supabase')}
+              onTestConnection={async () => { await handleTestConnection('supabase'); return true; }}
               isTesting={testingConnection === 'supabase'}
             />
           </TabsContent>
