@@ -56,6 +56,7 @@ export function ConnectionDetails() {
   }
 
   const isConnected = connection?.connected ?? false;
+  const isFallback = connection?.fallback ?? false;
 
   return (
     <div className="space-y-2">
@@ -76,12 +77,25 @@ export function ConnectionDetails() {
       {!isConnected && connection?.error && (
         <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
           <strong>ข้อผิดพลาด:</strong> {connection.error}
+          {connection.details && (
+            <div className="mt-1 text-xs text-red-500">
+              รายละเอียด: {connection.details}
+            </div>
+          )}
+          <div className="mt-2 text-xs text-red-700">
+            💡 <strong>แนะนำ:</strong> ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือติดต่อผู้ดูแลระบบ
+          </div>
         </div>
       )}
       
       {isConnected && (
         <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
-          ✅ ระบบพร้อมใช้งาน - ข้อมูลจะอัปเดตแบบ real-time
+          ✅ {connection.message || 'ระบบพร้อมใช้งาน'}
+          {isFallback && (
+            <div className="mt-1 text-xs text-yellow-600">
+              ⚠️ ใช้งานในโหมดจำกัด - บางฟีเจอร์อาจไม่พร้อมใช้งาน
+            </div>
+          )}
         </div>
       )}
     </div>

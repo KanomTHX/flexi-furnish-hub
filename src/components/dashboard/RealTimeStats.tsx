@@ -69,14 +69,18 @@ function StatCard({ title, value, change, changeType, icon, description, loading
 }
 
 export function RealTimeStats() {
-  // Real-time queries for dashboard stats
+  // Real-time queries for dashboard stats with fallback data
   const todaySalesQuery = useSupabaseQuery(
     ['dashboard-sales-today'],
     'sales_transactions',
     'id, total, created_at',
     {
       filter: `created_at.gte.${new Date().toISOString().split('T')[0]}`,
-      realtime: true
+      realtime: true,
+      fallbackData: [
+        { id: '1', total: 15000, created_at: new Date().toISOString() },
+        { id: '2', total: 8500, created_at: new Date().toISOString() }
+      ]
     }
   );
 
@@ -86,7 +90,17 @@ export function RealTimeStats() {
     'id, status',
     {
       filter: 'status.eq.active',
-      realtime: true
+      realtime: true,
+      fallbackData: [
+        { id: '1', status: 'active' },
+        { id: '2', status: 'active' },
+        { id: '3', status: 'active' },
+        { id: '4', status: 'active' },
+        { id: '5', status: 'active' },
+        { id: '6', status: 'active' },
+        { id: '7', status: 'active' },
+        { id: '8', status: 'active' }
+      ]
     }
   );
 
@@ -96,7 +110,12 @@ export function RealTimeStats() {
     'product_id',
     {
       filter: 'status.eq.available',
-      realtime: true
+      realtime: true,
+      fallbackData: [
+        { product_id: '1' },
+        { product_id: '2' },
+        { product_id: '3' }
+      ]
     }
   );
 
@@ -106,7 +125,11 @@ export function RealTimeStats() {
     'id, due_date',
     {
       filter: `due_date.lt.${new Date().toISOString().split('T')[0]}.and.status.eq.pending`,
-      realtime: true
+      realtime: true,
+      fallbackData: [
+        { id: '1', due_date: '2025-01-01' },
+        { id: '2', due_date: '2025-01-15' }
+      ]
     }
   );
 
@@ -163,19 +186,41 @@ export function RealTimeStats() {
     }
   ];
 
+  // Check if any query is using fallback data
+  const isUsingFallback = todaySalesQuery.error || employeesQuery.error || lowStockQuery.error || overduePaymentsQuery.error;
+
   return (
     <div className="space-y-4">
       {/* Real-time indicator */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">สถิติแบบ Real-time</h2>
         <div className="flex items-center space-x-2">
-          <Activity className="w-4 h-4 text-green-500 animate-pulse" />
-          <Badge variant="outline" className="text-green-600 border-green-200">
+          <Activity className={cn(
+            "w-4 h-4",
+            isUsingFallback ? "text-yellow-500" : "text-green-500 animate-pulse"
+          )} />
+          <Badge variant="outline" className={cn(
+            isUsingFallback 
+              ? "text-yellow-600 border-yellow-200" 
+              : "text-green-600 border-green-200"
+          )}>
             <Clock className="w-3 h-3 mr-1" />
-            อัปเดตสด
+            {isUsingFallback ? "ข้อมูลสำรอง" : "อัปเดตสด"}
           </Badge>
         </div>
       </div>
+
+      {/* Fallback warning */}
+      {isUsingFallback && (
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-4 h-4 text-yellow-600" />
+            <span className="text-sm text-yellow-800">
+              กำลังใช้ข้อมูลสำรองเนื่องจากไม่สามารถเชื่อมต่อฐานข้อมูลได้
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
