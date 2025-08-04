@@ -25,8 +25,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Database = lazy(() => import("./pages/Database"));
 
-// Testing components (development only)
-const RealTimeTestDashboard = lazy(() => import("./components/testing/RealTimeTestDashboard").then(module => ({ default: module.RealTimeTestDashboard })));
+// Testing components would go here if needed
 
 const queryClient = new QueryClient();
 
@@ -158,18 +157,7 @@ const App = () => (
                 </AdminLayout>
               </ProtectedRoute>
             } />
-            {/* Testing Routes (Development) */}
-            {process.env.NODE_ENV === 'development' && (
-              <Route path="/test-realtime" element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดหน้าทดสอบ..." />}>
-                      <RealTimeTestDashboard />
-                    </SuspenseWrapper>
-                  </AdminLayout>
-                </ProtectedRoute>
-              } />
-            )}
+            {/* Testing Routes (Development) - Add when needed */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={
               <SuspenseWrapper>
