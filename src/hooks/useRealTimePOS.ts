@@ -118,8 +118,7 @@ export function useRealTimePOS() {
   // Cart operations
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
     // Check stock availability
-    const availableStock = product.inventory?.reduce((sum, inv) => 
-      sum + (inv.status === 'available' ? 1 : 0), 0) || 0;
+    const availableStock = product.stock || 0;
     
     const currentInCart = cart.find(item => item.product.id === product.id)?.quantity || 0;
     
@@ -150,8 +149,8 @@ export function useRealTimePOS() {
       const newItem: CartItem = {
         product,
         quantity,
-        unitPrice: product.base_price,
-        totalPrice: product.base_price * quantity
+        unitPrice: product.price,
+        totalPrice: product.price * quantity
       };
 
       return [...prevCart, newItem];
@@ -181,8 +180,7 @@ export function useRealTimePOS() {
     if (!product) return;
 
     // Check stock availability
-    const availableStock = product.inventory?.reduce((sum, inv) => 
-      sum + (inv.status === 'available' ? 1 : 0), 0) || 0;
+    const availableStock = product.stock || 0;
     
     if (quantity > availableStock) {
       toast({
@@ -272,7 +270,11 @@ export function useRealTimePOS() {
           total_price: item.totalPrice,
         }));
 
-        await supabase.from('transaction_items').insert(itemsData);
+        await supabase.from('sale_items').insert(itemsData.map(item => ({
+          ...item,
+          line_total: item.total_price,
+          serial_number: Date.now().toString()
+        })));
 
         // Update inventory status
         for (const item of cart) {

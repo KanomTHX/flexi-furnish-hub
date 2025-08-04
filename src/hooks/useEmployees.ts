@@ -51,11 +51,17 @@ export const useEmployees = () => {
     return {
       totalEmployees,
       activeEmployees,
-      onLeave: 0,
-      avgAttendanceRate: 95,
-      newHiresThisMonth: 3,
-      pendingLeaves: 5,
-      upcomingTrainings: 2
+      newHires: 3,
+      terminations: 0,
+      averageSalary: 35000,
+      totalPayroll: totalEmployees * 35000,
+      attendanceRate: 95,
+      turnoverRate: 5,
+      departmentBreakdown: [],
+      positionBreakdown: [],
+      ageDistribution: [],
+      tenureDistribution: [],
+      performanceDistribution: []
     };
   }, [employees]);
 

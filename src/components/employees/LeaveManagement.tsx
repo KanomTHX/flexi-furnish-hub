@@ -137,7 +137,7 @@ export const LeaveManagement: React.FC = () => {
   };
 
   const handleApprove = (leaveId: string) => {
-    approveLeave(leaveId, 'current-user'); // In real app, get current user ID
+    approveLeave(leaveId); // Fixed: removed extra parameter
   };
 
   const handleReject = (leaveId: string, reason: string) => {

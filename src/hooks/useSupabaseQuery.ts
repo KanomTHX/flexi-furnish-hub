@@ -24,7 +24,7 @@ export function useSupabaseQuery<T = any>(
     queryKey,
     queryFn: async () => {
       try {
-        let query = supabase.from(tableName).select(selectQuery);
+        let query = supabase.from(tableName as any).select(selectQuery);
         
         if (options?.filter) {
           // Parse filter string (e.g., "status.eq.active")
@@ -139,16 +139,16 @@ export function useSupabaseMutation<T = any>(
       
       switch (operation) {
         case 'insert':
-          query = supabase.from(tableName).insert(payload).select();
+          query = supabase.from(tableName as any).insert(payload).select();
           break;
         case 'update':
-          query = supabase.from(tableName).update(payload.data).eq('id', payload.id).select();
+          query = supabase.from(tableName as any).update(payload.data).eq('id', payload.id).select();
           break;
         case 'delete':
-          query = supabase.from(tableName).delete().eq('id', payload.id);
+          query = supabase.from(tableName as any).delete().eq('id', payload.id);
           break;
         case 'upsert':
-          query = supabase.from(tableName).upsert(payload).select();
+          query = supabase.from(tableName as any).upsert(payload).select();
           break;
         default:
           throw new Error(`Unsupported operation: ${operation}`);
@@ -243,9 +243,6 @@ export function useSupabaseConnection() {
     refetchInterval: 30000, // Check every 30 seconds
     retry: 3,
     retryDelay: 1000,
-    onError: (error) => {
-      console.warn('Connection error:', error);
-      // Don't show toast for every connection error to avoid spam
-    },
+    // Removed onError as it's deprecated in newer versions
   });
 }

@@ -106,7 +106,7 @@ export function useBundleAnalytics() {
             console.group('📦 Bundle Analytics');
             console.log(`DOM Content Loaded: ${navEntry.domContentLoadedEventEnd - navEntry.domContentLoadedEventStart}ms`);
             console.log(`Load Complete: ${navEntry.loadEventEnd - navEntry.loadEventStart}ms`);
-            console.log(`Total Load Time: ${navEntry.loadEventEnd - navEntry.navigationStart}ms`);
+            console.log(`Total Load Time: ${navEntry.loadEventEnd - navEntry.fetchStart}ms`);
             console.groupEnd();
           }
         });

@@ -194,6 +194,7 @@ export function useOptimisticCart() {
       optimisticUpdate(
         {
           queryKey: ['cart'],
+          updateFn: (oldData: any[]) => oldData.map(i => i.id === item.id ? item : i),
           successMessage: "อัปเดตจำนวนสินค้าแล้ว",
           errorMessage: "ไม่สามารถอัปเดตจำนวนได้"
         },
@@ -205,6 +206,7 @@ export function useOptimisticCart() {
       optimisticDelete(
         {
           queryKey: ['cart'],
+          updateFn: (oldData: any[]) => oldData.filter(item => item.id !== itemId),
           successMessage: "ลบสินค้าออกจากตะกร้าแล้ว",
           errorMessage: "ไม่สามารถลบสินค้าได้"
         },
@@ -222,6 +224,7 @@ export function useOptimisticInventory() {
       optimisticUpdate(
         {
           queryKey: ['products'],
+          updateFn: (oldData: any[]) => oldData.map(p => p.id === product.id ? product : p),
           successMessage: "อัปเดตสต็อกสินค้าแล้ว",
           errorMessage: "ไม่สามารถอัปเดตสต็อกได้"
         },

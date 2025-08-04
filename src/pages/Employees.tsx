@@ -39,8 +39,7 @@ const Employees: React.FC = () => {
     payrolls,
     trainings,
     analytics,
-    loading,
-    calculateAnalytics
+    loading
   } = useEmployees();
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -48,7 +47,7 @@ const Employees: React.FC = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
 
-  const currentAnalytics = calculateAnalytics();
+  const currentAnalytics = analytics;
 
   // Quick Stats
   const quickStats = [
