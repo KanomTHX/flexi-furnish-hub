@@ -141,11 +141,13 @@ export function useBranchData() {
   );
 
   const currentBranchMovements = useMemo(() => 
-    getCurrentBranchData(branchStockMovements), [branchStockMovements, getCurrentBranchData]
+    branchStockMovements.filter(movement => movement.warehouseId === currentBranch?.id), 
+    [branchStockMovements, currentBranch]
   );
 
   const currentBranchAlerts = useMemo(() => 
-    getCurrentBranchData(branchStockAlerts), [branchStockAlerts, getCurrentBranchData]
+    branchStockAlerts.filter(alert => alert.warehouseId === currentBranch?.id), 
+    [branchStockAlerts, currentBranch]
   );
 
   // Selected branches data (for comparison/reporting)

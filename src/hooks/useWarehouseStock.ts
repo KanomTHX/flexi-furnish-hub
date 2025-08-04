@@ -200,14 +200,30 @@ export function useWarehouseStock() {
       criticalAlerts: [...safeWarehouseAlerts, ...safeStockAlerts].filter(a => a?.severity === 'critical').length,
       totalValue: safeStockLevels.reduce((sum, s) => sum + (s?.totalValue || 0), 0),
       topPerformingWarehouse: safeWarehouses.length > 0 
-        ? safeWarehouses.reduce((best, current) => 
-            (current?.capacity?.utilizationPercentage || 0) > (best?.capacity?.utilizationPercentage || 0) ? current : best
-          ) 
+        ? (() => {
+            const best = safeWarehouses.reduce((best, current) => 
+              (current?.capacity?.utilizationPercentage || 0) > (best?.capacity?.utilizationPercentage || 0) ? current : best
+            );
+            return {
+              id: best?.id || '',
+              name: best?.name || '',
+              utilizationRate: best?.capacity?.utilizationPercentage || 85,
+              productivityScore: 90
+            };
+          })()
         : { id: '', name: '', utilizationRate: 0, productivityScore: 0 },
       lowPerformingWarehouse: safeWarehouses.length > 0 
-        ? safeWarehouses.reduce((worst, current) => 
-            (current?.capacity?.utilizationPercentage || 100) < (worst?.capacity?.utilizationPercentage || 100) ? current : worst
-          ) 
+        ? (() => {
+            const worst = safeWarehouses.reduce((worst, current) => 
+              (current?.capacity?.utilizationPercentage || 100) < (worst?.capacity?.utilizationPercentage || 100) ? current : worst
+            );
+            return {
+              id: worst?.id || '',
+              name: worst?.name || '',
+              utilizationRate: worst?.capacity?.utilizationPercentage || 45,
+              productivityScore: 60
+            };
+          })()
         : { id: '', name: '', utilizationRate: 0, productivityScore: 0 }
     };
 

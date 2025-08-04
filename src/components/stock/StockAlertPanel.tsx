@@ -81,7 +81,7 @@ export function StockAlertPanel({ alerts, onMarkAsRead, onResolve }: StockAlertP
 
   // Use branch-specific alerts if available, otherwise use all alerts
   const displayAlerts = currentBranch && currentBranchAlerts.length > 0 ? currentBranchAlerts : alerts;
-  const safeAlerts = displayAlerts || [];
+  const safeAlerts = displayAlerts?.filter(a => a && typeof a === 'object' && 'id' in a) || [];
   const unreadAlerts = safeAlerts.filter(a => a && !a.isRead);
   const criticalAlerts = safeAlerts.filter(a => a && a.severity === 'critical');
   const resolvedAlerts = safeAlerts.filter(a => a && a.isResolved);
@@ -272,7 +272,9 @@ export function StockAlertPanel({ alerts, onMarkAsRead, onResolve }: StockAlertP
                 variant="outline" 
                 size="sm"
                 onClick={() => {
-                  unreadAlerts.forEach(alert => onMarkAsRead(alert.id));
+                  unreadAlerts.forEach(alert => {
+                    if ('id' in alert) onMarkAsRead(alert.id);
+                  });
                 }}
               >
                 อ่านทั้งหมด
@@ -289,7 +291,9 @@ export function StockAlertPanel({ alerts, onMarkAsRead, onResolve }: StockAlertP
                 <p className="text-sm">สต็อกทั้งหมดอยู่ในสภาพปกติ</p>
               </div>
             ) : (
-              safeAlerts.map((alert) => (
+              safeAlerts.map((alert) => {
+                if (!('id' in alert)) return null;
+                return (
                 <div 
                   key={alert.id}
                   className={`p-4 rounded-lg border ${
@@ -378,9 +382,10 @@ export function StockAlertPanel({ alerts, onMarkAsRead, onResolve }: StockAlertP
                       )}
                     </div>
                   </div>
-                </div>
-              ))
-            )}
+                 </div>
+                 );
+               })
+             )}
           </div>
         </CardContent>
       </Card>
