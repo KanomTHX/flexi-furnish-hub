@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,10 +14,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export function AdminHeader() {
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
   const navigate = useNavigate();
+  const { unreadCount } = usePushNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -40,14 +45,21 @@ export function AdminHeader() {
 
         <div className="flex items-center gap-4">
           {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="relative"
+            onClick={() => setShowNotifications(true)}
+          >
             <Bell className="w-4 h-4" />
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 w-5 h-5 text-xs p-0 flex items-center justify-center"
-            >
-              3
-            </Badge>
+            {unreadCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 w-5 h-5 text-xs p-0 flex items-center justify-center"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
+            )}
           </Button>
 
           {/* Branch Selector */}
@@ -64,8 +76,8 @@ export function AdminHeader() {
                   <User className="w-4 h-4" />
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium">ผู้ดูแลระบบ</p>
-                  <p className="text-xs text-muted-foreground">ผู้จัดการ</p>
+                  <p className="text-sm font-medium">{profile?.full_name || 'ผู้ดูแลระบบ'}</p>
+                  <p className="text-xs text-muted-foreground">{profile?.role || 'ผู้จัดการ'}</p>
                 </div>
                 <ChevronDown className="w-4 h-4" />
               </Button>
@@ -90,6 +102,12 @@ export function AdminHeader() {
           </DropdownMenu>
         </div>
       </div>
+      
+      {/* Notification Center */}
+      <NotificationCenter 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+      />
     </header>
   );
 }

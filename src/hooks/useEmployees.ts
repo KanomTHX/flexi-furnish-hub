@@ -1,4 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useSupabaseQuery, useSupabaseMutation } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Employee, 
   Department, 
@@ -44,18 +47,113 @@ interface EmployeesState {
 }
 
 export const useEmployees = () => {
-  const [state, setState] = useState<EmployeesState>({
-    employees: mockEmployees,
-    departments: mockDepartments,
-    positions: mockPositions,
-    attendance: mockAttendance,
-    leaves: mockLeaves,
-    payrolls: mockPayrolls,
-    trainings: mockTrainings,
-    analytics: mockEmployeeAnalytics,
-    loading: false,
-    error: null
+  const { toast } = useToast();
+  
+  // Real-time data queries
+  const employeesQuery = useSupabaseQuery<Employee>(
+    ['employees'],
+    'employees',
+    `
+      *,
+      department:departments(*),
+      position:positions(*)
+    `,
+    { realtime: true, orderBy: { column: 'created_at', ascending: false } }
+  );
+
+  const departmentsQuery = useSupabaseQuery<Department>(
+    ['departments'],
+    'departments',
+    '*',
+    { realtime: true }
+  );
+
+  const positionsQuery = useSupabaseQuery<Position>(
+    ['positions'],
+    'positions',
+    '*',
+    { realtime: true }
+  );
+
+  const attendanceQuery = useSupabaseQuery<Attendance>(
+    ['attendance'],
+    'attendance',
+    `
+      *,
+      employee:employees(*)
+    `,
+    { 
+      realtime: true, 
+      orderBy: { column: 'date', ascending: false },
+      limit: 100 
+    }
+  );
+
+  const leavesQuery = useSupabaseQuery<Leave>(
+    ['leaves'],
+    'leaves',
+    `
+      *,
+      employee:employees(*)
+    `,
+    { realtime: true, orderBy: { column: 'applied_at', ascending: false } }
+  );
+
+  const payrollsQuery = useSupabaseQuery<Payroll>(
+    ['payrolls'],
+    'payrolls',
+    `
+      *,
+      employee:employees(*)
+    `,
+    { realtime: true, orderBy: { column: 'created_at', ascending: false } }
+  );
+
+  // Mutations
+  const addEmployeeMutation = useSupabaseMutation('employees', 'insert', {
+    invalidateQueries: [['employees']],
   });
+
+  const updateEmployeeMutation = useSupabaseMutation('employees', 'update', {
+    invalidateQueries: [['employees']],
+  });
+
+  const deleteEmployeeMutation = useSupabaseMutation('employees', 'delete', {
+    invalidateQueries: [['employees']],
+  });
+
+  const addAttendanceMutation = useSupabaseMutation('attendance', 'insert', {
+    invalidateQueries: [['attendance']],
+  });
+
+  const addLeaveMutation = useSupabaseMutation('leaves', 'insert', {
+    invalidateQueries: [['leaves']],
+  });
+
+  // Fallback to mock data if queries are loading or failed
+  const employees = employeesQuery.data || mockEmployees;
+  const departments = departmentsQuery.data || mockDepartments;
+  const positions = positionsQuery.data || mockPositions;
+  const attendance = attendanceQuery.data || mockAttendance;
+  const leaves = leavesQuery.data || mockLeaves;
+  const payrolls = payrollsQuery.data || mockPayrolls;
+  const trainings = mockTrainings; // Keep as mock for now
+
+  const loading = employeesQuery.isLoading || departmentsQuery.isLoading || positionsQuery.isLoading;
+  const error = employeesQuery.error || departmentsQuery.error || positionsQuery.error;
+
+  const state: EmployeesState = {
+    employees,
+    departments,
+    positions,
+    attendance,
+    leaves,
+    payrolls,
+    trainings,
+    analytics: mockEmployeeAnalytics,
+    loading,
+    error: error?.message || null
+  };
 
   // Employee Management
   const addEmployee = useCallback((employeeData: EmployeeFormData) => {

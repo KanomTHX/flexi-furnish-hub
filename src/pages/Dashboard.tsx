@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { usePerformance, useBundleAnalytics } from "@/hooks/usePerformance";
 import React from "react";
 import { 
   DollarSign, 
@@ -19,10 +20,16 @@ import {
   Activity
 } from "lucide-react";
 import { EnhancedQuickActions } from "@/components/dashboard/EnhancedQuickActions";
+import { RealTimeStats } from "@/components/dashboard/RealTimeStats";
+import { ConnectionDetails } from "@/components/ui/connection-status";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Performance monitoring
+  const performanceMetrics = usePerformance('Dashboard');
+  useBundleAnalytics();
 
   // Real-time data refresh
   const [lastUpdated, setLastUpdated] = React.useState(new Date());
@@ -219,27 +226,18 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index} className="border-0 shadow-md bg-gradient-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className={`text-sm ${stat.change.startsWith('+') ? 'text-success' : 'text-destructive'}`}>
-                    {stat.change} จากเมื่อวาน
-                  </p>
-                </div>
-                <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Real-time Stats */}
+      <RealTimeStats />
+
+      {/* Connection Status Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">สถานะการเชื่อมต่อ</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ConnectionDetails />
+        </CardContent>
+      </Card>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
