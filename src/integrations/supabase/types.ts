@@ -254,6 +254,63 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          address: string | null
+          blacklisted: boolean | null
+          created_at: string
+          credit_score: number | null
+          email: string | null
+          emergency_contact: Json | null
+          id: string
+          id_card: string | null
+          monthly_income: number | null
+          name: string
+          notes: string | null
+          occupation: string | null
+          phone: string | null
+          updated_at: string
+          work_address: string | null
+          workplace: string | null
+        }
+        Insert: {
+          address?: string | null
+          blacklisted?: boolean | null
+          created_at?: string
+          credit_score?: number | null
+          email?: string | null
+          emergency_contact?: Json | null
+          id?: string
+          id_card?: string | null
+          monthly_income?: number | null
+          name: string
+          notes?: string | null
+          occupation?: string | null
+          phone?: string | null
+          updated_at?: string
+          work_address?: string | null
+          workplace?: string | null
+        }
+        Update: {
+          address?: string | null
+          blacklisted?: boolean | null
+          created_at?: string
+          credit_score?: number | null
+          email?: string | null
+          emergency_contact?: Json | null
+          id?: string
+          id_card?: string | null
+          monthly_income?: number | null
+          name?: string
+          notes?: string | null
+          occupation?: string | null
+          phone?: string | null
+          updated_at?: string
+          work_address?: string | null
+          workplace?: string | null
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           budget: number | null
