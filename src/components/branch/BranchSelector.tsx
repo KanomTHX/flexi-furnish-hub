@@ -49,28 +49,28 @@ export function BranchSelector({
   const getBranchStatusColor = (status: Branch['status']) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/10 text-success-foreground border-success/20';
       case 'inactive':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground border-border';
       case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/10 text-warning-foreground border-warning/20';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 
   const getBranchTypeIcon = (type: Branch['type']) => {
     switch (type) {
       case 'main':
-        return <Building2 className="h-5 w-5 text-blue-600" />;
+        return <Building2 className="h-5 w-5 text-primary" />;
       case 'branch':
-        return <Building2 className="h-5 w-5 text-green-600" />;
+        return <Building2 className="h-5 w-5 text-success" />;
       case 'outlet':
-        return <Building2 className="h-5 w-5 text-orange-600" />;
+        return <Building2 className="h-5 w-5 text-warning" />;
       case 'warehouse':
-        return <Building2 className="h-5 w-5 text-purple-600" />;
+        return <Building2 className="h-5 w-5 text-secondary" />;
       default:
-        return <Building2 className="h-5 w-5 text-gray-600" />;
+        return <Building2 className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -85,9 +85,9 @@ export function BranchSelector({
 
   if (!branches.length) {
     return (
-      <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
-        <div className="text-center text-gray-500">
-          <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+      <div className={`bg-card rounded-lg shadow-sm border p-6 ${className}`}>
+        <div className="text-center text-muted-foreground">
+          <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
           <p>ไม่พบข้อมูลสาขา</p>
         </div>
       </div>
@@ -95,12 +95,12 @@ export function BranchSelector({
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
+    <div className={`bg-card rounded-lg shadow-sm border ${className}`}>
       <div className="p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-foreground">
           {allowMultiSelect ? 'เลือกสาขาที่ต้องการดู' : 'เปลี่ยนสาขา'}
         </h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {allowMultiSelect 
             ? `เลือกได้หลายสาขา (เลือกแล้ว ${selectedBranchIds.length} สาขา)`
             : `สาขาปัจจุบัน: ${currentBranch?.name || 'ไม่ระบุ'}`

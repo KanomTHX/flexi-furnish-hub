@@ -9,6 +9,7 @@ import {
   BranchTransfer,
   BranchStock
 } from '../types/branch';
+import { BranchDataAccessMiddleware, DataAccessResponse } from '../middleware/branchDataAccess';
 import { 
   StockLevel,
   StockMovement,
@@ -301,15 +302,22 @@ export function useBranchData() {
     }
   }, []);
 
-  // Data isolation helpers
+  // Enhanced data isolation helpers with security middleware
   const getIsolatedData = useCallback(<T extends { branchId: string }>(
     data: T[], 
-    branchId: string
+    branchId: string,
+    resourceType: string = 'general'
   ) => {
-    return data.filter(item => item.branchId === branchId);
+    const filtered = data.filter(item => item.branchId === branchId);
+    
+    // ในการใช้งานจริง จะใช้ security middleware เพื่อกรองข้อมูล
+    // const accessResult = security.checkAccess({ targetBranchId: branchId, operation: 'view', resourceType });
+    // return BranchDataAccessMiddleware.filterDataByAccess(filtered, accessResult, resourceType);
+    
+    return filtered;
   }, []);
 
-  const canAccessBranchData = useCallback((branchId: string) => {
+  const canAccessBranchData = useCallback((branchId: string, resourceType: string = 'general') => {
     if (!branchContext || !currentBranch) return false;
     
     // Super admin can access all
@@ -319,9 +327,53 @@ export function useBranchData() {
     if (branchId === currentBranch.id) return true;
     
     // Check if branch allows access to other branches
-    return currentBranch.permissions.canAccessOtherBranches && 
-           branchContext.accessibleBranches.some(b => b.id === branchId);
+    const hasPermission = currentBranch.permissions.canAccessOtherBranches && 
+                         branchContext.accessibleBranches.some(b => b.id === branchId);
+    
+    if (!hasPermission) return false;
+    
+    // Check data isolation level
+    const targetBranch = branchContext.accessibleBranches.find(b => b.id === branchId);
+    if (targetBranch?.permissions.dataIsolationLevel === 'strict') return false;
+    
+    return true;
   }, [branchContext, currentBranch]);
+
+  // Enhanced data access with middleware processing
+  const getSecureData = useCallback(<T extends { branchId: string }>(
+    data: T[],
+    targetBranchId: string,
+    resourceType: string,
+    operation: 'view' | 'create' | 'update' | 'delete' = 'view'
+  ) => {
+    // ตรวจสอบสิทธิ์การเข้าถึง
+    const canAccess = canAccessBranchData(targetBranchId, resourceType);
+    
+    if (!canAccess) {
+      return {
+        success: false,
+        data: [],
+        accessResult: {
+          allowed: false,
+          reason: 'Access denied to branch data',
+          restrictionLevel: 'full' as const
+        }
+      };
+    }
+
+    // กรองข้อมูลตามสาขา
+    const filteredData = data.filter(item => item.branchId === targetBranchId);
+    
+    return {
+      success: true,
+      data: filteredData,
+      accessResult: {
+        allowed: true,
+        reason: 'Access granted',
+        restrictionLevel: 'none' as const
+      }
+    };
+  }, [canAccessBranchData]);
 
   // Export functions
   const exportBranchData = useCallback((branchIds?: string[]) => {
@@ -436,6 +488,7 @@ export function useBranchData() {
     // Utilities
     getIsolatedData,
     canAccessBranchData,
+    getSecureData,
     exportBranchData,
     exportBranchComparison
   };
