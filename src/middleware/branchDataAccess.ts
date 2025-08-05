@@ -60,13 +60,13 @@ export class BranchDataAccessMiddleware {
     if (accessResult.restrictionLevel === 'partial' && accessResult.allowedFields) {
       const allowedFields = accessResult.allowedFields;
       const filteredData = data.map(item => {
-        const filteredItem = {} as T;
+        const filteredItem = {} as Record<string, any>;
         allowedFields.forEach(field => {
           if (item.hasOwnProperty(field)) {
             filteredItem[field] = item[field];
           }
         });
-        return filteredItem;
+        return filteredItem as T;
       });
 
       const allFields = data.length > 0 ? Object.keys(data[0]) : [];
@@ -93,7 +93,7 @@ export class BranchDataAccessMiddleware {
   }
 
   // สร้างข้อมูลสำหรับ Cross-branch reporting
-  static createCrossBranchSummary<T extends { branchId: string }>(
+  static createCrossBranchSummary<T extends Record<string, any> & { branchId: string }>(
     data: T[],
     branchNames: Record<string, string>
   ) {
@@ -158,7 +158,7 @@ export class BranchDataAccessMiddleware {
     // เพิ่มสรุปข้อมูลแยกตามสาขา
     if (options.includeSummary && options.branchNames && accessResult.allowed) {
       const summary = this.createCrossBranchSummary(
-        processedData.filter(item => 'branchId' in item) as any[], 
+        processedData.filter(item => item && typeof item === 'object' && 'branchId' in item) as (Record<string, any> & { branchId: string })[], 
         options.branchNames
       );
       response.metadata = { ...response.metadata!, ...summary };
@@ -358,8 +358,8 @@ export function validateBranchAccess(
 export function sanitizeDataForBranch<T extends Record<string, any>>(
   data: T,
   allowedFields: string[]
-): Partial<T> {
-  const sanitized = {} as Partial<T>;
+): Record<string, any> {
+  const sanitized: Record<string, any> = {};
   allowedFields.forEach(field => {
     if (data.hasOwnProperty(field)) {
       sanitized[field] = data[field];

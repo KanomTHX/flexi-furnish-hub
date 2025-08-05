@@ -1,7 +1,4 @@
-// Branch Security Hook - Phase 1
-// Hook สำหรับจัดการความปลอดภัยและควบคุมการเข้าถึงข้อมูลสาขา
-
-import { useState, useEffect, useCallback, useContext, createContext, ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, useContext, createContext, ReactNode } from 'react';
 import { 
   BranchSecurityManager, 
   BranchAccessRequest, 
@@ -12,7 +9,6 @@ import {
 import { BranchDataContext } from '../types/branch';
 import { useBranchData } from './useBranchData';
 
-// Security Context
 interface BranchSecurityContextType {
   securityManager: BranchSecurityManager;
   currentSessionId: string | null;
@@ -23,7 +19,6 @@ interface BranchSecurityContextType {
 
 const BranchSecurityContext = createContext<BranchSecurityContextType | null>(null);
 
-// Provider Component
 export function BranchSecurityProvider({ 
   children, 
   config = {} 
@@ -39,14 +34,12 @@ export function BranchSecurityProvider({
   
   const { currentBranch, branchContext } = useBranchData();
 
-  // สร้าง Session เมื่อเปลี่ยนสาขา
   useEffect(() => {
     if (currentBranch && branchContext) {
       const sessionId = securityManager.createBranchSession('current-user', currentBranch.id);
       setCurrentSessionId(sessionId);
 
       return () => {
-        // Cleanup session เมื่อ component unmount
         if (sessionId) {
           securityManager.logAccess(sessionId, 'session_end', 'system');
         }
@@ -54,7 +47,6 @@ export function BranchSecurityProvider({
     }
   }, [currentBranch?.id, securityManager, branchContext]);
 
-  // ฟังก์ชันตรวจสอบสิทธิ์การเข้าถึง
   const checkAccess = useCallback((
     request: Omit<BranchAccessRequest, 'userId' | 'currentBranchId' | 'timestamp'>
   ): BranchAccessResult => {
@@ -68,7 +60,7 @@ export function BranchSecurityProvider({
 
     const fullRequest: BranchAccessRequest = {
       ...request,
-      userId: 'current-user', // ในการใช้งานจริงจะได้จาก auth context
+      userId: 'current-user',
       currentBranchId: currentBranch.id,
       timestamp: new Date()
     };
@@ -76,7 +68,6 @@ export function BranchSecurityProvider({
     return securityManager.checkBranchAccess(fullRequest, branchContext);
   }, [securityManager, currentBranch, branchContext, isSecurityEnabled]);
 
-  // ฟังก์ชันบันทึกการดำเนินการ
   const logOperation = useCallback((
     operation: string, 
     resourceType: string, 
@@ -95,14 +86,13 @@ export function BranchSecurityProvider({
     logOperation
   };
 
-  return (
-    <BranchSecurityContext.Provider value={contextValue}>
-      {children}
-    </BranchSecurityContext.Provider>
+  return React.createElement(
+    BranchSecurityContext.Provider,
+    { value: contextValue },
+    children
   );
 }
 
-// Main Hook
 export function useBranchSecurity() {
   const context = useContext(BranchSecurityContext);
   
@@ -118,20 +108,18 @@ export function useBranchSecurity() {
     logOperation: contextLogOperation 
   } = context;
 
-  // ตรวจสอบสิทธิ์การดูข้อมูลสาขา
   const canViewBranchData = useCallback((branchId: string, resourceType: string = 'general') => {
     const result = contextCheckAccess({
       targetBranchId: branchId,
       operation: 'view',
       resourceType: resourceType as any,
-      userRole: 'user' // ในการใช้งานจริงจะได้จาก auth context
+      userRole: 'user'
     });
 
     contextLogOperation('access_check', resourceType, branchId);
     return result;
   }, [contextCheckAccess, contextLogOperation]);
 
-  // ตรวจสอบสิทธิ์การแก้ไขข้อมูลสาขา
   const canEditBranchData = useCallback((branchId: string, resourceType: string = 'general') => {
     const result = contextCheckAccess({
       targetBranchId: branchId,
@@ -144,7 +132,6 @@ export function useBranchSecurity() {
     return result;
   }, [contextCheckAccess, contextLogOperation]);
 
-  // ตรวจสอบสิทธิ์การลบข้อมูล
   const canDeleteBranchData = useCallback((branchId: string, resourceType: string = 'general') => {
     const result = contextCheckAccess({
       targetBranchId: branchId,
@@ -157,7 +144,6 @@ export function useBranchSecurity() {
     return result;
   }, [contextCheckAccess, contextLogOperation]);
 
-  // ตรวจสอบสิทธิ์การโอนย้ายข้อมูล
   const canTransferBetweenBranches = useCallback((fromBranchId: string, toBranchId: string) => {
     const result = contextCheckAccess({
       targetBranchId: toBranchId,
@@ -170,11 +156,10 @@ export function useBranchSecurity() {
     return result;
   }, [contextCheckAccess, contextLogOperation]);
 
-  // ฟิลเตอร์ข้อมูลตาม Security Rules
-  const filterDataByAccess = useCallback(<T extends { branchId?: string }>(
-    data: T[], 
+  const filterDataByAccess = useCallback((
+    data: any[], 
     resourceType: string = 'general'
-  ): T[] => {
+  ) => {
     if (!isSecurityEnabled) return data;
 
     return data.filter(item => {
@@ -185,19 +170,16 @@ export function useBranchSecurity() {
     });
   }, [canViewBranchData, isSecurityEnabled]);
 
-  // รายงานการใช้งาน Session
   const getSessionReport = useCallback(() => {
     if (!currentSessionId) return null;
     return securityManager.getSessionReport(currentSessionId);
   }, [securityManager, currentSessionId]);
 
-  // ตรวจสอบสถานะ Session
   const isSessionValid = useCallback(() => {
     if (!currentSessionId) return false;
     return securityManager.validateSession(currentSessionId);
   }, [securityManager, currentSessionId]);
 
-  // สถิติการเข้าถึง
   const [accessStats, setAccessStats] = useState({
     totalChecks: 0,
     allowedAccess: 0,
@@ -205,7 +187,6 @@ export function useBranchSecurity() {
     partialAccess: 0
   });
 
-  // อัพเดทสถิติเมื่อมีการตรวจสอบสิทธิ์
   const trackAccessCheck = useCallback((result: BranchAccessResult) => {
     setAccessStats(prev => ({
       totalChecks: prev.totalChecks + 1,
@@ -215,7 +196,6 @@ export function useBranchSecurity() {
     }));
   }, []);
 
-  // Enhanced check functions with tracking
   const checkAccessWithTracking = useCallback((
     request: Omit<BranchAccessRequest, 'userId' | 'currentBranchId' | 'timestamp'>
   ) => {
@@ -225,34 +205,22 @@ export function useBranchSecurity() {
   }, [contextCheckAccess, trackAccessCheck]);
 
   return {
-    // Core functions
     checkAccess: checkAccessWithTracking,
     logOperation: contextLogOperation,
-    
-    // Convenience functions
     canViewBranchData,
     canEditBranchData,
     canDeleteBranchData,
     canTransferBetweenBranches,
-    
-    // Data filtering
     filterDataByAccess,
-    
-    // Session management
     currentSessionId,
     getSessionReport,
     isSessionValid,
-    
-    // Security status
     isSecurityEnabled,
     accessStats,
-    
-    // Manager instance for advanced usage
     securityManager
   };
 }
 
-// Utility hook for specific resource types
 export function useResourceSecurity(resourceType: string) {
   const security = useBranchSecurity();
   
@@ -265,7 +233,7 @@ export function useResourceSecurity(resourceType: string) {
   const canDelete = useCallback((branchId: string) => 
     security.canDeleteBranchData(branchId, resourceType), [security, resourceType]);
     
-  const filterData = useCallback(<T extends { branchId?: string }>(data: T[]) => 
+  const filterData = useCallback((data: any[]) => 
     security.filterDataByAccess(data, resourceType), [security, resourceType]);
 
   return {
