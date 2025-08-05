@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useReports } from '@/hooks/useReports';
+import { useBranchData } from '../hooks/useBranchData';
+import { BranchSelector } from '../components/branch/BranchSelector';
 import { ReportsOverview } from '@/components/reports/ReportsOverview';
 import { SalesReports } from '@/components/reports/SalesReports';
 import { InventoryReports } from '@/components/reports/InventoryReports';
@@ -20,7 +22,10 @@ import {
   DollarSign, 
   Settings,
   Download,
-  Plus
+  Plus,
+  Building2,
+  Eye,
+  BarChart3
 } from 'lucide-react';
 
 const Reports: React.FC = () => {
@@ -42,6 +47,8 @@ const Reports: React.FC = () => {
     getFinancialData
   } = useReports();
 
+  const { currentBranch, selectedBranchesAnalytics, branchSummary } = useBranchData();
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
   const handleGenerateReport = async (type: string) => {
@@ -130,17 +137,110 @@ const Reports: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">รายงาน</h1>
-          <p className="text-muted-foreground">
-            จัดการและสร้างรายงานต่างๆ สำหรับธุรกิจ
-          </p>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-3xl font-bold">รายงาน</h1>
+            <p className="text-muted-foreground">
+              จัดการและสร้างรายงานต่างๆ สำหรับธุรกิจ
+            </p>
+          </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+              {selectedBranchesAnalytics.length > 0 && (
+                <span className="text-xs text-blue-600">
+                  (รายได้ {selectedBranchesAnalytics[0]?.financial.totalRevenue.toLocaleString()} บาท)
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <Button onClick={() => handleGenerateReport('sales')} disabled={loading}>
-          <Plus className="h-4 w-4 mr-2" />
-          สร้างรายงานใหม่
-        </Button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowBranchSelector(!showBranchSelector)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Eye className="h-4 w-4" />
+            <span>เปลี่ยนสาขา</span>
+          </button>
+          <Button onClick={() => handleGenerateReport('sales')} disabled={loading}>
+            <Plus className="h-4 w-4 mr-2" />
+            สร้างรายงานใหม่
+          </Button>
+        </div>
       </div>
+
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={true}
+              allowMultiSelect={true}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Branch Summary Cards */}
+      {branchSummary && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Building2 className="h-5 w-5 text-blue-600" />
+                <div>
+                  <div className="text-2xl font-bold">{branchSummary.totalBranches}</div>
+                  <div className="text-sm text-muted-foreground">สาขาทั้งหมด</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                <div>
+                  <div className="text-2xl font-bold">
+                    {(branchSummary.totalRevenue / 1000000).toFixed(1)}M
+                  </div>
+                  <div className="text-sm text-muted-foreground">รายได้รวม (บาท)</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-purple-600" />
+                <div>
+                  <div className="text-2xl font-bold">
+                    {branchSummary.averageProfitMargin.toFixed(1)}%
+                  </div>
+                  <div className="text-sm text-muted-foreground">กำไรเฉลี่ย</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5 text-orange-600" />
+                <div>
+                  <div className="text-2xl font-bold">{branchSummary.totalCriticalAlerts}</div>
+                  <div className="text-sm text-muted-foreground">แจ้งเตือนสำคัญ</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">

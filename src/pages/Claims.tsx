@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useClaims } from '@/hooks/useClaims';
+import { useBranchData } from '../hooks/useBranchData';
+import { BranchSelector } from '../components/branch/BranchSelector';
 import { ClaimsOverview } from '@/components/claims/ClaimsOverview';
 import { ClaimsList } from '@/components/claims/ClaimsList';
 import { PendingClaimsDialog } from '@/components/claims/PendingClaimsDialog';
@@ -11,17 +13,19 @@ import { OverdueClaimsDialog } from '@/components/claims/OverdueClaimsDialog';
 import { CreateClaimDialog } from '@/components/claims/CreateClaimDialog';
 import { ClearClaimsFiltersDialog } from '@/components/claims/ClearClaimsFiltersDialog';
 import { exportClaimsToCSV, exportCustomersToCSV, exportProductsToCSV } from '@/utils/claimsHelpers';
-import { 
-  Shield, 
-  FileText, 
-  Users, 
+import {
+  Shield,
+  FileText,
+  Users,
   Package,
   Settings,
   Plus,
   AlertTriangle,
   Clock,
   CheckCircle,
-  Star
+  Star,
+  Building2,
+  Eye
 } from 'lucide-react';
 
 export default function Claims() {
@@ -41,7 +45,9 @@ export default function Claims() {
     getOverdueClaims
   } = useClaims();
 
+  const { currentBranch, currentBranchCustomers } = useBranchData();
   const { toast } = useToast();
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [pendingClaimsOpen, setPendingClaimsOpen] = useState(false);
   const [overdueClaimsOpen, setOverdueClaimsOpen] = useState(false);
   const [createClaimOpen, setCreateClaimOpen] = useState(false);
@@ -148,18 +154,34 @@ export default function Claims() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Branch Info */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">การเคลมและการรับประกัน</h1>
-          <p className="text-muted-foreground">
-            จัดการการเคลม การรับประกัน และความพึงพอใจของลูกค้า
-          </p>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">การเคลมและการรับประกัน</h1>
+            <p className="text-muted-foreground">
+              จัดการเคลม การรับประกัน และการบริการหลังการขาย
+            </p>
+          </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+              <span className="text-xs text-blue-600">({currentBranchCustomers.length} ลูกค้า)</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowBranchSelector(!showBranchSelector)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Eye className="h-4 w-4" />
+            <span>เปลี่ยนสาขา</span>
+          </button>
           {pendingClaims.length > 0 && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="relative"
               onClick={handleShowPendingClaims}
             >
@@ -171,8 +193,8 @@ export default function Claims() {
             </Button>
           )}
           {overdueClaims.length > 0 && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="relative"
               onClick={handleShowOverdueClaims}
             >
@@ -194,6 +216,19 @@ export default function Claims() {
         </div>
       </div>
 
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card>
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={false}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* High Priority Claims Alert */}
       {highPriorityClaims.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -203,7 +238,7 @@ export default function Claims() {
           </div>
           <div className="space-y-1">
             {highPriorityClaims.slice(0, 3).map((claim) => (
-              <div 
+              <div
                 key={claim.id}
                 className="text-sm text-red-600"
               >
@@ -228,7 +263,7 @@ export default function Claims() {
           </div>
           <div className="space-y-1">
             {overdueClaims.slice(0, 3).map((claim) => (
-              <div 
+              <div
                 key={claim.id}
                 className="text-sm text-orange-600"
               >
@@ -462,12 +497,12 @@ export default function Claims() {
           ...claim,
           dueDate: claim.dueDate || claim.createdAt,
           priority: claim.priority === 'urgent' ? 'high' : claim.priority as 'low' | 'medium' | 'high',
-          status: claim.status === 'submitted' ? 'pending' : 
-                 claim.status === 'under_review' ? 'in-progress' :
-                 claim.status === 'approved' ? 'resolved' :
-                 claim.status === 'completed' ? 'resolved' :
-                 claim.status === 'cancelled' ? 'closed' :
-                 claim.status as 'pending' | 'in-progress' | 'resolved' | 'closed',
+          status: claim.status === 'submitted' ? 'pending' :
+            claim.status === 'under_review' ? 'in-progress' :
+              claim.status === 'approved' ? 'resolved' :
+                claim.status === 'completed' ? 'resolved' :
+                  claim.status === 'cancelled' ? 'closed' :
+                    claim.status as 'pending' | 'in-progress' | 'resolved' | 'closed',
           product: {
             ...claim.product,
             serialNumber: claim.product.serialNumber || 'N/A'

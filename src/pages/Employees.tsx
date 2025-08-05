@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,12 @@ import {
   BarChart3,
   RefreshCw,
   Building2,
-  Briefcase
+  Briefcase,
+  Eye
 } from 'lucide-react';
 import { useEmployees } from '@/hooks/useEmployees';
+import { useBranchData } from '../hooks/useBranchData';
+import { BranchSelector } from '../components/branch/BranchSelector';
 import { EmployeeManagement } from '@/components/employees/EmployeeManagement';
 import { AttendanceManagement } from '@/components/employees/AttendanceManagement';
 import { LeaveManagement } from '@/components/employees/LeaveManagement';
@@ -42,6 +45,8 @@ const Employees: React.FC = () => {
     loading
   } = useEmployees();
 
+  const { currentBranch, currentBranchEmployees } = useBranchData();
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -130,15 +135,31 @@ const Employees: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Branch Info */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">จัดการพนักงาน</h1>
-          <p className="text-muted-foreground">
-            จัดการข้อมูลพนักงาน การเข้าทำงาน การลา เงินเดือน และการอบรม
-          </p>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">จัดการพนักงาน</h1>
+            <p className="text-muted-foreground">
+              จัดการข้อมูลพนักงาน การเข้าทำงาน การลา เงินเดือน และการอบรม
+            </p>
+          </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+              <span className="text-xs text-blue-600">({currentBranchEmployees.length} คน)</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setShowBranchSelector(!showBranchSelector)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Eye className="h-4 w-4" />
+            <span>เปลี่ยนสาขา</span>
+          </button>
           <Button 
             variant="outline" 
             size="sm"
@@ -158,6 +179,19 @@ const Employees: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card>
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={false}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAudit } from '@/hooks/useAudit';
+import { useBranchData } from '../hooks/useBranchData';
+import { BranchSelector } from '../components/branch/BranchSelector';
 import { AuditOverview } from '@/components/audit/AuditOverview';
 import { AuditLogsList } from '@/components/audit/AuditLogsList';
 import { ComplianceOverview } from '@/components/audit/ComplianceOverview';
@@ -24,7 +26,8 @@ import {
   Clock,
   Eye,
   Server,
-  BarChart3
+  BarChart3,
+  Building2
 } from 'lucide-react';
 
 export default function Audit() {
@@ -47,8 +50,10 @@ export default function Audit() {
     generateComplianceReport
   } = useAudit();
 
+  const { currentBranch, currentBranchEmployees } = useBranchData();
   const { toast } = useToast();
 
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [showSecurityDialog, setShowSecurityDialog] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
@@ -140,15 +145,31 @@ export default function Audit() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Branch Info */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">บันทึกการตรวจสอบ</h1>
-          <p className="text-muted-foreground">
-            ติดตามและตรวจสอบกิจกรรมทั้งหมดในระบบ
-          </p>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">บันทึกการตรวจสอบ</h1>
+            <p className="text-muted-foreground">
+              ติดตามและตรวจสอบกิจกรรมทั้งหมดในระบบ
+            </p>
+          </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+              <span className="text-xs text-blue-600">({currentBranchEmployees.length} ผู้ใช้)</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowBranchSelector(!showBranchSelector)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Eye className="h-4 w-4" />
+            <span>เปลี่ยนสาขา</span>
+          </button>
           <Button 
             variant="outline" 
             className={`relative ${unresolvedSecurityEvents.length > 0 ? 'border-red-200 text-red-700 hover:bg-red-50' : ''}`}
@@ -181,6 +202,19 @@ export default function Audit() {
           </Button>
         </div>
       </div>
+
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card>
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={false}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Critical Events Alert */}
       {criticalEvents.criticalLogs.length > 0 && (
