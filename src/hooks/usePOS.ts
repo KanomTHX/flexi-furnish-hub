@@ -1,6 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { CartItem, Customer, PaymentMethod, POSState, Product, Sale } from '@/types/pos';
 import { usePersistentCart } from './useLocalStorage';
+import { useSupabasePOS } from './useSupabasePOS';
+import { useBranchData } from './useBranchData';
 
 const TAX_RATE = 0.07; // 7% VAT
 
@@ -15,143 +17,15 @@ export function usePOS() {
     clearAll: clearPersisted
   } = usePersistentCart();
 
+  const { currentBranch } = useBranchData();
+  const { createSalesTransaction, loading: supabaseLoading } = useSupabasePOS();
+
   const [cart, setCart] = useState<CartItem[]>(persistedCart || []);
   const [customer, setCustomer] = useState<Customer | undefined>(persistedCustomer);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>();
   const [discount, setDiscount] = useState(persistedDiscount || 0);
-  // Mock sales data for testing
-  const mockSales: Sale[] = [
-    {
-      id: 'sale-001',
-      saleNumber: 'S240001',
-      customerId: 'customer-001',
-      customer: {
-        id: 'customer-001',
-        name: 'สมชาย ใจดี',
-        phone: '081-234-5678',
-        email: 'somchai@example.com'
-      },
-      items: [
-        {
-          product: {
-            id: 'prod-001',
-            name: 'โซฟา 3 ที่นั่ง Modern',
-            sku: 'SF-001',
-            price: 15000,
-            category: 'โซฟา',
-            stock: 10
-          },
-          quantity: 1,
-          unitPrice: 15000,
-          totalPrice: 15000
-        },
-        {
-          product: {
-            id: 'prod-002',
-            name: 'โต๊ะกาแฟ Glass Top',
-            sku: 'TB-002',
-            price: 3500,
-            category: 'โต๊ะ',
-            stock: 15
-          },
-          quantity: 1,
-          unitPrice: 3500,
-          totalPrice: 3500
-        }
-      ],
-      subtotal: 18500,
-      discount: 500,
-      tax: 1260,
-      total: 19260,
-      paymentMethod: {
-        id: 'cash',
-        name: 'เงินสด',
-        type: 'cash',
-        icon: '💵'
-      },
-      paymentStatus: 'completed',
-      status: 'completed',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-      updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      employeeId: 'emp-001'
-    },
-    {
-      id: 'sale-002',
-      saleNumber: 'S240002',
-      customerId: 'customer-002',
-      customer: {
-        id: 'customer-002',
-        name: 'สมหญิง รักงาน',
-        phone: '082-345-6789'
-      },
-      items: [
-        {
-          product: {
-            id: 'prod-003',
-            name: 'เตียงนอน King Size',
-            sku: 'BD-003',
-            price: 25000,
-            category: 'เตียง',
-            stock: 5
-          },
-          quantity: 1,
-          unitPrice: 25000,
-          totalPrice: 25000
-        }
-      ],
-      subtotal: 25000,
-      discount: 0,
-      tax: 1750,
-      total: 26750,
-      paymentMethod: {
-        id: 'card',
-        name: 'บัตรเครดิต',
-        type: 'card',
-        icon: '💳'
-      },
-      paymentStatus: 'completed',
-      status: 'completed',
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-      updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      employeeId: 'emp-001'
-    },
-    {
-      id: 'sale-003',
-      saleNumber: 'S240003',
-      items: [
-        {
-          product: {
-            id: 'prod-004',
-            name: 'เก้าอี้ทำงาน Ergonomic',
-            sku: 'CH-004',
-            price: 4500,
-            category: 'เก้าอี้',
-            stock: 20
-          },
-          quantity: 2,
-          unitPrice: 4500,
-          totalPrice: 9000
-        }
-      ],
-      subtotal: 9000,
-      discount: 0,
-      tax: 630,
-      total: 9630,
-      paymentMethod: {
-        id: 'cash',
-        name: 'เงินสด',
-        type: 'cash',
-        icon: '💵'
-      },
-      paymentStatus: 'completed',
-      status: 'completed',
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-      updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      employeeId: 'emp-001'
-    }
-  ];
+  const [sales, setSales] = useState<Sale[]>([]);
 
-  const [sales, setSales] = useState<Sale[]>(mockSales);
 
   // Sync with localStorage
   useEffect(() => {
@@ -244,32 +118,61 @@ export function usePOS() {
 
 
 
-  const completeCashSale = useCallback(() => {
-    if (!paymentMethod || cart.length === 0) return null;
+  const completeCashSale = useCallback(async () => {
+    if (!paymentMethod || cart.length === 0 || !currentBranch) {
+      return null;
+    }
 
-    const sale: Sale = {
-      id: `sale-${Date.now()}`,
-      saleNumber: `S${Date.now().toString().slice(-6)}`,
-      customerId: customer?.id,
-      customer,
-      items: cart,
-      subtotal,
-      discount,
-      tax,
-      total,
-      paymentMethod,
-      paymentStatus: 'completed',
-      status: 'completed',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      employeeId: 'current-user' // TODO: ใช้ user ID จริง
-    };
+    try {
+      // เตรียมข้อมูลสำหรับ Supabase
+      const transactionData = {
+        branch_id: currentBranch.id,
+        customer_id: customer?.id,
+        employee_id: 'current-user', // TODO: ใช้ user ID จริง
+        items: cart.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          discount_amount: 0 // TODO: รองรับส่วนลดต่อรายการ
+        })),
+        total_amount: subtotal,
+        discount_amount: discount,
+        tax_amount: tax,
+        payment_method: paymentMethod.type,
+        notes: customer ? `ลูกค้า: ${customer.name}` : undefined
+      };
 
-    setSales(prev => [...prev, sale]);
-    clearCart();
+      // บันทึกลง Supabase
+      const savedTransaction = await createSalesTransaction(transactionData);
 
-    return sale;
-  }, [cart, customer, paymentMethod, subtotal, discount, tax, total, clearCart]);
+      // สร้าง Sale object สำหรับ local state
+      const sale: Sale = {
+        id: savedTransaction.id,
+        saleNumber: savedTransaction.transaction_number,
+        customerId: customer?.id,
+        customer,
+        items: cart,
+        subtotal,
+        discount,
+        tax,
+        total,
+        paymentMethod,
+        paymentStatus: 'completed',
+        status: 'completed',
+        createdAt: savedTransaction.created_at,
+        updatedAt: savedTransaction.updated_at,
+        employeeId: savedTransaction.employee_id
+      };
+
+      setSales(prev => [...prev, sale]);
+      clearCart();
+
+      return sale;
+    } catch (error) {
+      console.error('Error completing sale:', error);
+      throw error;
+    }
+  }, [cart, customer, paymentMethod, subtotal, discount, tax, total, clearCart, currentBranch, createSalesTransaction]);
 
   const state: POSState = {
     cart,
@@ -285,6 +188,7 @@ export function usePOS() {
   return {
     state,
     sales,
+    loading: supabaseLoading,
     actions: {
       addToCart,
       removeFromCart,

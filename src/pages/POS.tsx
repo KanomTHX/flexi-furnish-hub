@@ -21,7 +21,7 @@ import { Product } from "@/types/pos";
 import { generateSaleNumber } from "@/utils/posHelpers";
 
 export default function POS() {
-  const { state, actions } = usePOS();
+  const { state, actions, loading } = usePOS();
   const { toast } = useToast();
   const { currentBranch, currentBranchCustomers } = useBranchData();
   const [showBranchSelector, setShowBranchSelector] = useState(false);
@@ -62,14 +62,22 @@ export default function POS() {
     setCheckoutOpen(true);
   };
 
-  const handleCompleteSale = () => {
-    const sale = actions.completeCashSale();
-    if (sale) {
+  const handleCompleteSale = async () => {
+    try {
+      const sale = await actions.completeCashSale();
+      if (sale) {
+        toast({
+          title: "ขายสำเร็จ!",
+          description: `การขาย ${sale.saleNumber} เสร็จสิ้นเรียบร้อยแล้ว`,
+        });
+        setCheckoutOpen(false);
+      }
+    } catch (error) {
       toast({
-        title: "ขายสำเร็จ!",
-        description: `การขาย ${sale.saleNumber} เสร็จสิ้นเรียบร้อยแล้ว`,
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถบันทึกการขายได้ กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive"
       });
-      setCheckoutOpen(false);
     }
   };
 
@@ -152,9 +160,9 @@ export default function POS() {
             <RotateCcw className="w-4 h-4 mr-2" />
             ล้างตะกร้า
           </Button>
-          <Button variant="admin" onClick={handleCheckout}>
+          <Button variant="admin" onClick={handleCheckout} disabled={loading}>
             <ShoppingCart className="w-4 h-4 mr-2" />
-            ชำระเงิน ({state.cart.length})
+            {loading ? 'กำลังประมวลผล...' : `ชำระเงิน (${state.cart.length})`}
           </Button>
         </div>
       </div>

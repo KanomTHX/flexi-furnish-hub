@@ -20,15 +20,15 @@ import { InstallmentDialog } from '@/components/installments/InstallmentDialog';
 import { CustomerManagement } from '@/components/installments/CustomerManagement';
 import { CustomerDetail } from '@/components/installments/CustomerDetail';
 import { CustomerAnalytics } from '@/components/installments/CustomerAnalytics';
-import { useInstallments } from '@/hooks/useInstallments';
-import { useCustomers } from '@/hooks/useCustomers';
+import { useSupabaseInstallments } from '@/hooks/useSupabaseInstallments';
+import { useSupabaseCustomers } from '@/hooks/useSupabaseCustomers';
 import { useBranchData } from '../hooks/useBranchData';
 import { BranchSelector } from '../components/branch/BranchSelector';
 import { Customer, InstallmentContract } from '@/types/pos';
 
 export default function Installments() {
-  const { contracts, summary, actions } = useInstallments();
-  const { customers, loading: customersLoading, actions: customerActions } = useCustomers();
+  const { contracts, summary, loading: contractsLoading, actions } = useSupabaseInstallments();
+  const { customers, loading: customersLoading, actions: customerActions } = useSupabaseCustomers();
   const { currentBranch, currentBranchCustomers } = useBranchData();
   const { toast } = useToast();
   const [showBranchSelector, setShowBranchSelector] = useState(false);
@@ -38,33 +38,57 @@ export default function Installments() {
   const [selectedCustomerForDetail, setSelectedCustomerForDetail] = useState<any>(null);
   const [totalAmount, setTotalAmount] = useState(0);
 
-  const handleCreateContract = (contract: InstallmentContract) => {
-    actions.addContract(contract);
-    toast({
-      title: "สัญญาผ่อนชำระถูกสร้างแล้ว!",
-      description: `สัญญาเลขที่ ${contract.contractNumber} ถูกสร้างเรียบร้อยแล้ว`,
-    });
-    setCreateDialogOpen(false);
+  const handleCreateContract = async (contract: InstallmentContract) => {
+    try {
+      await actions.addContract(contract);
+      toast({
+        title: "สัญญาผ่อนชำระถูกสร้างแล้ว!",
+        description: `สัญญาเลขที่ ${contract.contractNumber} ถูกสร้างเรียบร้อยแล้ว`,
+      });
+      setCreateDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "ไม่สามารถสร้างสัญญาได้",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handlePaymentReceived = (contractId: string, paymentId: string, amount: number) => {
-    actions.recordPayment(contractId, paymentId, amount);
-    // อัปเดตข้อมูลลูกค้าจากสัญญา
-    customerActions.updateCustomerFromContracts(contracts);
-    toast({
-      title: "บันทึกการชำระเงินแล้ว",
-      description: `รับชำระเงิน ${amount.toLocaleString()} บาท เรียบร้อยแล้ว`,
-    });
+  const handlePaymentReceived = async (contractId: string, paymentId: string, amount: number) => {
+    try {
+      await actions.recordPayment(contractId, paymentId, amount);
+      // อัปเดตข้อมูลลูกค้าจากสัญญา
+      customerActions.updateCustomerFromContracts(contracts);
+      toast({
+        title: "บันทึกการชำระเงินแล้ว",
+        description: `รับชำระเงิน ${amount.toLocaleString()} บาท เรียบร้อยแล้ว`,
+      });
+    } catch (error) {
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "ไม่สามารถบันทึกการชำระเงินได้",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUpdateContract = (contract: InstallmentContract) => {
-    actions.updateContract(contract);
-    // อัปเดตข้อมูลลูกค้าจากสัญญา
-    customerActions.updateCustomerFromContracts(contracts);
-    toast({
-      title: "อัพเดทสัญญาแล้ว",
-      description: `สัญญาเลขที่ ${contract.contractNumber} ถูกอัพเดทแล้ว`,
-    });
+  const handleUpdateContract = async (contract: InstallmentContract) => {
+    try {
+      await actions.updateContract(contract);
+      // อัปเดตข้อมูลลูกค้าจากสัญญา
+      customerActions.updateCustomerFromContracts(contracts);
+      toast({
+        title: "อัพเดทสัญญาแล้ว",
+        description: `สัญญาเลขที่ ${contract.contractNumber} ถูกอัพเดทแล้ว`,
+      });
+    } catch (error) {
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "ไม่สามารถอัพเดทสัญญาได้",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleViewCustomer = (customerId: string) => {
@@ -124,6 +148,18 @@ export default function Installments() {
     setTotalAmount(50000);
     setCreateDialogOpen(true);
   };
+
+  // แสดง loading state
+  if (contractsLoading || customersLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">กำลังโหลดข้อมูล...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

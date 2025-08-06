@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Package } from 'lucide-react';
+import { Search, Plus, Package, Loader2 } from 'lucide-react';
 import { Product } from '@/types/pos';
-import { mockProducts, categories } from '@/data/mockProducts';
+import { useSupabasePOS, SupabaseProduct } from '@/hooks/useSupabasePOS';
+import { useBranchData } from '@/hooks/useBranchData';
 
 interface ProductGridProps {
   onAddToCart: (product: Product) => void;
@@ -14,13 +15,64 @@ interface ProductGridProps {
 
 export function ProductGrid({ onAddToCart }: ProductGridProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('หมวดหมู่ทั้งหมด');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  const { currentBranch } = useBranchData();
+  const { 
+    products: supabaseProducts, 
+    categories, 
+    loading, 
+    fetchProducts, 
+    getProductStock 
+  } = useSupabasePOS();
 
-  const filteredProducts = mockProducts.filter(product => {
+  const [productsWithStock, setProductsWithStock] = useState<(SupabaseProduct & { stock: number })[]>([]);
+
+  // ดึงข้อมูลสินค้าเมื่อ component mount หรือเมื่อเปลี่ยนสาขา
+  useEffect(() => {
+    if (currentBranch) {
+      fetchProducts(currentBranch.id);
+    }
+  }, [currentBranch, fetchProducts]);
+
+  // อัปเดตสต็อกสินค้า
+  useEffect(() => {
+    const updateProductsWithStock = async () => {
+      if (!currentBranch || supabaseProducts.length === 0) return;
+
+      const productsWithStockData = await Promise.all(
+        supabaseProducts.map(async (product) => {
+          const stockData = await getProductStock(product.id, currentBranch.id);
+          return {
+            ...product,
+            stock: stockData.available_quantity || 0
+          };
+        })
+      );
+
+      setProductsWithStock(productsWithStockData);
+    };
+
+    updateProductsWithStock();
+  }, [supabaseProducts, currentBranch, getProductStock]);
+
+  // กรองสินค้า
+  const filteredProducts = productsWithStock.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'หมวดหมู่ทั้งหมด' || product.category === selectedCategory;
+                         product.product_code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
     return matchesSearch && matchesCategory;
+  });
+
+  // แปลงข้อมูลสินค้าให้เข้ากับ Product interface
+  const convertToProduct = (supabaseProduct: SupabaseProduct & { stock: number }): Product => ({
+    id: supabaseProduct.id,
+    name: supabaseProduct.name,
+    sku: supabaseProduct.product_code,
+    price: supabaseProduct.selling_price,
+    category: supabaseProduct.category?.name || 'ไม่ระบุ',
+    stock: supabaseProduct.stock,
+    description: supabaseProduct.description
   });
 
   const formatPrice = (price: number) => {
@@ -31,6 +83,24 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
     }).format(price);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">กำลังโหลดสินค้า...</span>
+      </div>
+    );
+  }
+
+  if (!currentBranch) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>กรุณาเลือกสาขาก่อนดูสินค้า</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Search and Filter */}
@@ -38,7 +108,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="ค้นหาสินค้าตามชื่อหรือ SKU..."
+            placeholder="ค้นหาสินค้าตามชื่อหรือรหัสสินค้า..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -46,12 +116,13 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-48">
-            <SelectValue />
+            <SelectValue placeholder="เลือกหมวดหมู่" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">หมวดหมู่ทั้งหมด</SelectItem>
             {categories.map(category => (
-              <SelectItem key={category} value={category}>
-                {category}
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -60,55 +131,63 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[600px] overflow-y-auto">
-        {filteredProducts.map(product => (
-          <Card key={product.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                {/* Product Image Placeholder */}
-                <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
-                  <Package className="w-8 h-8 text-muted-foreground" />
-                </div>
-
-                {/* Product Info */}
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-sm leading-tight">{product.name}</h3>
-                    <Badge variant="outline" className="text-xs">
-                      {product.sku}
-                    </Badge>
+        {filteredProducts.map(supabaseProduct => {
+          const product = convertToProduct(supabaseProduct);
+          return (
+            <Card key={product.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  {/* Product Image Placeholder */}
+                  <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
+                    <Package className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {product.description}
-                  </p>
 
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-primary">
-                      {formatPrice(product.price)}
-                    </span>
-                    <Badge 
-                      variant={product.stock > 10 ? "default" : product.stock > 0 ? "secondary" : "destructive"}
-                      className="text-xs"
-                    >
-                      สต็อก: {product.stock}
-                    </Badge>
+                  {/* Product Info */}
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-semibold text-sm leading-tight">{product.name}</h3>
+                      <Badge variant="outline" className="text-xs">
+                        {product.sku}
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {product.description || 'ไม่มีรายละเอียด'}
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-primary">
+                        {formatPrice(product.price)}
+                      </span>
+                      <Badge 
+                        variant={product.stock > 10 ? "default" : product.stock > 0 ? "secondary" : "destructive"}
+                        className="text-xs"
+                      >
+                        สต็อก: {product.stock}
+                      </Badge>
+                    </div>
+
+                    {/* Category */}
+                    <div className="text-xs text-muted-foreground">
+                      หมวด: {product.category}
+                    </div>
                   </div>
-                </div>
 
-                {/* Add to Cart Button */}
-                <Button
-                  onClick={() => onAddToCart(product)}
-                  disabled={product.stock === 0}
-                  className="w-full"
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  เพิ่มลงตะกร้า
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  {/* Add to Cart Button */}
+                  <Button
+                    onClick={() => onAddToCart(product)}
+                    disabled={product.stock === 0}
+                    className="w-full"
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {product.stock === 0 ? 'สินค้าหมด' : 'เพิ่มลงตะกร้า'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {filteredProducts.length === 0 && (

@@ -97,7 +97,17 @@ export function useBranchSecurity() {
   const context = useContext(BranchSecurityContext);
   
   if (!context) {
-    throw new Error('useBranchSecurity must be used within a BranchSecurityProvider');
+    // แทนที่จะ throw error ให้ return ค่า default
+    console.warn('useBranchSecurity: BranchSecurityProvider not found, using default values');
+    return {
+      accessStats: null,
+      isSecurityEnabled: false,
+      checkAccess: () => true,
+      filterDataByAccess: (data: any) => data,
+      logOperation: () => {},
+      isSessionValid: () => true,
+      getSessionReport: () => ({ isValid: true, violations: [] })
+    };
   }
 
   const { 

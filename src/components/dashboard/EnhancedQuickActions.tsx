@@ -183,6 +183,14 @@ export function EnhancedQuickActions() {
     });
   };
 
+  const handlePosSystemCheck = () => {
+    navigate('/pos-system-check');
+    toast({
+      title: "ตรวจสอบระบบ POS",
+      description: "กำลังเปิดหน้าตรวจสอบสถานะระบบ POS",
+    });
+  };
+
   // Define quick actions with priority and badges
   const quickActions: QuickActionItem[] = [
     {
@@ -266,6 +274,21 @@ export function EnhancedQuickActions() {
       hoverColor: 'hover:border-emerald-500 hover:bg-emerald-50',
       action: handleAccounting,
       priority: 'low'
+    },
+    {
+      id: 'pos-system-check',
+      title: 'ตรวจสอบระบบ POS',
+      description: 'ตรวจสอบสถานะตารางและข้อมูล',
+      icon: Activity,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      hoverColor: 'hover:border-red-500 hover:bg-red-50',
+      action: handlePosSystemCheck,
+      badge: {
+        text: 'ตรวจสอบ',
+        variant: 'outline'
+      },
+      priority: 'medium'
     }
   ];
 

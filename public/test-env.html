@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Environment Variables Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Environment Variables Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        console.log('🧪 Testing Environment Variables...');
+        
+        const results = document.getElementById('results');
+        
+        // ทดสอบ environment variables
+        const env = {
+            VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+            VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+            VITE_SUPABASE_SERVICE_ROLE_KEY: import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
+            VITE_USE_SERVICE_ROLE: import.meta.env.VITE_USE_SERVICE_ROLE
+        };
+        
+        console.log('Environment Variables:', env);
+        
+        let html = '<h2>📊 Environment Variables Status:</h2><ul>';
+        
+        for (const [key, value] of Object.entries(env)) {
+            const hasValue = value && value !== 'undefined';
+            const status = hasValue ? '✅' : '❌';
+            const className = hasValue ? 'success' : 'error';
+            const displayValue = hasValue ? 
+                (value.length > 50 ? value.substring(0, 50) + '...' : value) : 
+                'Not Set';
+            
+            html += `<li class="${className}"><strong>${key}:</strong> ${status} ${displayValue}</li>`;
+            
+            console.log(`${key}: ${hasValue ? '✅ Set' : '❌ Missing'}`);
+        }
+        
+        html += '</ul>';
+        
+        // แสดงข้อมูลการตั้งค่า
+        const useServiceRole = env.VITE_USE_SERVICE_ROLE === 'true';
+        const selectedKey = useServiceRole ? env.VITE_SUPABASE_SERVICE_ROLE_KEY : env.VITE_SUPABASE_ANON_KEY;
+        const keyType = useServiceRole ? 'Service Role Key' : 'Anon Key';
+        
+        html += `<h2>🔑 Current Configuration:</h2>`;
+        html += `<ul>`;
+        html += `<li><strong>Mode:</strong> ${keyType}</li>`;
+        html += `<li><strong>Service Role Enabled:</strong> ${useServiceRole ? '✅ Yes' : '❌ No'}</li>`;
+        html += `<li><strong>Selected Key Length:</strong> ${selectedKey?.length || 0} characters</li>`;
+        html += `</ul>`;
+        
+        // ปุ่มทดสอบ
+        html += '<h2>🧪 Connection Test:</h2>';
+        html += '<button onclick="testConnection()">Test Database Connection</button>';
+        html += '<div id="connection-result"></div>';
+        
+        // แสดงคำแนะนำ
+        const hasValidConfig = env.VITE_SUPABASE_URL && 
+                              (useServiceRole ? env.VITE_SUPABASE_SERVICE_ROLE_KEY : env.VITE_SUPABASE_ANON_KEY);
+        
+        if (!hasValidConfig) {
+            html += `<div class="error">`;
+            html += `<h2>❌ Configuration Issues:</h2>`;
+            html += `<p>Please check your .env.local file:</p>`;
+            html += `<pre>VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+VITE_SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+VITE_USE_SERVICE_ROLE=true</pre>`;
+            html += `</div>`;
+        } else {
+            html += `<div class="success">`;
+            html += `<h2>✅ Configuration OK!</h2>`;
+            html += `<p>Environment variables are properly configured.</p>`;
+            html += `</div>`;
+        }
+        
+        results.innerHTML = html;
+        
+        // ฟังก์ชันทดสอบการเชื่อมต่อ
+        window.testConnection = async function() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.innerHTML = '<p class="warning">🔄 Testing connection...</p>';
+            
+            console.log('🔗 Testing database connection...');
+            
+            try {
+                if (!env.VITE_SUPABASE_URL || !selectedKey) {
+                    throw new Error('Missing environment variables');
+                }
+                
+                const { createClient } = await import('@supabase/supabase-js');
+                const supabase = createClient(env.VITE_SUPABASE_URL, selectedKey, {
+                    auth: {
+                        autoRefreshToken: false,
+                        persistSession: false
+                    }
+                });
+                
+                console.log('📡 Attempting to connect to Supabase...');
+                
+                const { data, error } = await supabase
+                    .from('branches')
+                    .select('count', { count: 'exact', head: true });
+                
+                if (error) {
+                    console.error('❌ Connection error:', error);
+                    resultDiv.innerHTML = `<p class="error">❌ Connection Error: ${error.message}</p>`;
+                } else {
+                    console.log('✅ Connection successful!');
+                    resultDiv.innerHTML = `<p class="success">✅ Connection successful! Using ${keyType}</p>`;
+                }
+            } catch (err) {
+                console.error('💥 Test failed:', err);
+                resultDiv.innerHTML = `<p class="error">❌ Test Failed: ${err.message}</p>`;
+            }
+        };
+        
+        // ทดสอบอัตโนมัติ
+        if (hasValidConfig) {
+            setTimeout(() => {
+                console.log('🚀 Running automatic connection test...');
+                testConnection();
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

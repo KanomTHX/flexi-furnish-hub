@@ -5,9 +5,19 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      // ตรวจสอบว่าไม่ใช่ null, undefined, หรือ "undefined" string
+      if (item === null || item === 'undefined' || item === undefined) {
+        return initialValue;
+      }
+      return JSON.parse(item);
     } catch (error) {
       console.error(`Error reading localStorage key "${key}":`, error);
+      // ล้างค่าที่เสียหายออกจาก localStorage
+      try {
+        window.localStorage.removeItem(key);
+      } catch (removeError) {
+        console.error(`Error removing corrupted localStorage key "${key}":`, removeError);
+      }
       return initialValue;
     }
   });

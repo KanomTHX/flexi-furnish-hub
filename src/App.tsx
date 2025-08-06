@@ -24,7 +24,28 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Employees = lazy(() => import("./pages/Employees"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Database = lazy(() => import("./pages/Database"));
+const DatabaseSetup = lazy(() => import("./pages/DatabaseSetup"));
+const DatabaseInstaller = lazy(() => import("./pages/DatabaseInstaller"));
+const DatabaseQuickStart = lazy(() => import("./pages/DatabaseQuickStart"));
+const TestConnection = lazy(() => import("./pages/TestConnection"));
+const QuickTest = lazy(() => import("./pages/QuickTest"));
+const SimpleTest = lazy(() => import("./pages/SimpleTest"));
+const CheckPosSystem = lazy(() => import("./pages/CheckPosSystem"));
+const PosSystemCheck = lazy(() => import("./pages/PosSystemCheck"));
+const QuickPosCheck = lazy(() => import("./pages/QuickPosCheck"));
+const POSTest = lazy(() => import("./pages/POSTest"));
+const POSSupabaseTest = lazy(() => import("./pages/POSSupabaseTest"));
+const ManualDatabaseSetup = lazy(() => import("./pages/ManualDatabaseSetup"));
+const SimpleConnectionTest = lazy(() => import("./pages/SimpleConnectionTest"));
+const InstallmentsSupabaseTest = lazy(() => import("./pages/InstallmentsSupabaseTest"));
+const InstallmentContractTest = lazy(() => import("./pages/InstallmentContractTest"));
+const InstallmentPaymentTest = lazy(() => import("./pages/InstallmentPaymentTest"));
+const InstallmentCustomerTest = lazy(() => import("./pages/InstallmentCustomerTest"));
+const InstallmentTestSuite = lazy(() => import("./pages/InstallmentTestSuite"));
+const WarehousesSupabaseTest = lazy(() => import("./pages/WarehousesSupabaseTest"));
+const WarehouseCreationTest = lazy(() => import("./pages/WarehouseCreationTest"));
+const WarehouseStockTest = lazy(() => import("./pages/WarehouseStockTest"));
+const WarehouseTestSuite = lazy(() => import("./pages/WarehouseTestSuite"));
 
 // Testing components would go here if needed
 
@@ -154,7 +175,196 @@ const App = () => (
               <ProtectedRoute>
                 <AdminLayout>
                   <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบฐานข้อมูล..." />}>
-                    <Database />
+                    <DatabaseSetup />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/database-installer" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดตัวติดตั้งฐานข้อมูล..." />}>
+                    <DatabaseInstaller />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/database-quickstart" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดคู่มือเริ่มต้น..." />}>
+                    <DatabaseQuickStart />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/test-connection" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบ..." />}>
+                    <TestConnection />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/quick-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบด่วน..." />}>
+                    <QuickTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/simple-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบง่าย..." />}>
+                    <SimpleTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/check-pos-system" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการตรวจสอบระบบ POS..." />}>
+                    <CheckPosSystem />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/pos-system-check" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการตรวจสอบระบบ POS..." />}>
+                    <PosSystemCheck />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/quick-pos-check" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการตรวจสอบด่วน..." />}>
+                    <QuickPosCheck />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/pos-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบ POS..." />}>
+                    <POSTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/pos-supabase-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบ POS Supabase..." />}>
+                    <POSSupabaseTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/manual-database-setup" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการติดตั้งฐานข้อมูลแบบ Manual..." />}>
+                    <ManualDatabaseSetup />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/simple-connection-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบการเชื่อมต่อ..." />}>
+                    <SimpleConnectionTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/installments-supabase-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบระบบ Installments..." />}>
+                    <InstallmentsSupabaseTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/installment-contract-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบสัญญาผ่อนชำระ..." />}>
+                    <InstallmentContractTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/installment-payment-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบการชำระเงิน..." />}>
+                    <InstallmentPaymentTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/installment-customer-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบระบบลูกค้า..." />}>
+                    <InstallmentCustomerTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/installment-test-suite" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดชุดทดสอบ..." />}>
+                    <InstallmentTestSuite />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/warehouses-supabase-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบระบบ Warehouses..." />}>
+                    <WarehousesSupabaseTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/warehouse-creation-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบสร้างคลังสินค้า..." />}>
+                    <WarehouseCreationTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/warehouse-stock-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบการเคลื่อนไหวสต็อก..." />}>
+                    <WarehouseStockTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/warehouse-test-suite" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดชุดทดสอบคลังสินค้า..." />}>
+                    <WarehouseTestSuite />
                   </SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>
