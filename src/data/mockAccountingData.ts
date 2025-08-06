@@ -215,112 +215,117 @@ export const mockAccounts: Account[] = [
   }
 ];
 
+// Helper function to create journal entries with proper account references
+function createJournalEntries(): JournalEntry[] {
+  return [
+    {
+      id: 'je-001',
+      entryNumber: 'JE-2024-001',
+      date: '2024-01-15',
+      description: 'บันทึกการขายสินค้าเงินสด',
+      reference: 'INV-2024-001',
+      totalDebit: 15000,
+      totalCredit: 15000,
+      status: 'approved',
+      createdBy: 'user-001',
+      approvedBy: 'manager-001',
+      approvedAt: '2024-01-15T14:30:00Z',
+      entries: [
+        {
+          id: 'jel-001',
+          accountId: 'acc-001',
+          account: mockAccounts.find(acc => acc.id === 'acc-001')!,
+          description: 'รับเงินสดจากการขาย',
+          debitAmount: 15000,
+          creditAmount: 0,
+          reference: 'INV-2024-001'
+        },
+        {
+          id: 'jel-002',
+          accountId: 'acc-011',
+          account: mockAccounts.find(acc => acc.id === 'acc-011')!,
+          description: 'รายได้จากการขายสินค้า',
+          debitAmount: 0,
+          creditAmount: 15000,
+          reference: 'INV-2024-001'
+        }
+      ],
+      createdAt: '2024-01-15T10:00:00Z',
+      updatedAt: '2024-01-15T14:30:00Z'
+    },
+    {
+      id: 'je-002',
+      entryNumber: 'JE-2024-002',
+      date: '2024-01-16',
+      description: 'บันทึกการซื้อสินค้าเครดิต',
+      reference: 'PO-2024-001',
+      totalDebit: 25000,
+      totalCredit: 25000,
+      status: 'approved',
+      createdBy: 'user-002',
+      approvedBy: 'manager-001',
+      approvedAt: '2024-01-16T16:00:00Z',
+      entries: [
+        {
+          id: 'jel-003',
+          accountId: 'acc-003',
+          account: mockAccounts.find(acc => acc.id === 'acc-003')!,
+          description: 'ซื้อสินค้าเข้าคลัง',
+          debitAmount: 25000,
+          creditAmount: 0,
+          reference: 'PO-2024-001'
+        },
+        {
+          id: 'jel-004',
+          accountId: 'acc-006',
+          account: mockAccounts.find(acc => acc.id === 'acc-006')!,
+          description: 'เจ้าหนี้การค้า',
+          debitAmount: 0,
+          creditAmount: 25000,
+          reference: 'PO-2024-001'
+        }
+      ],
+      createdAt: '2024-01-16T09:00:00Z',
+      updatedAt: '2024-01-16T16:00:00Z'
+    },
+    {
+      id: 'je-003',
+      entryNumber: 'JE-2024-003',
+      date: '2024-01-17',
+      description: 'จ่ายค่าเช่าประจำเดือน',
+      reference: 'RENT-2024-01',
+      totalDebit: 12000,
+      totalCredit: 12000,
+      status: 'pending',
+      createdBy: 'user-003',
+      entries: [
+        {
+          id: 'jel-005',
+          accountId: 'acc-014',
+          account: mockAccounts.find(acc => acc.id === 'acc-014')!,
+          description: 'ค่าเช่าประจำเดือน มกราคม',
+          debitAmount: 12000,
+          creditAmount: 0,
+          reference: 'RENT-2024-01'
+        },
+        {
+          id: 'jel-006',
+          accountId: 'acc-001',
+          account: mockAccounts.find(acc => acc.id === 'acc-001')!,
+          description: 'จ่ายเงินสดค่าเช่า',
+          debitAmount: 0,
+          creditAmount: 12000,
+          reference: 'RENT-2024-01'
+        }
+      ],
+      createdAt: '2024-01-17T11:00:00Z',
+      updatedAt: '2024-01-17T11:00:00Z'
+    }
+  ];
+}
+
 // Mock Journal Entries
-export const mockJournalEntries: JournalEntry[] = [
-  {
-    id: 'je-001',
-    entryNumber: 'JE-2024-001',
-    date: '2024-01-15',
-    description: 'บันทึกการขายสินค้าเงินสด',
-    reference: 'INV-2024-001',
-    totalDebit: 15000,
-    totalCredit: 15000,
-    status: 'approved',
-    createdBy: 'user-001',
-    approvedBy: 'manager-001',
-    approvedAt: '2024-01-15T14:30:00Z',
-    entries: [
-      {
-        id: 'jel-001',
-        accountId: 'acc-001',
-        account: mockAccounts[0],
-        description: 'รับเงินสดจากการขาย',
-        debitAmount: 15000,
-        creditAmount: 0,
-        reference: 'INV-2024-001'
-      },
-      {
-        id: 'jel-002',
-        accountId: 'acc-011',
-        account: mockAccounts[10],
-        description: 'รายได้จากการขายสินค้า',
-        debitAmount: 0,
-        creditAmount: 15000,
-        reference: 'INV-2024-001'
-      }
-    ],
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T14:30:00Z'
-  },
-  {
-    id: 'je-002',
-    entryNumber: 'JE-2024-002',
-    date: '2024-01-16',
-    description: 'บันทึกการซื้อสินค้าเครดิต',
-    reference: 'PO-2024-001',
-    totalDebit: 25000,
-    totalCredit: 25000,
-    status: 'approved',
-    createdBy: 'user-002',
-    approvedBy: 'manager-001',
-    approvedAt: '2024-01-16T16:00:00Z',
-    entries: [
-      {
-        id: 'jel-003',
-        accountId: 'acc-003',
-        account: mockAccounts[2],
-        description: 'ซื้อสินค้าเข้าคลัง',
-        debitAmount: 25000,
-        creditAmount: 0,
-        reference: 'PO-2024-001'
-      },
-      {
-        id: 'jel-004',
-        accountId: 'acc-006',
-        account: mockAccounts[5],
-        description: 'เจ้าหนี้การค้า',
-        debitAmount: 0,
-        creditAmount: 25000,
-        reference: 'PO-2024-001'
-      }
-    ],
-    createdAt: '2024-01-16T09:00:00Z',
-    updatedAt: '2024-01-16T16:00:00Z'
-  },
-  {
-    id: 'je-003',
-    entryNumber: 'JE-2024-003',
-    date: '2024-01-17',
-    description: 'จ่ายค่าเช่าประจำเดือน',
-    reference: 'RENT-2024-01',
-    totalDebit: 12000,
-    totalCredit: 12000,
-    status: 'pending',
-    createdBy: 'user-003',
-    entries: [
-      {
-        id: 'jel-005',
-        accountId: 'acc-014',
-        account: mockAccounts[13],
-        description: 'ค่าเช่าประจำเดือน มกราคม',
-        debitAmount: 12000,
-        creditAmount: 0,
-        reference: 'RENT-2024-01'
-      },
-      {
-        id: 'jel-006',
-        accountId: 'acc-001',
-        account: mockAccounts[0],
-        description: 'จ่ายเงินสดค่าเช่า',
-        debitAmount: 0,
-        creditAmount: 12000,
-        reference: 'RENT-2024-01'
-      }
-    ],
-    createdAt: '2024-01-17T11:00:00Z',
-    updatedAt: '2024-01-17T11:00:00Z'
-  }
-];
+export const mockJournalEntries: JournalEntry[] = createJournalEntries();
 
 // Mock Transactions
 export const mockTransactions: Transaction[] = [
@@ -374,6 +379,138 @@ export const mockTransactions: Transaction[] = [
     sourceId: 'payment-001',
     status: 'pending',
     createdAt: '2024-01-18T14:00:00Z'
+  },
+  {
+    id: 'txn-005',
+    type: 'sale',
+    date: '2024-01-19',
+    amount: 22000,
+    description: 'ขายสินค้าเครดิต - ใบกำกับภาษี INV-2024-002',
+    reference: 'INV-2024-002',
+    sourceModule: 'pos',
+    sourceId: 'sale-002',
+    status: 'processed',
+    createdAt: '2024-01-19T11:30:00Z'
+  },
+  {
+    id: 'txn-006',
+    type: 'payment',
+    date: '2024-01-20',
+    amount: 8500,
+    description: 'จ่ายค่าไฟฟ้าประจำเดือน',
+    reference: 'ELEC-2024-01',
+    sourceModule: 'accounting',
+    sourceId: 'expense-002',
+    status: 'processed',
+    createdAt: '2024-01-20T09:15:00Z'
+  },
+  {
+    id: 'txn-007',
+    type: 'purchase',
+    date: '2024-01-21',
+    amount: 18000,
+    description: 'ซื้อวัสดุสำนักงาน',
+    reference: 'PO-2024-002',
+    sourceModule: 'inventory',
+    sourceId: 'purchase-002',
+    status: 'processed',
+    createdAt: '2024-01-21T14:20:00Z'
+  },
+  {
+    id: 'txn-008',
+    type: 'receipt',
+    date: '2024-01-22',
+    amount: 15000,
+    description: 'รับชำระหนี้จากลูกค้า บริษัท ABC',
+    reference: 'RCP-2024-002',
+    sourceModule: 'pos',
+    sourceId: 'payment-002',
+    status: 'processed',
+    createdAt: '2024-01-22T16:45:00Z'
+  },
+  {
+    id: 'txn-009',
+    type: 'adjustment',
+    date: '2024-01-23',
+    amount: 2500,
+    description: 'ปรับปรุงยอดสินค้าคงเหลือ',
+    reference: 'ADJ-2024-001',
+    sourceModule: 'inventory',
+    sourceId: 'adjustment-001',
+    status: 'pending',
+    createdAt: '2024-01-23T10:30:00Z'
+  },
+  {
+    id: 'txn-010',
+    type: 'transfer',
+    date: '2024-01-24',
+    amount: 50000,
+    description: 'โอนเงินระหว่างสาขา',
+    reference: 'TRF-2024-001',
+    sourceModule: 'warehouse',
+    sourceId: 'transfer-001',
+    status: 'pending',
+    createdAt: '2024-01-24T13:00:00Z'
+  },
+  {
+    id: 'txn-011',
+    type: 'sale',
+    date: '2024-01-25',
+    amount: 35000,
+    description: 'ขายสินค้าเงินสด - ลูกค้าใหญ่',
+    reference: 'INV-2024-003',
+    sourceModule: 'pos',
+    sourceId: 'sale-003',
+    status: 'processed',
+    createdAt: '2024-01-25T15:20:00Z'
+  },
+  {
+    id: 'txn-012',
+    type: 'payment',
+    date: '2024-01-26',
+    amount: 85000,
+    description: 'จ่ายเงินเดือนพนักงาน',
+    reference: 'SAL-2024-01',
+    sourceModule: 'accounting',
+    sourceId: 'salary-001',
+    status: 'processed',
+    createdAt: '2024-01-26T08:00:00Z'
+  },
+  {
+    id: 'txn-013',
+    type: 'purchase',
+    date: '2024-01-27',
+    amount: 45000,
+    description: 'ซื้อสินค้าใหม่เข้าคลัง',
+    reference: 'PO-2024-003',
+    sourceModule: 'inventory',
+    sourceId: 'purchase-003',
+    status: 'pending',
+    createdAt: '2024-01-27T12:30:00Z'
+  },
+  {
+    id: 'txn-014',
+    type: 'receipt',
+    date: '2024-01-28',
+    amount: 28000,
+    description: 'รับเงินจากการขายผ่อนชำระ',
+    reference: 'INST-2024-001',
+    sourceModule: 'installments',
+    sourceId: 'installment-001',
+    status: 'processed',
+    createdAt: '2024-01-28T17:15:00Z'
+  },
+  {
+    id: 'txn-015',
+    type: 'adjustment',
+    date: '2024-01-29',
+    amount: 1200,
+    description: 'ปรับปรุงค่าเสื่อมราคา',
+    reference: 'DEP-2024-001',
+    sourceModule: 'accounting',
+    sourceId: 'depreciation-001',
+    status: 'pending',
+    createdAt: '2024-01-29T09:45:00Z'
   }
 ];
 

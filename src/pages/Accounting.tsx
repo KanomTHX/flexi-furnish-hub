@@ -9,6 +9,9 @@ import { BranchSelector } from '../components/branch/BranchSelector';
 import { AccountingOverview } from '@/components/accounting/AccountingOverview';
 import { ChartOfAccounts } from '@/components/accounting/ChartOfAccounts';
 import { JournalEntries } from '@/components/accounting/JournalEntries';
+import { TransactionManagement } from '@/components/accounting/TransactionManagement';
+import { TransactionReports } from '@/components/accounting/TransactionReports';
+import { TransactionJournalLink } from '@/components/accounting/TransactionJournalLink';
 import { CreateJournalEntryDialog } from '@/components/accounting/CreateJournalEntryDialog';
 import { PendingApprovalDialog } from '@/components/accounting/PendingApprovalDialog';
 import { ClearFiltersDialog } from '@/components/accounting/ClearFiltersDialog';
@@ -50,7 +53,9 @@ export default function Accounting() {
     approveJournalEntry,
     rejectJournalEntry,
     createTransaction,
+    updateTransaction,
     updateTransactionStatus,
+    deleteTransaction,
     getPendingJournalEntries,
     getRecentTransactions
   } = useAccounting();
@@ -113,6 +118,38 @@ export default function Accounting() {
     toast({
       title: "ส่งออกข้อมูลสำเร็จ",
       description: "ไฟล์ธุรกรรมถูกดาวน์โหลดแล้ว",
+    });
+  };
+
+  const handleCreateTransaction = (transactionData: any) => {
+    createTransaction(transactionData);
+    toast({
+      title: "สร้างธุรกรรมสำเร็จ",
+      description: "ธุรกรรมใหม่ถูกเพิ่มในระบบแล้ว",
+    });
+  };
+
+  const handleUpdateTransaction = (id: string, updates: any) => {
+    updateTransaction(id, updates);
+    toast({
+      title: "อัปเดตธุรกรรมสำเร็จ",
+      description: "ข้อมูลธุรกรรมถูกอัปเดตแล้ว",
+    });
+  };
+
+  const handleDeleteTransaction = (id: string) => {
+    deleteTransaction(id);
+    toast({
+      title: "ลบธุรกรรมสำเร็จ",
+      description: "ธุรกรรมถูกลบออกจากระบบแล้ว",
+    });
+  };
+
+  const handleLinkTransaction = (transactionId: string, journalEntryId: string) => {
+    updateTransaction(transactionId, { journalEntryId });
+    toast({
+      title: "เชื่อมโยงสำเร็จ",
+      description: "ธุรกรรมถูกเชื่อมโยงกับรายการบัญชีแล้ว",
     });
   };
 
@@ -316,26 +353,34 @@ export default function Accounting() {
 
       {/* Main Content */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="overview" className="flex items-center gap-2 text-xs">
             <BarChart3 className="w-4 h-4" />
             ภาพรวม
           </TabsTrigger>
-          <TabsTrigger value="accounts" className="flex items-center gap-2">
+          <TabsTrigger value="accounts" className="flex items-center gap-2 text-xs">
             <DollarSign className="w-4 h-4" />
             ผังบัญชี ({accounts.length})
           </TabsTrigger>
-          <TabsTrigger value="journal" className="flex items-center gap-2">
+          <TabsTrigger value="journal" className="flex items-center gap-2 text-xs">
             <FileText className="w-4 h-4" />
             รายการบัญชี ({journalEntries.length})
           </TabsTrigger>
-          <TabsTrigger value="transactions" className="flex items-center gap-2">
+          <TabsTrigger value="transactions" className="flex items-center gap-2 text-xs">
             <Activity className="w-4 h-4" />
             ธุรกรรม ({transactions.length})
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
+          <TabsTrigger value="transaction-link" className="flex items-center gap-2 text-xs">
+            <Building2 className="w-4 h-4" />
+            เชื่อมโยงธุรกรรม
+          </TabsTrigger>
+          <TabsTrigger value="transaction-reports" className="flex items-center gap-2 text-xs">
+            <TrendingUp className="w-4 h-4" />
+            รายงานธุรกรรม
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-2 text-xs">
             <Calculator className="w-4 h-4" />
-            รายงาน
+            รายงานการเงิน
           </TabsTrigger>
         </TabsList>
 
@@ -369,23 +414,29 @@ export default function Accounting() {
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                ธุรกรรมทั้งหมด
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>ระบบจัดการธุรกรรมจะพัฒนาในเวอร์ชันถัดไป</p>
-                <p className="text-sm mt-2">
-                  จะรวมถึงการติดตามธุรกรรม การเชื่อมโยงกับโมดูลอื่น และการรายงาน
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <TransactionManagement
+            transactions={transactions}
+            filter={transactionFilter}
+            onFilterChange={setTransactionFilter}
+            onCreateTransaction={handleCreateTransaction}
+            onUpdateTransaction={handleUpdateTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
+            onExport={handleExportTransactions}
+          />
+        </TabsContent>
+
+        <TabsContent value="transaction-link" className="space-y-6">
+          <TransactionJournalLink
+            transactions={transactions}
+            journalEntries={journalEntries}
+            accounts={accounts}
+            onCreateJournalEntry={handleJournalEntryCreated}
+            onLinkTransaction={handleLinkTransaction}
+          />
+        </TabsContent>
+
+        <TabsContent value="transaction-reports" className="space-y-6">
+          <TransactionReports transactions={transactions} />
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-6">

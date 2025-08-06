@@ -156,6 +156,18 @@ export function useAccounting() {
     ));
   }, []);
 
+  const updateTransaction = useCallback((transactionId: string, updates: Partial<Transaction>) => {
+    setTransactions(prev => prev.map(transaction => 
+      transaction.id === transactionId 
+        ? { ...transaction, ...updates }
+        : transaction
+    ));
+  }, []);
+
+  const deleteTransaction = useCallback((transactionId: string) => {
+    setTransactions(prev => prev.filter(transaction => transaction.id !== transactionId));
+  }, []);
+
   // Filter operations
   const clearAccountFilter = useCallback(() => {
     setAccountFilter({});
@@ -236,7 +248,9 @@ export function useAccounting() {
 
     // Transaction operations
     createTransaction,
+    updateTransaction,
     updateTransactionStatus,
+    deleteTransaction,
 
     // Utility functions
     getAccountById,
