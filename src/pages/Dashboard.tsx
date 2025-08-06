@@ -25,6 +25,8 @@ import { RealTimeStats } from "@/components/dashboard/RealTimeStats";
 import { ConnectionDetails } from "@/components/ui/connection-status";
 import { useBranchData } from "../hooks/useBranchData";
 import { BranchSelector } from "../components/branch/BranchSelector";
+import { BranchContextSwitcher } from "../components/branch/BranchContextSwitcher";
+import { BranchPerformanceMonitor } from "../components/branch/BranchPerformanceMonitor";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -226,17 +228,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Branch Selector */}
+      {/* Branch Context Switcher */}
       {showBranchSelector && (
-        <Card>
-          <CardContent className="p-4">
-            <BranchSelector
-              onBranchChange={() => setShowBranchSelector(false)}
-              showStats={false}
-              className="border-0 shadow-none"
-            />
-          </CardContent>
-        </Card>
+        <BranchContextSwitcher
+          onSwitchComplete={() => setShowBranchSelector(false)}
+          showSessionInfo={true}
+        />
       )}
 
       {/* System Notifications - Bubble Style */}
@@ -261,6 +258,9 @@ export default function Dashboard() {
 
       {/* Real-time Stats */}
       <RealTimeStats />
+
+      {/* Branch Performance Monitor */}
+      <BranchPerformanceMonitor />
 
       {/* Connection Status Details */}
       <Card>
