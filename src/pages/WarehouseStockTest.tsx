@@ -375,7 +375,7 @@ export default function WarehouseStockTest() {
       } else {
         results[results.length - 1] = {
           step: 'ทดสอบการโอนย้ายสต็อก',
-          status: 'warning',
+          status: 'error',
           message: 'ต้องมีคลังสินค้าอย่างน้อย 2 คลัง เพื่อทดสอบการโอนย้าย'
         };
       }

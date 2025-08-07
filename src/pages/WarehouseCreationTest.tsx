@@ -200,7 +200,6 @@ export default function WarehouseCreationTest() {
               id: createdWarehouse.id,
               code: createdWarehouse.code,
               name: createdWarehouse.name,
-              type: createdWarehouse.type,
               status: createdWarehouse.status
             }
           };

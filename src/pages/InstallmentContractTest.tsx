@@ -173,9 +173,13 @@ export default function InstallmentContractTest() {
         totalPayable,
         monthlyPayment,
         plan: {
+          id: `plan-test-${contractData.months}m`,
+          name: `แผนทดสอบ ${contractData.months} เดือน`,
           months: contractData.months,
           interestRate: contractData.interestRate,
-          installmentAmount: monthlyPayment
+          downPaymentPercent: 20,
+          processingFee: 500,
+          isActive: true
         },
         payments,
         totalPaid: contractData.downPayment,

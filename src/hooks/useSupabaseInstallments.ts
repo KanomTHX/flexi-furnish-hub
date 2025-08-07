@@ -91,28 +91,35 @@ export function useSupabaseInstallments() {
       totalPayable: plan.total_amount,
       monthlyPayment: plan.installment_amount,
       plan: {
+        id: `plan-${plan.number_of_installments}m`,
+        name: `แผนผ่อน ${plan.number_of_installments} เดือน`,
         months: plan.number_of_installments,
         interestRate: plan.interest_rate,
-        installmentAmount: plan.installment_amount
+        downPaymentPercent: 20,
+        processingFee: 500,
+        isActive: true
       },
       payments: payments.map(payment => ({
         id: payment.id,
+        contractId: plan.id,
         installmentNumber: payment.payment_number,
         dueDate: payment.due_date,
-        amount: payment.amount,
+        amount: payment.amount || 0,
+        principalAmount: (payment.amount || 0) * 0.8,
+        interestAmount: (payment.amount || 0) * 0.2,
         status: payment.status as 'pending' | 'paid' | 'overdue',
-        paidDate: payment.paid_date,
-        paidAmount: payment.paid_amount,
-        paymentMethod: payment.payment_method,
-        receiptNumber: payment.receipt_number,
-        notes: payment.notes
+        paidDate: payment.payment_date || '',
+        paidAmount: payment.amount_paid || 0,
+        paymentMethod: payment.payment_method || '',
+        receiptNumber: `RCP-${payment.payment_number}`,
+        notes: payment.notes || ''
       })),
       totalPaid,
       remainingBalance,
       paidInstallments,
       remainingInstallments,
       status: plan.status as 'draft' | 'active' | 'completed' | 'cancelled' | 'defaulted',
-      startDate: plan.start_date,
+      createdAt: plan.created_at,
       createdAt: plan.created_at,
       updatedAt: plan.updated_at,
       notes: ''
