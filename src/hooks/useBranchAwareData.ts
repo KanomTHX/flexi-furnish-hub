@@ -215,10 +215,10 @@ export function useCrossBranchData<T = any>(
       return acc;
     }, {} as Record<string, string>);
 
-    const normalizedCrossBranchAccess = typeof crossBranchAccess === 'object' && 'restrictionLevel' in crossBranchAccess 
+    const normalizedCrossBranchAccess = crossBranchAccess && typeof crossBranchAccess === 'object' && 'restrictionLevel' in crossBranchAccess 
       ? crossBranchAccess 
       : { 
-          allowed: typeof crossBranchAccess === 'object' ? crossBranchAccess.allowed : crossBranchAccess, 
+          allowed: crossBranchAccess && typeof crossBranchAccess === 'object' ? crossBranchAccess.allowed : !!crossBranchAccess, 
           reason: '', 
           restrictionLevel: 'full' as const 
         };

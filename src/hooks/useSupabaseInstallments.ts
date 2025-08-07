@@ -93,7 +93,7 @@ export function useSupabaseInstallments() {
       plan: {
         months: plan.number_of_installments,
         interestRate: plan.interest_rate,
-        monthlyPayment: plan.installment_amount
+        installmentAmount: plan.installment_amount
       },
       payments: payments.map(payment => ({
         id: payment.id,
@@ -225,7 +225,7 @@ export function useSupabaseInstallments() {
           installment_amount: contract.monthlyPayment,
           number_of_installments: contract.plan.months,
           interest_rate: contract.plan.interestRate,
-          start_date: contract.startDate,
+          start_date: contract.createdAt.split('T')[0],
           status: contract.status
         })
         .select()

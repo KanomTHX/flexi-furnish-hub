@@ -138,7 +138,7 @@ export function usePOS() {
         total_amount: subtotal,
         discount_amount: discount,
         tax_amount: tax,
-        payment_method: paymentMethod.type,
+        payment_method: (paymentMethod.type === 'installment' ? 'credit' : paymentMethod.type) as "cash" | "card" | "transfer" | "credit",
         notes: customer ? `ลูกค้า: ${customer.name}` : undefined
       };
 

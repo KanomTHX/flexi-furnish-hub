@@ -101,7 +101,7 @@ export default function InstallmentCustomerTest() {
       let createdCount = 0;
       for (const customerData of testCustomersData) {
         try {
-          const newCustomer = await customerActions.createCustomer(customerData);
+          const newCustomer = await customerActions.createCustomer({ ...customerData, notes: '' });
           createdIds.push(newCustomer.id);
           createdCount++;
           

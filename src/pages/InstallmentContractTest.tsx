@@ -71,7 +71,7 @@ export default function InstallmentContractTest() {
       setTestResults([...results]);
 
       try {
-        const newCustomer = await customerActions.createCustomer(customerData);
+        const newCustomer = await customerActions.createCustomer({ ...customerData, notes: '' });
         setCreatedCustomer(newCustomer);
         
         results[results.length - 1] = {
@@ -175,7 +175,7 @@ export default function InstallmentContractTest() {
         plan: {
           months: contractData.months,
           interestRate: contractData.interestRate,
-          monthlyPayment
+          installmentAmount: monthlyPayment
         },
         payments,
         totalPaid: contractData.downPayment,
