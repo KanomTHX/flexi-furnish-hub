@@ -51,10 +51,11 @@ export function useBranchAwareData<T = any>(
   const secureFilters = useMemo(() => {
     const baseFilters = options.filters || {};
     
-    if (!accessResult.allowed) return baseFilters;
+    if (typeof accessResult === 'boolean' && !accessResult) return baseFilters;
+    if (typeof accessResult === 'object' && !accessResult.allowed) return baseFilters;
     
     // ถ้าเป็น admin สามารถเข้าถึงข้อมูลทุกสาขา
-    if ('restrictionLevel' in accessResult && accessResult.restrictionLevel === 'none') {
+    if (typeof accessResult === 'object' && 'restrictionLevel' in accessResult && accessResult.restrictionLevel === 'none') {
       return baseFilters;
     }
     
@@ -70,7 +71,7 @@ export function useBranchAwareData<T = any>(
 
   // Query ข้อมูลจากฐานข้อมูล
   const query = useSupabaseQuery(
-    [...queryKey, currentBranch?.id, accessResult.allowed],
+    [...queryKey, currentBranch?.id, 'access-check'],
     options.tableName,
     options.columns,
     {
@@ -84,13 +85,14 @@ export function useBranchAwareData<T = any>(
         .join('.and.'),
       realtime: options.realtime,
       fallbackData: options.fallbackData,
-      enabled: accessResult.allowed
+      enabled: typeof accessResult === 'object' ? accessResult.allowed : accessResult
     }
   );
 
   // กรองข้อมูลตามสิทธิ์การเข้าถึง
   const processedData = useMemo(() => {
-    if (!query.data || !accessResult.allowed) {
+    const allowed = typeof accessResult === 'object' ? accessResult.allowed : accessResult;
+    if (!query.data || !allowed) {
       return {
         filteredData: [],
         metadata: {
@@ -102,9 +104,17 @@ export function useBranchAwareData<T = any>(
       };
     }
 
+    const normalizedAccessResult = typeof accessResult === 'object' && 'restrictionLevel' in accessResult 
+      ? accessResult 
+      : { 
+          allowed: typeof accessResult === 'object' ? accessResult.allowed : accessResult, 
+          reason: '', 
+          restrictionLevel: 'full' as const 
+        };
+    
     const result = BranchDataAccessMiddleware.filterDataByAccess(
       query.data,
-      'restrictionLevel' in accessResult ? accessResult : { ...accessResult, restrictionLevel: 'full' as const },
+      normalizedAccessResult,
       options.resourceType || 'general'
     );
 
@@ -119,14 +129,15 @@ export function useBranchAwareData<T = any>(
 
   // Log การเข้าถึงข้อมูล
   useEffect(() => {
-    if (query.data && accessResult.allowed) {
+    const allowed = typeof accessResult === 'object' ? accessResult.allowed : accessResult;
+    if (query.data && allowed) {
       logOperation(
         'data_access',
         options.resourceType || 'general',
         currentBranch?.id
       );
     }
-  }, [query.data, accessResult.allowed, logOperation, options.resourceType, currentBranch?.id]);
+  }, [query.data, logOperation, options.resourceType, currentBranch?.id]);
 
   const refetch = useCallback(() => {
     query.refetch();
@@ -170,7 +181,7 @@ export function useCrossBranchData<T = any>(
 
   // Query ข้อมูลจากทุกสาขาที่มีสิทธิ์
   const query = useSupabaseQuery(
-    [...queryKey, 'cross-branch', crossBranchAccess.allowed],
+    [...queryKey, 'cross-branch', 'multi-access'],
     options.tableName,
     options.columns,
     {
@@ -179,13 +190,14 @@ export function useCrossBranchData<T = any>(
         : '',
       realtime: options.realtime,
       fallbackData: options.fallbackData,
-      enabled: crossBranchAccess.allowed
+      enabled: typeof crossBranchAccess === 'object' ? crossBranchAccess.allowed : crossBranchAccess
     }
   );
 
   // ประมวลผลข้อมูลด้วย Middleware
   const processedData = useMemo(() => {
-    if (!query.data || !crossBranchAccess.allowed) {
+    const allowed = typeof crossBranchAccess === 'object' ? crossBranchAccess.allowed : crossBranchAccess;
+    if (!query.data || !allowed) {
       return {
         filteredData: [],
         metadata: {
@@ -203,9 +215,17 @@ export function useCrossBranchData<T = any>(
       return acc;
     }, {} as Record<string, string>);
 
+    const normalizedCrossBranchAccess = typeof crossBranchAccess === 'object' && 'restrictionLevel' in crossBranchAccess 
+      ? crossBranchAccess 
+      : { 
+          allowed: typeof crossBranchAccess === 'object' ? crossBranchAccess.allowed : crossBranchAccess, 
+          reason: '', 
+          restrictionLevel: 'full' as const 
+        };
+    
     const response = BranchDataAccessMiddleware.processApiResponse(
       query.data,
-      crossBranchAccess,
+      normalizedCrossBranchAccess,
       options.resourceType || 'general',
       {
         includeSummary: options.includeSummary,
@@ -237,7 +257,12 @@ export function useCrossBranchData<T = any>(
     isLoading: query.isLoading,
     error: query.error,
     accessResult: crossBranchAccess,
-    metadata: processedData.metadata,
+    metadata: {
+      totalRecords: processedData.metadata.totalRecords || 0,
+      filteredRecords: processedData.metadata.filteredRecords || 0,
+      allowedBranches: 'allowedBranches' in processedData.metadata ? processedData.metadata.allowedBranches : branches.map(b => b.id),
+      restrictedFields: processedData.metadata.restrictedFields || []
+    },
     branchSummary: processedData.branchSummary,
     bestPerformingBranch: processedData.branchSummary?.[0], // สาขาที่มีผลงานดีที่สุด
     refetch
