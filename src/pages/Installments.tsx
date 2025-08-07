@@ -131,21 +131,29 @@ export default function Installments() {
     }
   };
 
-  // Mock function สำหรับสร้างสัญญาใหม่
+  // ฟังก์ชันสำหรับสร้างสัญญาใหม่
   const handleQuickCreate = () => {
-    const mockCustomer: Customer = {
+    // สร้างลูกค้าใหม่เปล่าๆ สำหรับกรอกข้อมูล
+    const newCustomer: Customer = {
       id: `customer-${Date.now()}`,
-      name: 'ลูกค้าตัวอย่าง',
-      phone: '081-234-5678',
-      email: 'customer@example.com',
-      address: '123 ถนนตัวอย่าง กรุงเทพฯ 10100',
-      idCard: '1-2345-67890-12-3',
-      occupation: 'พนักงานบริษัท',
-      monthlyIncome: 30000
+      name: '',
+      phone: '',
+      email: '',
+      address: '',
+      idCard: '',
+      occupation: '',
+      monthlyIncome: 0
     };
     
-    setSelectedCustomer(mockCustomer);
-    setTotalAmount(50000);
+    setSelectedCustomer(newCustomer);
+    setTotalAmount(0); // ให้ผู้ใช้กรอกยอดเงิน
+    setCreateDialogOpen(true);
+  };
+
+  // ฟังก์ชันสำหรับสร้างสัญญาจากลูกค้าที่มีอยู่
+  const handleCreateFromExistingCustomer = (customer: Customer, amount: number) => {
+    setSelectedCustomer(customer);
+    setTotalAmount(amount);
     setCreateDialogOpen(true);
   };
 

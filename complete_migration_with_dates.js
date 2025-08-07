@@ -1,0 +1,193 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  'https://hartshwcchbsnmbrjdyn.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhcnRzaHdjY2hic25tYnJqZHluIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDAzNzU3NCwiZXhwIjoyMDY5NjEzNTc0fQ.EuWZV7-3o9GsDPGKAS4L4L3t7GKQkn7kfnoHpc9IzOw'
+);
+
+async function runCompleteMigration() {
+  try {
+    console.log('Running complete migration with all required fields...');
+    
+    // Get branch_id
+    const { data: branches } = await supabase
+      .from('branches')
+      .select('id')
+      .limit(1);
+      
+    const branchId = branches && branches.length > 0 
+      ? branches[0].id 
+      : '00000000-0000-0000-0000-000000000000';
+    
+    console.log('Using branch_id:', branchId);
+    
+    // Sample plans with ALL required fields including dates
+    const samplePlans = [
+      {
+        plan_number: 'PLAN003',
+        total_amount: 10000.00,
+        name: 'ผ่อน 0% 3 งวด',
+        months: 3,
+        number_of_installments: 3,
+        interest_rate: 0.00,
+        down_payment: 1000.00,
+        down_payment_percent: 10.00,
+        processing_fee: 200.00,
+        description: 'ผ่อนชำระ 3 งวด ไม่มีดอกเบี้ย',
+        min_amount: 3000,
+        max_amount: 30000,
+        requires_guarantor: false,
+        is_active: true,
+        installment_amount: 3333.33,
+        status: 'active',
+        branch_id: branchId,
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year from now
+      },
+      {
+        plan_number: 'PLAN006',
+        total_amount: 15000.00,
+        name: 'ผ่อน 0% 6 งวด',
+        months: 6,
+        number_of_installments: 6,
+        interest_rate: 0.00,
+        down_payment: 2000.00,
+        down_payment_percent: 20.00,
+        processing_fee: 500.00,
+        description: 'ผ่อนชำระ 6 งวด ไม่มีดอกเบี้ย',
+        min_amount: 5000,
+        max_amount: 50000,
+        requires_guarantor: false,
+        is_active: true,
+        installment_amount: 2166.67,
+        status: 'active',
+        branch_id: branchId,
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        plan_number: 'PLAN012',
+        total_amount: 50000.00,
+        name: 'ผ่อน 0% 12 งวด',
+        months: 12,
+        number_of_installments: 12,
+        interest_rate: 0.00,
+        down_payment: 3000.00,
+        down_payment_percent: 30.00,
+        processing_fee: 1000.00,
+        description: 'ผ่อนชำระ 12 งวด ไม่มีดอกเบี้ย',
+        min_amount: 10000,
+        max_amount: 100000,
+        requires_guarantor: false,
+        is_active: true,
+        installment_amount: 3916.67,
+        status: 'active',
+        branch_id: branchId,
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        plan_number: 'PLAN024',
+        total_amount: 100000.00,
+        name: 'ผ่อน 8% 24 งวด',
+        months: 24,
+        number_of_installments: 24,
+        interest_rate: 8.00,
+        down_payment: 5000.00,
+        down_payment_percent: 25.00,
+        processing_fee: 2000.00,
+        description: 'ผ่อนชำระ 24 งวด ดอกเบี้ย 8% ต่อปี',
+        min_amount: 20000,
+        max_amount: 500000,
+        requires_guarantor: true,
+        is_active: true,
+        installment_amount: 4583.33,
+        status: 'active',
+        branch_id: branchId,
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        plan_number: 'PLAN036',
+        total_amount: 200000.00,
+        name: 'ผ่อน 10% 36 งวด',
+        months: 36,
+        number_of_installments: 36,
+        interest_rate: 10.00,
+        down_payment: 10000.00,
+        down_payment_percent: 30.00,
+        processing_fee: 3000.00,
+        description: 'ผ่อนชำระ 36 งวด ดอกเบี้ย 10% ต่อปี',
+        min_amount: 50000,
+        max_amount: 1000000,
+        requires_guarantor: true,
+        is_active: true,
+        installment_amount: 6111.11,
+        status: 'active',
+        branch_id: branchId,
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+    
+    console.log('Inserting sample plans...');
+    
+    for (const plan of samplePlans) {
+      try {
+        // Check if plan already exists
+        const { data: existing } = await supabase
+          .from('installment_plans')
+          .select('plan_number')
+          .eq('plan_number', plan.plan_number)
+          .single();
+          
+        if (existing) {
+          console.log(`Plan ${plan.plan_number} already exists, skipping...`);
+          continue;
+        }
+        
+        const { data, error } = await supabase
+          .from('installment_plans')
+          .insert(plan)
+          .select();
+          
+        if (error) {
+          console.error(`Error inserting ${plan.plan_number}:`, error);
+        } else {
+          console.log(`✓ Inserted plan: ${plan.plan_number} - ${plan.name}`);
+        }
+      } catch (err) {
+        console.error(`Error with plan ${plan.plan_number}:`, err.message);
+      }
+    }
+    
+    console.log('\nChecking results...');
+    
+    // Check results
+    const { data: plans, error: selectError } = await supabase
+      .from('installment_plans')
+      .select('plan_number, name, months, number_of_installments, total_amount, installment_amount, status, start_date, end_date')
+      .order('plan_number');
+      
+    if (selectError) {
+      console.error('Error checking results:', selectError);
+    } else {
+      console.log('\nInstallment plans in database:');
+      console.log('==============================');
+      plans.forEach(plan => {
+        console.log(`${plan.plan_number}: ${plan.name}`);
+        console.log(`  - งวด: ${plan.number_of_installments}, ยอดรวม: ${plan.total_amount} บาท`);
+        console.log(`  - ผ่อนต่องวด: ${plan.installment_amount} บาท`);
+        console.log(`  - วันที่เริ่ม: ${plan.start_date}`);
+        console.log('');
+      });
+    }
+    
+    console.log('✅ Complete migration finished successfully!');
+    
+  } catch (err) {
+    console.error('Migration error:', err.message);
+  }
+}
+
+runCompleteMigration();

@@ -1,0 +1,48 @@
+{
+  "customers": {
+    "exists": true,
+    "columns": [],
+    "foreignKeys": [],
+    "missingColumns": [
+      "id_card",
+      "occupation",
+      "monthly_income",
+      "workplace",
+      "work_address",
+      "emergency_contact_name",
+      "emergency_contact_phone",
+      "emergency_contact_relationship"
+    ]
+  },
+  "installment_plans": {
+    "exists": true,
+    "columns": [],
+    "foreignKeys": []
+  },
+  "installment_contracts": {
+    "exists": true,
+    "columns": [],
+    "foreignKeys": [],
+    "customerColumns": []
+  },
+  "installment_payments": {
+    "exists": true,
+    "columns": [],
+    "foreignKeys": []
+  },
+  "guarantors": {
+    "exists": false,
+    "columns": [],
+    "foreignKeys": []
+  },
+  "contract_history": {
+    "exists": false,
+    "columns": [],
+    "foreignKeys": []
+  },
+  "contract_documents": {
+    "exists": false,
+    "columns": [],
+    "foreignKeys": []
+  }
+}
