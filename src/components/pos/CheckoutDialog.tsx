@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { User, CreditCard, Receipt, Check } from 'lucide-react';
 import { POSState, Customer, PaymentMethod } from '@/types/pos';
-import { paymentMethods } from '@/data/mockProducts';
+import { paymentMethods } from '@/data/constants';
 import { CustomerSelector } from './CustomerSelector';
 
 interface CheckoutDialogProps {

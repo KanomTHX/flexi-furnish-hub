@@ -17,7 +17,7 @@ import {
   generateMockSalesData,
   generateMockInventoryData,
   generateMockFinancialData
-} from '@/data/mockReportsData';
+} from '@/hooks/useSupabaseHooks';
 
 export const useReports = () => {
   const [salesReports, setSalesReports] = useState<SalesReport[]>([]);

@@ -15,7 +15,7 @@ import {
   mockWarehouseTasks, 
   mockWarehouseAlerts,
   calculateWarehouseSummary
-} from '@/data/mockWarehouseData';
+} from '@/hooks/useSupabaseHooks';
 import { 
   filterWarehouses, 
   filterTransfers, 

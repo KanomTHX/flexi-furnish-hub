@@ -16,7 +16,7 @@ import {
   Eye
 } from 'lucide-react'
 import { usePOS } from '@/hooks/usePOS'
-import { mockProducts } from '@/data/mockProducts'
+// Mock products removed - will use Supabase data
 import { useToast } from '@/hooks/use-toast'
 
 export default function POSTest() {
@@ -69,16 +69,26 @@ export default function POSTest() {
     }
   }
 
+  const testProduct = {
+    id: 'test-1',
+    name: 'สินค้าทดสอบ',
+    sku: 'TEST-001',
+    price: 1000,
+    category: 'ทดสอบ',
+    stock: 10,
+    description: 'สินค้าสำหรับทดสอบระบบ',
+    barcode: '1234567890123'
+  };
+
   const testAddToCart = () => {
     const initialCartLength = state.cart.length
-    const testProduct = mockProducts[0]
     actions.addToCart(testProduct)
     return state.cart.length === initialCartLength + 1
   }
 
   const testUpdateQuantity = () => {
     if (state.cart.length === 0) {
-      actions.addToCart(mockProducts[0])
+      actions.addToCart(testProduct)
     }
     const productId = state.cart[0].product.id
     const initialQuantity = state.cart[0].quantity
@@ -89,7 +99,7 @@ export default function POSTest() {
 
   const testRemoveFromCart = () => {
     if (state.cart.length === 0) {
-      actions.addToCart(mockProducts[0])
+      actions.addToCart(testProduct)
     }
     const initialCartLength = state.cart.length
     const productId = state.cart[0].product.id
@@ -99,7 +109,7 @@ export default function POSTest() {
 
   const testApplyDiscount = () => {
     if (state.cart.length === 0) {
-      actions.addToCart(mockProducts[0])
+      actions.addToCart(testProduct)
     }
     const discountAmount = 100
     actions.applyDiscount(discountAmount)
@@ -108,9 +118,9 @@ export default function POSTest() {
 
   const testCalculateTotals = () => {
     actions.clearCart()
-    actions.addToCart(mockProducts[0], 2) // เพิ่มสินค้า 2 ชิ้น
+    actions.addToCart(testProduct, 2) // เพิ่มสินค้า 2 ชิ้น
     
-    const expectedSubtotal = mockProducts[0].price * 2
+    const expectedSubtotal = testProduct.price * 2
     const expectedTax = (expectedSubtotal - state.discount) * 0.07
     const expectedTotal = expectedSubtotal - state.discount + expectedTax
     
@@ -141,7 +151,7 @@ export default function POSTest() {
 
   const testClearCart = () => {
     // เพิ่มสินค้าก่อน
-    actions.addToCart(mockProducts[0])
+    actions.addToCart(testProduct)
     actions.setCustomer({ id: 'test', name: 'Test Customer' })
     actions.applyDiscount(50)
     
@@ -384,27 +394,25 @@ export default function POSTest() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {mockProducts.slice(0, 6).map((product) => (
-                  <div key={product.id} className="border rounded-lg p-4">
-                    <div className="space-y-2">
-                      <h4 className="font-medium">{product.name}</h4>
-                      <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-blue-600">{formatPrice(product.price)}</span>
-                        <Badge variant={product.stock > 10 ? "default" : "secondary"}>
-                          สต็อก: {product.stock}
-                        </Badge>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => actions.addToCart(product)}
-                        className="w-full"
-                      >
-                        เพิ่มลงตะกร้า
-                      </Button>
+                <div className="border rounded-lg p-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium">{testProduct.name}</h4>
+                    <p className="text-sm text-muted-foreground">SKU: {testProduct.sku}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-blue-600">{formatPrice(testProduct.price)}</span>
+                      <Badge variant={testProduct.stock > 10 ? "default" : "secondary"}>
+                        สต็อก: {testProduct.stock}
+                      </Badge>
                     </div>
+                    <Button
+                      size="sm"
+                      onClick={() => actions.addToCart(testProduct)}
+                      className="w-full"
+                    >
+                      เพิ่มลงตะกร้า
+                    </Button>
                   </div>
-                ))}
+                </div>
               </div>
             </CardContent>
           </Card>

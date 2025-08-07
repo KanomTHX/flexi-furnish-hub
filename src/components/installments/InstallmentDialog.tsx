@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Customer, InstallmentPlan, InstallmentContract } from '@/types/pos';
-import { mockInstallmentPlans, getActiveInstallmentPlans } from '@/data/mockInstallmentPlans';
+import { installmentPlans, getActiveInstallmentPlans } from '@/data/constants';
 import { 
   createInstallmentContract, 
   checkInstallmentEligibility,

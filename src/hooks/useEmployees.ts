@@ -28,7 +28,7 @@ import {
   mockLeaves, 
   mockPayrolls, 
   mockTrainings 
-} from '@/data/mockEmployeesData';
+} from '@/hooks/useSupabaseHooks';
 
 export const useEmployees = () => {
   const { toast } = useToast();

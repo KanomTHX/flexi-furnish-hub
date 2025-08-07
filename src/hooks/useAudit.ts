@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   AuditLog,
   AuditStatistics,
@@ -13,31 +13,123 @@ import {
   AuditSeverity,
   AuditStatus
 } from '@/types/audit';
-import {
-  mockAuditLogs,
-  mockUsers,
-  mockSecurityEvents,
-  mockComplianceReports,
-  calculateAuditStatistics,
-  createAuditLog
-} from '@/data/mockAuditData';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useAudit() {
   // State management
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(mockAuditLogs);
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>(mockSecurityEvents);
-  const [complianceReports, setComplianceReports] = useState<ComplianceReport[]>(mockComplianceReports);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
+  const [complianceReports, setComplianceReports] = useState<ComplianceReport[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load data from Supabase
+  useEffect(() => {
+    loadAuditData();
+  }, []);
+
+  const loadAuditData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load audit logs
+      const { data: auditData, error: auditError } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
+      if (auditError) throw auditError;
+      
+      // Transform audit data to match expected format
+      const transformedAuditLogs: AuditLog[] = (auditData || []).map(log => ({
+        id: log.id,
+        timestamp: log.created_at,
+        sessionId: 'unknown',
+        userId: log.employee_id,
+        action: log.action as AuditAction,
+        resource: log.table_name as AuditResource,
+        resourceId: log.record_id || '',
+        resourceName: '',
+        module: 'system' as SystemModule,
+        description: log.action,
+        details: { 
+          oldValues: log.old_values, 
+          newValues: log.new_values 
+        },
+        ipAddress: log.ip_address || '',
+        userAgent: log.user_agent || '',
+        severity: 'medium' as AuditSeverity,
+        status: 'success' as AuditStatus,
+        createdAt: log.created_at,
+        user: {
+          id: log.employee_id,
+          username: 'user',
+          fullName: 'Unknown User',
+          email: '',
+          role: 'staff' as const,
+          isActive: true
+        }
+      }));
+
+      setAuditLogs(transformedAuditLogs);
+      
+    } catch (err) {
+      console.error('Error loading audit data:', err);
+      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Filters
   const [auditFilter, setAuditFilter] = useState<AuditFilter>({});
   const [securityEventFilter, setSecurityEventFilter] = useState<SecurityEventFilter>({});
 
   // Calculate statistics
-  const statistics: AuditStatistics = useMemo(() => 
-    calculateAuditStatistics(), 
-    [auditLogs, securityEvents]
-  );
+  const statistics: AuditStatistics = useMemo(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const todayLogs = auditLogs.filter(log => log.timestamp.split('T')[0] === todayStr);
+    const weekLogs = auditLogs.filter(log => new Date(log.timestamp) >= weekAgo);
+    const monthLogs = auditLogs.filter(log => new Date(log.timestamp) >= monthAgo);
+
+    return {
+      totalEvents: auditLogs.length,
+      totalLogs: auditLogs.length,
+      todayEvents: todayLogs.length,
+      todayLogs: todayLogs.length,
+      weekEvents: weekLogs.length,
+      weekLogs: weekLogs.length,
+      monthEvents: monthLogs.length,
+      monthLogs: monthLogs.length,
+      criticalEvents: auditLogs.filter(log => log.severity === 'critical').length,
+      failedActions: auditLogs.filter(log => log.status === 'failed').length,
+      failedLogs: auditLogs.filter(log => log.status === 'failed').length,
+      uniqueUsers: [...new Set(auditLogs.map(log => log.userId))].length,
+      securityIncidents: securityEvents.length,
+      unresolvedIncidents: securityEvents.filter(event => !event.resolved).length,
+      systemErrors: auditLogs.filter(log => log.action === 'system_error').length,
+      loginAttempts: auditLogs.filter(log => log.action === 'login' || log.action === 'login_failed').length,
+      dataExports: auditLogs.filter(log => log.action === 'export').length,
+      complianceScore: 85, // Mock compliance score
+      riskLevel: 'medium' as const,
+      averageResponseTime: 2.5,
+      mostActiveUser: auditLogs.length > 0 ? auditLogs[0].user.fullName : 'ไม่มีข้อมูล',
+      mostCommonAction: 'read',
+      mostAffectedResource: 'user',
+      topActions: [{ action: 'read', count: 10 }],
+      topModules: [{ module: 'system', count: 5 }],
+      topUsers: [{ user: 'admin', count: 15 }],
+      hourlyActivity: [{ hour: 9, events: 5 }],
+      dailyTrends: [{ date: '2024-01-01', events: 20 }]
+    };
+  }, [auditLogs, securityEvents]);
 
   // Filtered audit logs
   const filteredAuditLogs = useMemo(() => {
@@ -102,9 +194,32 @@ export function useAudit() {
     details: any = {},
     severity: AuditSeverity = 'low'
   ) => {
-    const newLog = createAuditLog(
-      userId, action, resource, resourceId, module, description, details, severity
-    );
+    const newLog: AuditLog = {
+      id: `audit-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      sessionId: 'unknown',
+      userId,
+      action,
+      resource,
+      resourceId,
+      resourceName: '',
+      module,
+      description,
+      details,
+      ipAddress: '0.0.0.0',
+      userAgent: 'System/Manual',
+      severity,
+      status: 'success',
+      createdAt: new Date().toISOString(),
+      user: {
+        id: userId,
+        username: 'user',
+        fullName: 'Unknown User',
+        email: '',
+        role: 'staff' as const,
+        isActive: true
+      }
+    };
     setAuditLogs(prev => [newLog, ...prev]);
     return newLog;
   }, []);

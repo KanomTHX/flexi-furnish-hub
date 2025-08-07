@@ -15,18 +15,7 @@ import {
   StockMovement,
   StockAlert
 } from '../types/stock';
-import { 
-  mockBranches, 
-  mockBranchDataContext, 
-  mockBranchEmployees, 
-  mockBranchCustomers,
-  mockBranchAnalytics
-} from '../data/mockBranchData';
-import { 
-  mockStockLevels, 
-  mockStockMovements, 
-  mockStockAlerts 
-} from '../data/mockStockData';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useBranchData() {
   // Branch State
@@ -52,47 +41,124 @@ export function useBranchData() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSwitchingBranch, setIsSwitchingBranch] = useState(false);
 
-  // Initialize data
+  // Initialize data from Supabase
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
       try {
-        // Load branch data
-        setBranches(mockBranches);
-        setBranchContext(mockBranchDataContext);
-        setCurrentBranch(mockBranches[0]); // Default to main branch
-        setBranchEmployees(mockBranchEmployees);
-        setBranchCustomers(mockBranchCustomers);
-        setBranchAnalytics(mockBranchAnalytics);
+        // Load branches from Supabase
+        const { data: branchesData, error: branchError } = await supabase
+          .from('branches')
+          .select('*')
+          .order('name');
+
+        if (branchError) throw branchError;
+
+        // Transform Supabase data to match expected format
+        const transformedBranches: Branch[] = (branchesData || []).map(branch => ({
+          id: branch.id,
+          code: branch.code || `BR-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+          name: branch.name,
+          type: 'main' as const,
+          status: 'active' as const,
+          businessInfo: {
+            taxId: '',
+            registrationNumber: '',
+            businessType: 'retail',
+            establishedDate: branch.created_at
+          },
+          address: {
+            street: branch.address || '',
+            district: '',
+            province: '',
+            postalCode: '',
+            country: 'ไทย'
+          },
+          contact: {
+            phone: branch.phone || '',
+            email: '',
+            manager: '',
+            managerPhone: '',
+            website: ''
+          },
+          settings: {
+            timezone: 'Asia/Bangkok',
+            currency: 'THB',
+            taxRate: 7,
+            operatingHours: {
+              open: '09:00',
+              close: '18:00',
+              workDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+            },
+            features: {
+              enablePOS: true,
+              enableInventory: true,
+              enableAccounting: true,
+              enableCRM: true
+            },
+            requireManagerApproval: false,
+            autoBackup: true,
+            dataRetentionDays: 365
+          },
+          permissions: {
+            canAccessOtherBranches: false,
+            canTransferToBranches: [],
+            canViewFinancialData: true,
+            dataIsolationLevel: 'partial' as const
+          },
+          stats: {
+            totalEmployees: 0,
+            totalCustomers: 0,
+            totalProducts: 0,
+            totalSales: 0,
+            averageOrderValue: 0,
+            monthlyRevenue: 0,
+            yearlyRevenue: 0
+          },
+          createdAt: branch.created_at,
+          updatedAt: branch.updated_at,
+          createdBy: 'system',
+          updatedBy: 'system'
+        }));
+
+        setBranches(transformedBranches);
         
-        // Convert stock data to branch-specific format
-        const branchStock: BranchStock[] = mockStockLevels.map(stock => {
-          const branch = mockBranches.find(b => b.id === stock.warehouseId) || mockBranches[0];
-          return {
-            ...stock,
-            branchId: branch.id,
-            branchCode: branch.code,
-            branchName: branch.name,
-            isSharedWithBranches: [],
-            transferRestrictions: {
-              allowedDestinations: branch.permissions.canTransferToBranches,
-              requiresApproval: branch.settings.requireManagerApproval,
-              minimumQuantity: 1
-            }
-          };
+        // Set default current branch
+        if (transformedBranches.length > 0) {
+          setCurrentBranch(transformedBranches[0]);
+          setSelectedBranchIds([transformedBranches[0].id]);
+        }
+
+        // Initialize empty arrays for other data (to be implemented later)
+        setBranchEmployees([]);
+        setBranchCustomers([]);
+        setBranchAnalytics([]);
+        setBranchStockLevels([]);
+        setBranchStockMovements([]);
+        setBranchStockAlerts([]);
+        
+        // Set mock context for now
+        setBranchContext({
+          currentBranch: transformedBranches[0] || null,
+          userPermissions: {
+            canSwitchBranch: true,
+            canViewAllBranches: true,
+            canManageBranches: true,
+            allowedOperations: ['view', 'create', 'update', 'delete']
+          },
+          accessibleBranches: transformedBranches
         });
         
-        setBranchStockLevels(branchStock);
-        setBranchStockMovements(mockStockMovements);
-        setBranchStockAlerts(mockStockAlerts);
-        
-        // Set default selected branches to current branch
-        setSelectedBranchIds([mockBranches[0].id]);
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
         console.error('Error initializing branch data:', error);
+        // Fallback to empty state
+        setBranches([]);
+        setBranchEmployees([]);
+        setBranchCustomers([]);
+        setBranchAnalytics([]);
+        setBranchStockLevels([]);
+        setBranchStockMovements([]);
+        setBranchStockAlerts([]);
       } finally {
         setIsLoading(false);
       }

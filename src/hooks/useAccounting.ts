@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Account,
   JournalEntry,
@@ -10,18 +10,27 @@ import {
   JournalEntryLine,
   JournalEntryStatus
 } from '@/types/accounting';
-import {
-  mockAccounts,
-  mockJournalEntries,
-  mockTransactions,
-  calculateAccountingSummary
-} from '@/data/mockAccountingData';
+import { useSupabaseAccounting } from '@/hooks/useSupabaseAccounting';
 
 export function useAccounting() {
-  // State management
-  const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries);
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
+  const {
+    transactions: supabaseTransactions,
+    branches,
+    loading,
+    error,
+    createTransaction: createSupabaseTransaction,
+    updateTransaction: updateSupabaseTransaction,
+    deleteTransaction: deleteSupabaseTransaction,
+    selectedBranch,
+    setSelectedBranch,
+    dateRange,
+    setDateRange
+  } = useSupabaseAccounting();
+
+  // State management for local data not yet in Supabase
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   
   // Filters
   const [accountFilter, setAccountFilter] = useState<AccountFilter>({});
@@ -29,10 +38,36 @@ export function useAccounting() {
   const [transactionFilter, setTransactionFilter] = useState<TransactionFilter>({});
 
   // Calculate summary
-  const summary: AccountingSummary = useMemo(() => 
-    calculateAccountingSummary(), 
-    [accounts, journalEntries, transactions]
-  );
+  const summary: AccountingSummary = useMemo(() => {
+    const totalAssets = accounts.filter(a => a.type === 'asset').reduce((sum, a) => sum + a.balance, 0);
+    const totalLiabilities = accounts.filter(a => a.type === 'liability').reduce((sum, a) => sum + a.balance, 0);
+    const totalEquity = accounts.filter(a => a.type === 'equity').reduce((sum, a) => sum + a.balance, 0);
+    const totalRevenue = accounts.filter(a => a.type === 'revenue').reduce((sum, a) => sum + a.balance, 0);
+    const totalExpenses = accounts.filter(a => a.type === 'expense').reduce((sum, a) => sum + a.balance, 0);
+    
+    return {
+      totalAssets,
+      totalLiabilities,
+      totalEquity,
+      totalRevenue,
+      totalExpenses,
+      totalRevenues: totalRevenue,
+      netIncome: totalRevenue - totalExpenses,
+      profitMargin: totalRevenue > 0 ? ((totalRevenue - totalExpenses) / totalRevenue) * 100 : 0,
+      debtToEquityRatio: totalEquity > 0 ? totalLiabilities / totalEquity : 0,
+      currentRatio: totalLiabilities > 0 ? totalAssets / totalLiabilities : 0,
+      pendingJournalEntries: journalEntries.filter(je => je.status === 'pending').length,
+      pendingEntries: journalEntries.filter(je => je.status === 'pending').length,
+      pendingTransactions: transactions.filter(t => t.status === 'pending').length,
+      recentTransactions: transactions.slice(0, 10).length,
+      accountsCount: accounts.length,
+      totalTransactionsThisMonth: transactions.filter(t => {
+        const transactionDate = new Date(t.date);
+        const now = new Date();
+        return transactionDate.getMonth() === now.getMonth() && transactionDate.getFullYear() === now.getFullYear();
+      }).length
+    };
+  }, [accounts, journalEntries, transactions]);
 
   // Filtered data
   const filteredAccounts = useMemo(() => {
@@ -137,8 +172,8 @@ export function useAccounting() {
     updateJournalEntry(entryId, { status: 'rejected' });
   }, [updateJournalEntry]);
 
-  // Transaction operations
-  const createTransaction = useCallback((transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
+  // Transaction operations (local only)
+  const createLocalTransaction = useCallback((transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
     const newTransaction: Transaction = {
       ...transactionData,
       id: `txn-${Date.now()}`,
@@ -156,7 +191,7 @@ export function useAccounting() {
     ));
   }, []);
 
-  const updateTransaction = useCallback((transactionId: string, updates: Partial<Transaction>) => {
+  const updateLocalTransaction = useCallback((transactionId: string, updates: Partial<Transaction>) => {
     setTransactions(prev => prev.map(transaction => 
       transaction.id === transactionId 
         ? { ...transaction, ...updates }
@@ -164,7 +199,7 @@ export function useAccounting() {
     ));
   }, []);
 
-  const deleteTransaction = useCallback((transactionId: string) => {
+  const deleteLocalTransaction = useCallback((transactionId: string) => {
     setTransactions(prev => prev.filter(transaction => transaction.id !== transactionId));
   }, []);
 
@@ -247,10 +282,15 @@ export function useAccounting() {
     rejectJournalEntry,
 
     // Transaction operations
-    createTransaction,
-    updateTransaction,
+    createTransaction: createLocalTransaction,
+    updateTransaction: updateLocalTransaction,
     updateTransactionStatus,
-    deleteTransaction,
+    deleteTransaction: deleteLocalTransaction,
+    
+    // Supabase transaction operations
+    createSupabaseTransaction,
+    updateSupabaseTransaction,
+    deleteSupabaseTransaction,
 
     // Utility functions
     getAccountById,

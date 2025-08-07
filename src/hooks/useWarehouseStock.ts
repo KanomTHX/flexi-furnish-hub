@@ -25,14 +25,7 @@ import {
   mockWarehouseTransfers,
   mockWarehouseTasks,
   mockWarehouseAlerts
-} from '../data/mockWarehouseData';
-import {
-  mockStockLevels,
-  mockStockMovements,
-  mockStockAlerts,
-  mockStockAdjustments,
-  mockStockCounts
-} from '../data/mockStockData';
+} from '@/hooks/useSupabaseHooks';
 
 export function useWarehouseStock() {
   // Warehouse State

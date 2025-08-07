@@ -27,7 +27,7 @@ import {
   getActiveUsers,
   getUsersByRole,
   getRecentAuditLogs
-} from '@/data/mockSettingsData';
+} from '@/hooks/useSupabaseHooks';
 
 export const useSettings = () => {
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>(mockGeneralSettings);

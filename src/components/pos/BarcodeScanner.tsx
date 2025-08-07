@@ -5,16 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Scan, X, Search } from 'lucide-react';
 import { Product } from '@/types/pos';
-import { mockProducts } from '@/data/mockProducts';
+// Products will be loaded from Supabase in the parent component
 import { validateBarcode } from '@/utils/posHelpers';
 
 interface BarcodeScannerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProductFound: (product: Product) => void;
+  products?: Product[]; // Products from parent component
 }
 
-export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeScannerProps) {
+export function BarcodeScanner({ open, onOpenChange, onProductFound, products = [] }: BarcodeScannerProps) {
   const [barcode, setBarcode] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState('');
@@ -34,7 +35,7 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
     }
 
     // Search for product by barcode
-    const product = mockProducts.find(p => p.barcode === barcode);
+    const product = products.find(p => p.barcode === barcode);
     
     if (product) {
       onProductFound(product);
