@@ -429,7 +429,7 @@ export class SupabaseTableCreator {
         const createResult = await this.createTableWithFallback(tableDef)
         results.push(createResult)
         
-        if (createResult.success) {
+        if (createResult && 'success' in createResult && createResult.success) {
           successCount++
         }
 
@@ -475,7 +475,7 @@ export class SupabaseTableCreator {
     // วิธีที่ 2: ใช้ REST API (สำหรับตารางง่ายๆ)
     try {
       const result = await this.createTableViaREST(tableDef)
-      if (result.success) {
+      if (result && typeof result === 'object' && 'success' in result && result.success) {
         return result
       }
     } catch (error) {
@@ -492,7 +492,7 @@ export class SupabaseTableCreator {
     }
   }
 
-  private async createTableViaREST(tableDef: { name: string; sql: string }) {
+  private async createTableViaREST(tableDef: { name: string; sql: string }): Promise<{ table: string; success: boolean; method: string } | never> {
     // สำหรับตารางพื้นฐานที่ไม่มี foreign key
     const basicTables = ['branches', 'product_categories', 'chart_of_accounts']
     

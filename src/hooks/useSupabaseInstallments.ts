@@ -73,6 +73,8 @@ export function useSupabaseInstallments() {
 
     return {
       id: plan.id,
+      saleId: plan.sales_transaction_id || '',
+      planId: plan.id,
       contractNumber: plan.plan_number,
       customerId: customer.id,
       customer: {
@@ -90,6 +92,8 @@ export function useSupabaseInstallments() {
       financedAmount: plan.total_amount - plan.down_payment,
       totalPayable: plan.total_amount,
       monthlyPayment: plan.installment_amount,
+      totalInterest: plan.total_amount * (plan.interest_rate / 100),
+      processingFee: 500,
       plan: {
         id: `plan-${plan.number_of_installments}m`,
         name: `แผนผ่อน ${plan.number_of_installments} เดือน`,
@@ -108,8 +112,8 @@ export function useSupabaseInstallments() {
         principalAmount: (payment.amount || 0) * 0.8,
         interestAmount: (payment.amount || 0) * 0.2,
         status: payment.status as 'pending' | 'paid' | 'overdue',
-        paidDate: payment.payment_date || '',
-        paidAmount: payment.amount_paid || 0,
+        paidDate: payment.paid_date || '',
+        paidAmount: payment.paid_amount || 0,
         paymentMethod: payment.payment_method || '',
         receiptNumber: `RCP-${payment.payment_number}`,
         notes: payment.notes || ''
@@ -119,7 +123,10 @@ export function useSupabaseInstallments() {
       paidInstallments,
       remainingInstallments,
       status: plan.status as 'draft' | 'active' | 'completed' | 'cancelled' | 'defaulted',
-      createdAt: plan.created_at,
+      contractDate: plan.start_date,
+      firstPaymentDate: plan.start_date,
+      lastPaymentDate: new Date(new Date(plan.start_date).getTime() + plan.number_of_installments * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      createdBy: 'system',
       createdAt: plan.created_at,
       updatedAt: plan.updated_at,
       notes: ''
