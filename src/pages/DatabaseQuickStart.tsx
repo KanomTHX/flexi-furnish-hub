@@ -144,7 +144,7 @@ VITE_USE_SERVICE_ROLE=true`
                   <div>
                     <p className="font-medium">รับ API Keys</p>
                     <p className="text-sm text-muted-foreground">
-                      ไปที่ Settings > API และคัดลอก:
+                      ไปที่ Settings {'>'}  API และคัดลอก:
                     </p>
                     <ul className="text-sm text-muted-foreground mt-1 ml-4 list-disc">
                       <li>Project URL</li>

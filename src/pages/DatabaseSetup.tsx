@@ -221,7 +221,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here`
                 <h4 className="font-medium mb-2">❌ ไม่พบตาราง</h4>
                 <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
                   <li>ตรวจสอบว่าได้รันไฟล์ CREATE_POS_SYSTEM_TABLES.sql แล้ว</li>
-                  <li>ตรวจสอบใน Supabase Dashboard > Table Editor</li>
+                  <li>ตรวจสอบใน Supabase Dashboard {'>'} Table Editor</li>
                   <li>ลองรันไฟล์ SQL อีกครั้ง</li>
                 </ul>
               </div>
