@@ -252,7 +252,7 @@ export default function Warehouses() {
               <div 
                 key={alert.id}
                 className="text-sm text-red-600 cursor-pointer hover:underline"
-                onClick={() => handleAlertClick(alert.id, 'warehouse' in alert)}
+                onClick={() => {/* handleAlertClick */}}
               >
                 • {alert.warehouse.name}: {alert.message}
               </div>
@@ -273,7 +273,7 @@ export default function Warehouses() {
             <Card className="border-orange-200 bg-orange-50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <CheckSquare className="h-8 w-8 text-orange-600" />
+                  <Package className="h-8 w-8 text-orange-600" />
                   <div>
                     <div className="text-2xl font-bold text-orange-700">
                       {pendingTasks.length}

@@ -164,6 +164,8 @@ export default function InstallmentContractTest() {
       const contractNumber = `CT${Date.now().toString().slice(-8)}`;
       const newContract: InstallmentContract = {
         id: `contract-${Date.now()}`,
+        saleId: '',
+        planId: 'plan-test',
         contractNumber,
         customerId: createdCustomer!.id,
         customer: createdCustomer!,
@@ -172,6 +174,8 @@ export default function InstallmentContractTest() {
         financedAmount,
         totalPayable,
         monthlyPayment,
+        totalInterest: totalPayable - contractData.totalAmount,
+        processingFee: 500,
         plan: {
           id: `plan-test-${contractData.months}m`,
           name: `แผนทดสอบ ${contractData.months} เดือน`,
@@ -187,7 +191,10 @@ export default function InstallmentContractTest() {
         paidInstallments: 0,
         remainingInstallments: contractData.months,
         status: 'active',
-        startDate: startDate.toISOString().split('T')[0],
+        contractDate: new Date().toISOString().split('T')[0],
+        firstPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        lastPaymentDate: new Date(Date.now() + contractData.months * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdBy: 'test-user',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         notes: 'สร้างจากการทดสอบระบบ'
