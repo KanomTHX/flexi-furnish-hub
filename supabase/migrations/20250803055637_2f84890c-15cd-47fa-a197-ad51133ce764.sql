@@ -80,44 +80,57 @@ END $$;
 DO $$
 BEGIN
   -- Only create triggers if they don't exist
-  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_accounts_updated_at' AND table_name = 'accounts') THEN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_accounts_updated_at' AND event_object_table = 'accounts') THEN
     CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON public.accounts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
   END IF;
   
-  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_journal_entries_updated_at' AND table_name = 'journal_entries') THEN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_journal_entries_updated_at' AND event_object_table = 'journal_entries') THEN
     CREATE TRIGGER update_journal_entries_updated_at BEFORE UPDATE ON public.journal_entries FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
   END IF;
   
-  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_departments_updated_at' AND table_name = 'departments') THEN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_departments_updated_at' AND event_object_table = 'departments') THEN
     CREATE TRIGGER update_departments_updated_at BEFORE UPDATE ON public.departments FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
   END IF;
   
-  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_positions_updated_at' AND table_name = 'positions') THEN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_positions_updated_at' AND event_object_table = 'positions') THEN
     CREATE TRIGGER update_positions_updated_at BEFORE UPDATE ON public.positions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
   END IF;
   
-  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_employees_updated_at' AND table_name = 'employees') THEN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_employees_updated_at' AND event_object_table = 'employees') THEN
     CREATE TRIGGER update_employees_updated_at BEFORE UPDATE ON public.employees FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
   END IF;
   
-  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_trainings_updated_at' AND table_name = 'trainings') THEN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_trainings_updated_at' AND event_object_table = 'trainings') THEN
     CREATE TRIGGER update_trainings_updated_at BEFORE UPDATE ON public.trainings FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
   END IF;
 END $$;
 
--- Update the user_role enum to include new roles needed for the system
+-- Create or update the user_role enum to include new roles needed for the system
 DO $$
 BEGIN
-    -- Check if we need to add new roles to the existing enum
-    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'hr' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')) THEN
-        ALTER TYPE user_role ADD VALUE 'hr';
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'warehouse_manager' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')) THEN
-        ALTER TYPE user_role ADD VALUE 'warehouse_manager';
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'accountant' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')) THEN
-        ALTER TYPE user_role ADD VALUE 'accountant';
+    -- Create user_role enum if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+        CREATE TYPE user_role AS ENUM ('admin', 'user', 'hr', 'warehouse_manager', 'accountant', 'sales', 'employee');
+    ELSE
+        -- Add new roles if they don't exist
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'hr' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')) THEN
+            ALTER TYPE user_role ADD VALUE 'hr';
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'warehouse_manager' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')) THEN
+            ALTER TYPE user_role ADD VALUE 'warehouse_manager';
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'accountant' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')) THEN
+            ALTER TYPE user_role ADD VALUE 'accountant';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'sales' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')) THEN
+            ALTER TYPE user_role ADD VALUE 'sales';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'employee' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')) THEN
+            ALTER TYPE user_role ADD VALUE 'employee';
+        END IF;
     END IF;
 END $$;

@@ -20,10 +20,20 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Optimize build for performance
-    target: 'esnext',
-    minify: 'esbuild',
-    sourcemap: mode === 'development',
+    // Production optimizations
+    target: mode === 'production' ? 'es2015' : 'esnext',
+    minify: mode === 'production' ? 'terser' : 'esbuild',
+    sourcemap: mode === 'production' ? 'hidden' : true,
+    terserOptions: mode === 'production' ? {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+      },
+      mangle: {
+        safari10: true,
+      },
+    } : undefined,
     rollupOptions: {
       output: {
         // Manual chunk splitting for better caching
@@ -54,7 +64,15 @@ export default defineConfig(({ mode }) => ({
             return 'vendor';
           }
           
-          // Feature chunks
+          // Warehouse system feature chunks
+          if (id.includes('src/components/warehouses') || id.includes('src/lib/warehouseService') || id.includes('src/lib/serialNumberService')) {
+            return 'warehouse-features';
+          }
+          if (id.includes('src/services/printService') || id.includes('src/services/realTimeStockService')) {
+            return 'warehouse-services';
+          }
+          
+          // Other feature chunks
           if (id.includes('src/pages/POS') || id.includes('src/components/pos') || id.includes('src/hooks/usePOS')) {
             return 'pos-features';
           }
@@ -78,7 +96,11 @@ export default defineConfig(({ mode }) => ({
       }
     },
     // Increase chunk size warning limit
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    // Enable CSS code splitting
+    cssCodeSplit: true,
+    // Optimize asset inlining
+    assetsInlineLimit: 4096,
   },
   // Optimize dependencies
   optimizeDeps: {

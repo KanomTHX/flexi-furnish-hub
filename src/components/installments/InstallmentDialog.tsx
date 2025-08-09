@@ -47,6 +47,29 @@ export function InstallmentDialog({
   const [terms, setTerms] = useState('');
   const [requireGuarantor, setRequireGuarantor] = useState(false);
   const [step, setStep] = useState<'customer' | 'plan' | 'guarantor' | 'details' | 'review'>('customer');
+  
+  // State สำหรับแก้ไขแผน
+  const [customInterestRate, setCustomInterestRate] = useState<number | null>(null);
+  const [customDownPaymentPercent, setCustomDownPaymentPercent] = useState<number | null>(null);
+  
+  // State สำหรับเลือกลูกค้าเก่า
+  const [showExistingCustomer, setShowExistingCustomer] = useState(false);
+  const [existingCustomers, setExistingCustomers] = useState<Customer[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedExistingCustomer, setSelectedExistingCustomer] = useState<Customer | null>(null);
+  const [customerHistory, setCustomerHistory] = useState<any[]>([]);
+  const [existingGuarantors, setExistingGuarantors] = useState<any[]>([]);
+  
+  // State สำหรับสร้างแผนใหม่
+  const [showCreatePlan, setShowCreatePlan] = useState(false);
+  const [newPlan, setNewPlan] = useState({
+    name: '',
+    months: 12,
+    interestRate: 0,
+    downPaymentPercent: 20,
+    processingFee: 500,
+    description: ''
+  });
 
   // อัปเดตข้อมูลเมื่อ props เปลี่ยน
   useEffect(() => {
@@ -90,6 +113,13 @@ export function InstallmentDialog({
     fetchPlans();
   }, []);
 
+  // ดึงข้อมูลลูกค้าเก่าเมื่อเปิด dialog
+  useEffect(() => {
+    if (open) {
+      fetchExistingCustomers();
+    }
+  }, [open]);
+
   const [activePlans, setActivePlans] = useState<InstallmentPlan[]>([]);
   const eligibility = checkInstallmentEligibility(customerData, contractAmount);
 
@@ -123,6 +153,178 @@ export function InstallmentDialog({
 
   const handleGuarantorUpdate = (field: keyof Customer, value: any) => {
     setGuarantor(prev => ({ ...prev, [field]: value }));
+  };
+
+  // ฟังก์ชันสำหรับรีเซ็ตค่าแก้ไข
+  const resetCustomValues = () => {
+    setCustomInterestRate(null);
+    setCustomDownPaymentPercent(null);
+  };
+
+  // ฟังก์ชันสำหรับคำนวณค่าต่างๆ ด้วยค่าที่แก้ไขได้
+  const getEffectiveInterestRate = (plan: InstallmentPlan) => {
+    return customInterestRate !== null ? customInterestRate : plan.interestRate;
+  };
+
+  const getEffectiveDownPaymentPercent = (plan: InstallmentPlan) => {
+    return customDownPaymentPercent !== null ? customDownPaymentPercent : plan.downPaymentPercent;
+  };
+
+  // ฟังก์ชันสำหรับดึงลูกค้าเก่า
+  const fetchExistingCustomers = async () => {
+    try {
+      const { data: customers, error } = await supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setExistingCustomers(customers || []);
+    } catch (error) {
+      console.error('Error fetching existing customers:', error);
+    }
+  };
+
+  // ฟังก์ชันสำหรับดึงประวัติลูกค้า
+  const fetchCustomerHistory = async (customerId: string) => {
+    try {
+      const { data: contracts, error } = await supabase
+        .from('installment_contracts')
+        .select(`
+          *,
+          installment_plans (
+            name,
+            number_of_installments,
+            interest_rate
+          )
+        `)
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCustomerHistory(contracts || []);
+    } catch (error) {
+      console.error('Error fetching customer history:', error);
+    }
+  };
+
+  // ฟังก์ชันสำหรับดึงผู้ค้ำประกันเก่า
+  const fetchExistingGuarantors = async (customerId: string) => {
+    try {
+      const { data: guarantors, error } = await supabase
+        .from('guarantors')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setExistingGuarantors(guarantors || []);
+      return guarantors || [];
+    } catch (error) {
+      console.error('Error fetching existing guarantors:', error);
+      return [];
+    }
+  };
+
+  // ฟังก์ชันสำหรับเลือกลูกค้าเก่า
+  const handleSelectExistingCustomer = async (customer: Customer) => {
+    setSelectedExistingCustomer(customer);
+    
+    // ดึงประวัติและผู้ค้ำประกัน
+    await fetchCustomerHistory(customer.id);
+    const guarantors = await fetchExistingGuarantors(customer.id);
+    
+    // ถ้ามีผู้ค้ำประกันเก่า ให้เลือกคนล่าสุด
+    if (guarantors && guarantors.length > 0) {
+      setGuarantor(guarantors[0]);
+    }
+  };
+
+  // ฟังก์ชันสำหรับยืนยันการเลือกลูกค้าเก่า
+  const confirmSelectExistingCustomer = () => {
+    if (selectedExistingCustomer) {
+      setCustomerData(selectedExistingCustomer);
+      setShowExistingCustomer(false);
+      setSelectedExistingCustomer(null);
+      setCustomerHistory([]);
+      setSearchTerm('');
+    }
+  };
+
+  // ฟังก์ชันสำหรับกรองลูกค้า
+  const filteredCustomers = existingCustomers.filter(customer =>
+    customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.phone?.includes(searchTerm) ||
+    customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // ฟังก์ชันสำหรับสร้างแผนใหม่
+  const handleCreateNewPlan = async () => {
+    try {
+      const planData = {
+        plan_number: `CUSTOM-${Date.now()}`,
+        name: newPlan.name,
+        description: newPlan.description || `แผนกำหนดเอง ${newPlan.months} งวด`,
+        number_of_installments: newPlan.months,
+        interest_rate: newPlan.interestRate,
+        down_payment_percent: newPlan.downPaymentPercent,
+        processing_fee: newPlan.processingFee,
+        total_amount: 1000000, // ยอดสูงสุดเริ่มต้น
+        installment_amount: 0, // จะคำนวณใหม่
+        is_active: true,
+        status: 'active',
+        start_date: new Date().toISOString().split('T')[0],
+        branch_id: null
+      };
+
+      const { data: createdPlan, error } = await supabase
+        .from('installment_plans')
+        .insert([planData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // แปลงข้อมูลให้ตรงกับ InstallmentPlan type
+      const mappedPlan = {
+        id: createdPlan.id,
+        name: createdPlan.name,
+        planNumber: createdPlan.plan_number,
+        months: createdPlan.number_of_installments,
+        interestRate: createdPlan.interest_rate,
+        downPaymentPercent: createdPlan.down_payment_percent,
+        processingFee: createdPlan.processing_fee,
+        minAmount: 0,
+        maxAmount: createdPlan.total_amount,
+        requiresGuarantor: false,
+        isActive: createdPlan.is_active,
+        description: createdPlan.description
+      };
+
+      // เพิ่มแผนใหม่เข้าไปใน activePlans
+      setActivePlans(prev => [...prev, mappedPlan]);
+      
+      // เลือกแผนใหม่ทันที
+      setSelectedPlan(mappedPlan);
+      
+      // ปิด dialog สร้างแผน
+      setShowCreatePlan(false);
+      
+      // รีเซ็ตฟอร์ม
+      setNewPlan({
+        name: '',
+        months: 12,
+        interestRate: 0,
+        downPaymentPercent: 20,
+        processingFee: 500,
+        description: ''
+      });
+
+    } catch (error) {
+      console.error('Error creating new plan:', error);
+      // TODO: แสดง error message ให้ผู้ใช้
+    }
   };
 
   const handleConfirm = async () => {
@@ -186,11 +388,18 @@ export function InstallmentDialog({
       }
 
       // สร้างสัญญาในฐานข้อมูล
+      const effectiveInterestRate = getEffectiveInterestRate(selectedPlan);
+      const effectiveDownPaymentPercent = getEffectiveDownPaymentPercent(selectedPlan);
+      
       const contract = await createContract({
         customer: { ...customerData, id: customerId },
-        plan: selectedPlan,
+        plan: {
+          ...selectedPlan,
+          interestRate: effectiveInterestRate,
+          downPaymentPercent: effectiveDownPaymentPercent
+        },
         totalAmount: contractAmount,
-        downPayment: Math.round(contractAmount * (selectedPlan.downPaymentPercent / 100) * 100) / 100,
+        downPayment: Math.round(contractAmount * (effectiveDownPaymentPercent / 100) * 100) / 100,
         guarantorId: guarantorId,
         collateral: collateral || undefined,
         terms: terms || undefined,
@@ -209,10 +418,21 @@ export function InstallmentDialog({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            ข้อมูลลูกค้า
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              ข้อมูลลูกค้า
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowExistingCustomer(true)}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+            >
+              <User className="h-4 w-4 mr-2" />
+              เลือกลูกค้าเก่า
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -442,9 +662,11 @@ export function InstallmentDialog({
         <CardContent>
           <div className="grid gap-4">
             {activePlans.map((plan) => {
-              const downPayment = Math.round(contractAmount * (plan.downPaymentPercent / 100) * 100) / 100;
+              const effectiveInterestRate = getEffectiveInterestRate(plan);
+              const effectiveDownPaymentPercent = getEffectiveDownPaymentPercent(plan);
+              const downPayment = Math.round(contractAmount * (effectiveDownPaymentPercent / 100) * 100) / 100;
               const financedAmount = contractAmount - downPayment;
-              const monthlyPayment = calculateMonthlyPayment(financedAmount, plan.interestRate, plan.months);
+              const monthlyPayment = calculateMonthlyPayment(financedAmount, effectiveInterestRate, plan.months);
 
               return (
                 <Card
@@ -453,6 +675,10 @@ export function InstallmentDialog({
                     }`}
                   onClick={() => {
                     setSelectedPlan(plan);
+                    // รีเซ็ตค่าแก้ไขเมื่อเลือกแผนใหม่
+                    if (selectedPlan?.id !== plan.id) {
+                      resetCustomValues();
+                    }
                     // ตรวจสอบว่าต้องมีผู้ค้ำประกันหรือไม่
                     const needsGuarantor = contractAmount > 100000 ||
                       plan.months > 24 ||
@@ -465,8 +691,9 @@ export function InstallmentDialog({
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-lg">{plan.name}</CardTitle>
                       <div className="flex gap-2">
-                        <Badge variant={plan.interestRate === 0 ? 'secondary' : 'default'}>
-                          {plan.interestRate === 0 ? 'ไม่มีดอกเบี้ย' : `${plan.interestRate}% ต่อปี`}
+                        <Badge variant={effectiveInterestRate === 0 ? 'secondary' : 'default'}>
+                          {effectiveInterestRate === 0 ? 'ไม่มีดอกเบี้ย' : `${effectiveInterestRate}% ต่อปี`}
+                          {customInterestRate !== null && <span className="ml-1 text-xs">(แก้ไข)</span>}
                         </Badge>
                         {contractAmount > 100000 || plan.months > 24 || (customerData.monthlyIncome || 0) < 15000 ? (
                           <Badge variant="outline" className="text-orange-600 border-orange-600">
@@ -497,6 +724,58 @@ export function InstallmentDialog({
                       </div>
                     </div>
 
+                    {/* ส่วนแก้ไขแผน (แสดงเมื่อเลือกแผนนี้) */}
+                    {selectedPlan?.id === plan.id && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 className="font-medium text-blue-900 mb-3">ปรับแต่งแผน</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`interest-${plan.id}`} className="text-sm">
+                              ดอกเบี้ย (% ต่อปี)
+                            </Label>
+                            <Input
+                              id={`interest-${plan.id}`}
+                              type="number"
+                              value={customInterestRate !== null ? customInterestRate : plan.interestRate}
+                              onChange={(e) => setCustomInterestRate(parseFloat(e.target.value) || 0)}
+                              min="0"
+                              max="50"
+                              step="0.1"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`downpayment-${plan.id}`} className="text-sm">
+                              เงินดาวน์ (%)
+                            </Label>
+                            <Input
+                              id={`downpayment-${plan.id}`}
+                              type="number"
+                              value={customDownPaymentPercent !== null ? customDownPaymentPercent : plan.downPaymentPercent}
+                              onChange={(e) => setCustomDownPaymentPercent(parseFloat(e.target.value) || 0)}
+                              min="0"
+                              max="100"
+                              step="1"
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={resetCustomValues}
+                            className="text-xs"
+                          >
+                            รีเซ็ต
+                          </Button>
+                          <div className="text-xs text-blue-700 flex items-center">
+                            💡 การเปลี่ยนแปลงจะมีผลกับค่างวดและเงินดาวน์ทันที
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* แสดงคำเตือนถ้ารายได้ไม่เพียงพอ */}
                     {(customerData.monthlyIncome || 0) < monthlyPayment * 3 && (
                       <Alert className="mt-3">
@@ -512,6 +791,136 @@ export function InstallmentDialog({
             })}
           </div>
         </CardContent>
+      </Card>
+
+      {/* ส่วนสร้างแผนใหม่ */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-base">สร้างแผนใหม่</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCreatePlan(!showCreatePlan)}
+            >
+              {showCreatePlan ? 'ยกเลิก' : '+ สร้างแผนใหม่'}
+            </Button>
+          </div>
+        </CardHeader>
+        
+        {showCreatePlan && (
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="planName">ชื่อแผน *</Label>
+                <Input
+                  id="planName"
+                  value={newPlan.name}
+                  onChange={(e) => setNewPlan(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="เช่น แผนพิเศษ 18 งวด"
+                />
+              </div>
+              <div>
+                <Label htmlFor="planMonths">จำนวนงวด *</Label>
+                <Input
+                  id="planMonths"
+                  type="number"
+                  value={newPlan.months}
+                  onChange={(e) => setNewPlan(prev => ({ ...prev, months: parseInt(e.target.value) || 12 }))}
+                  min="1"
+                  max="60"
+                />
+              </div>
+              <div>
+                <Label htmlFor="planInterest">ดอกเบี้ย (% ต่อปี) *</Label>
+                <Input
+                  id="planInterest"
+                  type="number"
+                  value={newPlan.interestRate}
+                  onChange={(e) => setNewPlan(prev => ({ ...prev, interestRate: parseFloat(e.target.value) || 0 }))}
+                  min="0"
+                  max="50"
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="planDownPayment">เงินดาวน์ (%) *</Label>
+                <Input
+                  id="planDownPayment"
+                  type="number"
+                  value={newPlan.downPaymentPercent}
+                  onChange={(e) => setNewPlan(prev => ({ ...prev, downPaymentPercent: parseFloat(e.target.value) || 0 }))}
+                  min="0"
+                  max="100"
+                />
+              </div>
+              <div>
+                <Label htmlFor="planFee">ค่าธรรมเนียม (บาท)</Label>
+                <Input
+                  id="planFee"
+                  type="number"
+                  value={newPlan.processingFee}
+                  onChange={(e) => setNewPlan(prev => ({ ...prev, processingFee: parseFloat(e.target.value) || 0 }))}
+                  min="0"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="planDescription">คำอธิบาย</Label>
+              <Textarea
+                id="planDescription"
+                value={newPlan.description}
+                onChange={(e) => setNewPlan(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="คำอธิบายแผนผ่อนชำระ (ไม่บังคับ)"
+                rows={2}
+              />
+            </div>
+
+            {/* แสดงตัวอย่างการคำนวณ */}
+            {newPlan.name && contractAmount > 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-medium text-green-800 mb-2">ตัวอย่างการคำนวณ</h4>
+                <div className="text-sm text-green-700 grid grid-cols-2 gap-2">
+                  <p>ยอดสินค้า: ฿{contractAmount.toLocaleString()}</p>
+                  <p>เงินดาวน์: ฿{Math.round(contractAmount * (newPlan.downPaymentPercent / 100)).toLocaleString()}</p>
+                  <p>ยอดผ่อน: ฿{Math.round(contractAmount * (1 - newPlan.downPaymentPercent / 100)).toLocaleString()}</p>
+                  <p>ค่างวด: ฿{calculateMonthlyPayment(
+                    contractAmount * (1 - newPlan.downPaymentPercent / 100),
+                    newPlan.interestRate,
+                    newPlan.months
+                  ).toLocaleString()}/เดือน</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCreateNewPlan}
+                disabled={!newPlan.name || newPlan.months < 1}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                สร้างแผน
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCreatePlan(false);
+                  setNewPlan({
+                    name: '',
+                    months: 12,
+                    interestRate: 0,
+                    downPaymentPercent: 20,
+                    processingFee: 500,
+                    description: ''
+                  });
+                }}
+              >
+                ยกเลิก
+              </Button>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {selectedPlan && requireGuarantor && (
@@ -997,7 +1406,7 @@ export function InstallmentDialog({
     }
   };
 
-  return (
+  const renderMainDialog = () => (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -1040,5 +1449,173 @@ export function InstallmentDialog({
         {step === 'review' && renderReviewStep()}
       </DialogContent>
     </Dialog>
+  );
+
+  // Dialog สำหรับเลือกลูกค้าเก่า
+  const renderExistingCustomerDialog = () => (
+    <Dialog open={showExistingCustomer} onOpenChange={setShowExistingCustomer}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            เลือกลูกค้าเก่า
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* ช่องค้นหา */}
+          <div>
+            <Label htmlFor="search">ค้นหาลูกค้า</Label>
+            <Input
+              id="search"
+              placeholder="ค้นหาด้วยชื่อ, เบอร์โทร, หรืออีเมล..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
+          {/* รายการลูกค้า */}
+          <div className="grid grid-cols-1 gap-4 max-h-96 overflow-y-auto">
+            {filteredCustomers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {searchTerm ? 'ไม่พบลูกค้าที่ค้นหา' : 'ไม่มีข้อมูลลูกค้า'}
+              </div>
+            ) : (
+              filteredCustomers.map((customer) => (
+                <Card 
+                  key={customer.id} 
+                  className={`cursor-pointer hover:bg-blue-50 border-2 transition-colors ${
+                    selectedExistingCustomer?.id === customer.id 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'hover:border-blue-200'
+                  }`}
+                  onClick={() => handleSelectExistingCustomer(customer)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-medium text-lg">{customer.name}</h3>
+                          <Badge variant="outline" className="text-xs">
+                            ID: {customer.id?.slice(-8)}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                          <div>
+                            <p><strong>เบอร์โทร:</strong> {customer.phone}</p>
+                            <p><strong>อีเมล:</strong> {customer.email || 'ไม่ระบุ'}</p>
+                            <p><strong>อาชีพ:</strong> {customer.occupation || 'ไม่ระบุ'}</p>
+                          </div>
+                          <div>
+                            <p><strong>รายได้:</strong> ฿{customer.monthlyIncome?.toLocaleString() || 'ไม่ระบุ'}</p>
+                            <p><strong>ที่อยู่:</strong> {customer.address || 'ไม่ระบุ'}</p>
+                            <p><strong>วันที่สร้าง:</strong> {new Date(customer.created_at || '').toLocaleDateString('th-TH')}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        size="sm" 
+                        className="ml-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectExistingCustomer(customer);
+                        }}
+                      >
+                        เลือก
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* แสดงประวัติลูกค้าที่เลือก */}
+          {selectedExistingCustomer && (
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                ประวัติการทำสัญญาของ {selectedExistingCustomer.name}
+              </h4>
+              
+              {customerHistory.length === 0 ? (
+                <p className="text-muted-foreground text-sm">ไม่มีประวัติการทำสัญญา</p>
+              ) : (
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {customerHistory.map((contract, index) => (
+                    <div key={contract.id} className="bg-gray-50 p-3 rounded-lg text-sm">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p><strong>สัญญาที่ {index + 1}:</strong> ฿{contract.total_amount?.toLocaleString()}</p>
+                          <p><strong>แผน:</strong> {contract.installment_plans?.name} ({contract.installment_plans?.number_of_installments} งวด)</p>
+                          <p><strong>สถานะ:</strong> 
+                            <Badge 
+                              variant={contract.status === 'active' ? 'default' : 'secondary'}
+                              className="ml-1"
+                            >
+                              {contract.status}
+                            </Badge>
+                          </p>
+                        </div>
+                        <div className="text-right text-xs text-muted-foreground">
+                          {new Date(contract.created_at).toLocaleDateString('th-TH')}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* แสดงผู้ค้ำประกันเก่า */}
+              {existingGuarantors.length > 0 && (
+                <div className="mt-4">
+                  <h5 className="font-medium mb-2 text-sm">ผู้ค้ำประกันเก่า:</h5>
+                  <div className="space-y-2">
+                    {existingGuarantors.map((guarantor, index) => (
+                      <div key={guarantor.id} className="bg-green-50 p-2 rounded text-sm">
+                        <p><strong>{guarantor.name}</strong> - {guarantor.phone}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {guarantor.occupation} | รายได้: ฿{guarantor.monthly_income?.toLocaleString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowExistingCustomer(false);
+                setSelectedExistingCustomer(null);
+                setCustomerHistory([]);
+                setExistingGuarantors([]);
+                setSearchTerm('');
+              }}
+            >
+              ยกเลิก
+            </Button>
+            {selectedExistingCustomer && (
+              <Button onClick={confirmSelectExistingCustomer}>
+                ใช้ข้อมูลลูกค้านี้
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  return (
+    <>
+      {renderMainDialog()}
+      {renderExistingCustomerDialog()}
+    </>
   );
 }

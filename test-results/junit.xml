@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="17" failures="0" errors="0" time="0.0150647">
+    <testsuite name="src/utils/__tests__/monitoring.simple.test.ts" timestamp="2025-08-09T08:20:34.550Z" hostname="DESKTOP-Q9DCGIK" tests="17" failures="0" errors="0" skipped="0" time="0.0150647">
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Basic Functionality &gt; should export monitoring functions" time="0.0043704">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Basic Functionality &gt; should export monitor instance" time="0.0005992">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Metric Recording &gt; should accept metric name and value" time="0.0012006">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Metric Recording &gt; should accept optional tags" time="0.0006838">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Operation Measurement &gt; should accept operation name and function" time="0.0007508">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Health Monitoring &gt; should return health status structure" time="0.0006048">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Health Monitoring &gt; should record health checks" time="0.0004543">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; System Metrics &gt; should return system metrics structure" time="0.0005913">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; System Metrics &gt; should have proper data types" time="0.0005528">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Metric Retrieval &gt; should get metrics without filters" time="0.000386">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Metric Retrieval &gt; should accept metric name filter" time="0.0004171">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Metric Retrieval &gt; should accept date filter" time="0.000334">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Cleanup &gt; should have destroy method" time="0.000352">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Module Structure &gt; should export all required functions" time="0.0004336">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Module Structure &gt; should have proper TypeScript types" time="0.0002669">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Performance Metrics &gt; should handle performance metric types" time="0.0003911">
+        </testcase>
+        <testcase classname="src/utils/__tests__/monitoring.simple.test.ts" name="Monitoring (Simple Tests) &gt; Health Check Status &gt; should handle different health statuses" time="0.0004732">
+        </testcase>
+    </testsuite>
+</testsuites>

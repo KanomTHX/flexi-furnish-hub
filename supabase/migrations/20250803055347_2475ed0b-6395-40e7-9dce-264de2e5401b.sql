@@ -1,13 +1,24 @@
 -- Create new custom types (avoiding existing ones)
-CREATE TYPE IF NOT EXISTS account_type AS ENUM ('asset', 'liability', 'equity', 'revenue', 'expense');
-CREATE TYPE IF NOT EXISTS account_category AS ENUM (
-  'current_asset', 'fixed_asset', 'intangible_asset',
-  'current_liability', 'long_term_liability',
-  'owner_equity', 'retained_earnings',
-  'sales_revenue', 'other_revenue',
-  'cost_of_goods_sold', 'operating_expense', 'other_expense'
-);
-CREATE TYPE IF NOT EXISTS journal_entry_status AS ENUM ('draft', 'pending', 'approved', 'rejected');
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_type') THEN
+        CREATE TYPE account_type AS ENUM ('asset', 'liability', 'equity', 'revenue', 'expense');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_category') THEN
+        CREATE TYPE account_category AS ENUM (
+          'current_asset', 'fixed_asset', 'intangible_asset',
+          'current_liability', 'long_term_liability',
+          'owner_equity', 'retained_earnings',
+          'sales_revenue', 'other_revenue',
+          'cost_of_goods_sold', 'operating_expense', 'other_expense'
+        );
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'journal_entry_status') THEN
+        CREATE TYPE journal_entry_status AS ENUM ('draft', 'pending', 'approved', 'rejected');
+    END IF;
+END $$;
 
 -- Accounting Module Tables
 CREATE TABLE IF NOT EXISTS public.accounts (
@@ -53,15 +64,44 @@ CREATE TABLE IF NOT EXISTS public.journal_entry_lines (
 );
 
 -- Employee Module Types and Tables
-CREATE TYPE IF NOT EXISTS employee_status AS ENUM ('active', 'inactive', 'terminated', 'on-leave', 'probation');
-CREATE TYPE IF NOT EXISTS document_type AS ENUM ('id-card', 'passport', 'resume', 'certificate', 'contract', 'medical', 'background-check', 'other');
-CREATE TYPE IF NOT EXISTS attendance_status AS ENUM ('present', 'absent', 'late', 'half-day', 'overtime', 'holiday');
-CREATE TYPE IF NOT EXISTS leave_type AS ENUM ('annual', 'sick', 'maternity', 'paternity', 'emergency', 'unpaid', 'study', 'other');
-CREATE TYPE IF NOT EXISTS leave_status AS ENUM ('pending', 'approved', 'rejected', 'cancelled');
-CREATE TYPE IF NOT EXISTS payroll_status AS ENUM ('draft', 'calculated', 'approved', 'paid', 'cancelled');
-CREATE TYPE IF NOT EXISTS training_type AS ENUM ('orientation', 'skill-development', 'compliance', 'leadership', 'technical', 'soft-skills');
-CREATE TYPE IF NOT EXISTS training_status AS ENUM ('planned', 'ongoing', 'completed', 'cancelled');
-CREATE TYPE IF NOT EXISTS participant_status AS ENUM ('enrolled', 'attending', 'completed', 'dropped', 'failed');
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'employee_status') THEN
+        CREATE TYPE employee_status AS ENUM ('active', 'inactive', 'terminated', 'on-leave', 'probation');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_type') THEN
+        CREATE TYPE document_type AS ENUM ('id-card', 'passport', 'resume', 'certificate', 'contract', 'medical', 'background-check', 'other');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'attendance_status') THEN
+        CREATE TYPE attendance_status AS ENUM ('present', 'absent', 'late', 'half-day', 'overtime', 'holiday');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'leave_type') THEN
+        CREATE TYPE leave_type AS ENUM ('annual', 'sick', 'maternity', 'paternity', 'emergency', 'unpaid', 'study', 'other');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'leave_status') THEN
+        CREATE TYPE leave_status AS ENUM ('pending', 'approved', 'rejected', 'cancelled');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payroll_status') THEN
+        CREATE TYPE payroll_status AS ENUM ('draft', 'calculated', 'approved', 'paid', 'cancelled');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'training_type') THEN
+        CREATE TYPE training_type AS ENUM ('orientation', 'skill-development', 'compliance', 'leadership', 'technical', 'soft-skills');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'training_status') THEN
+        CREATE TYPE training_status AS ENUM ('planned', 'ongoing', 'completed', 'cancelled');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'participant_status') THEN
+        CREATE TYPE participant_status AS ENUM ('enrolled', 'attending', 'completed', 'dropped', 'failed');
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.departments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
