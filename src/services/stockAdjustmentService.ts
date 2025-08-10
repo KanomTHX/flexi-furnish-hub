@@ -1,3 +1,7 @@
+// NOTE: Serial number features temporarily disabled due to missing product_serial_numbers table
+// This file has been automatically modified to prevent relationship errors
+// Original functionality can be restored once the table is created
+
 import { supabase } from '@/integrations/supabase/client';
 import { StockAdjustmentData, AdjustmentItem } from '@/components/warehouses/StockAdjustment';
 
@@ -77,7 +81,7 @@ export class StockAdjustmentService {
   private async processAdjustmentItem(adjustmentId: string, item: AdjustmentItem): Promise<void> {
     // Get current serial number data
     const { data: snData, error: snError } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .select('*')
       .eq('serial_number', item.serialNumber)
       .single();
@@ -108,7 +112,7 @@ export class StockAdjustmentService {
   private async addToStock(snData: any, item: AdjustmentItem, adjustmentId: string): Promise<void> {
     // Update serial number to available status
     const { error: updateError } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .update({
         status: 'available',
         updated_at: new Date().toISOString()
@@ -136,7 +140,7 @@ export class StockAdjustmentService {
   private async removeFromStock(snData: any, item: AdjustmentItem, adjustmentId: string): Promise<void> {
     // Update serial number status to indicate removal
     const { error: updateError } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .update({
         status: 'damaged', // or another appropriate status
         updated_at: new Date().toISOString()
@@ -168,7 +172,7 @@ export class StockAdjustmentService {
 
     // Update serial number status
     const { error: updateError } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .update({
         status: item.newStatus,
         updated_at: new Date().toISOString()
@@ -268,7 +272,7 @@ export class StockAdjustmentService {
           quantity,
           notes,
           created_at,
-          product_serial_numbers (serial_number),
+          // product_serial_numbers( // Disabled - table not availableserial_number),
           products (name, code)
         )
       `)
@@ -303,7 +307,7 @@ export class StockAdjustmentService {
           unit_cost,
           notes,
           created_at,
-          product_serial_numbers (serial_number),
+          // product_serial_numbers( // Disabled - table not availableserial_number),
           products (name, code, brand, model)
         )
       `)

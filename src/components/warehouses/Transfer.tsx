@@ -22,11 +22,15 @@ import {
   Eye,
   Loader2,
   X,
-  Plus
+  Plus,
+  Scan
 } from 'lucide-react';
 import { SerialNumber, StockTransfer, Warehouse } from '@/types/warehouse';
 import { transferService } from '@/lib/transferService';
+import { notificationService } from '@/lib/notificationService';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { BarcodeScanner } from '@/components/ui/BarcodeScanner';
 
 interface TransferProps {
   warehouses: Warehouse[];
@@ -53,7 +57,9 @@ export function Transfer({ warehouses, currentWarehouseId, onTransferComplete }:
   const [isLoadingSN, setIsLoadingSN] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSNDialog, setShowSNDialog] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // โหลด Serial Numbers ที่พร้อมโอน
   const loadAvailableSerialNumbers = async () => {
@@ -121,6 +127,58 @@ export function Transfer({ warehouses, currentWarehouseId, onTransferComplete }:
     setSelectedSerialNumbers(prev => prev.filter(item => item.id !== snId));
   };
 
+  // จัดการผลลัพธ์จากการสแกน barcode
+  const handleBarcodeScanned = async (scannedCode: string) => {
+    try {
+      // ค้นหา Serial Number จากโค้ดที่สแกน
+      const foundSN = availableSerialNumbers.find(sn => 
+        sn.serialNumber === scannedCode || 
+        sn.product?.code === scannedCode ||
+        sn.product?.sku === scannedCode
+      );
+
+      if (foundSN) {
+        // ตรวจสอบว่าเลือกแล้วหรือยัง
+        const alreadySelected = selectedSerialNumbers.some(selected => selected.id === foundSN.id);
+        
+        if (!alreadySelected) {
+          const newSN: SelectedSN = {
+            id: foundSN.id,
+            serialNumber: foundSN.serialNumber,
+            productName: foundSN.product?.name || '',
+            productCode: foundSN.product?.code || '',
+            unitCost: foundSN.unitCost
+          };
+          setSelectedSerialNumbers(prev => [...prev, newSN]);
+          
+          toast({
+            title: "เพิ่มสินค้าสำเร็จ",
+            description: `เพิ่ม ${foundSN.serialNumber} เรียบร้อยแล้ว`,
+          });
+        } else {
+          toast({
+            title: "สินค้าถูกเลือกแล้ว",
+            description: `${foundSN.serialNumber} อยู่ในรายการที่เลือกแล้ว`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "ไม่พบสินค้า",
+          description: `ไม่พบสินค้าที่มีโค้ด ${scannedCode} ในคลังนี้`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error processing barcode:', error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถประมวลผลบาร์โค้ดได้",
+        variant: "destructive",
+      });
+    }
+  };
+
   // ยืนยันการโอน
   const handleConfirmTransfer = async () => {
     if (!targetWarehouseId || selectedSerialNumbers.length === 0) {
@@ -139,12 +197,20 @@ export function Transfer({ warehouses, currentWarehouseId, onTransferComplete }:
         targetWarehouseId,
         serialNumbers: selectedSerialNumbers.map(sn => sn.id),
         notes: notes || undefined
-      }, 'current-user'); // TODO: ใช้ user ID จริง
+      }, user?.id || 'anonymous');
 
       toast({
         title: "สร้างการโอนสำเร็จ",
         description: `สร้างการโอน ${transfer.transferNumber} เรียบร้อยแล้ว`,
       });
+
+      // ส่งการแจ้งเตือน
+      await notificationService.notifyTransferCreated(
+        transfer.id,
+        targetWarehouseId,
+        transfer.transferNumber,
+        sourceWarehouse?.name || 'คลังต้นทาง'
+      );
 
       // รีเซ็ตฟอร์ม
       setTargetWarehouseId('');
@@ -251,14 +317,24 @@ export function Transfer({ warehouses, currentWarehouseId, onTransferComplete }:
                 <Package className="h-5 w-5" />
                 เลือกสินค้าที่ต้องการโอน
               </CardTitle>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowSNDialog(true)}
-                disabled={!sourceWarehouseId}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                เลือกสินค้า
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSNDialog(true)}
+                  disabled={!sourceWarehouseId}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  เลือกสินค้า
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowBarcodeScanner(true)}
+                  disabled={!sourceWarehouseId}
+                >
+                  <Scan className="h-4 w-4 mr-2" />
+                  สแกน
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -533,6 +609,15 @@ export function Transfer({ warehouses, currentWarehouseId, onTransferComplete }:
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Barcode Scanner */}
+      <BarcodeScanner
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onScan={handleBarcodeScanned}
+        title="สแกนสินค้าที่ต้องการโอน"
+        description="สแกน Serial Number, รหัสสินค้า หรือ SKU"
+      />
     </div>
   );
 }

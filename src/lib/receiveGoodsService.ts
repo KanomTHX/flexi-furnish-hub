@@ -471,8 +471,7 @@ export class ReceiveGoodsService {
         .from('receive_logs')
         .select(`
           *,
-          supplier:suppliers(id, name),
-          product_serial_numbers!inner(product_id, product:products(id, name))
+          supplier:suppliers(id, name)
         `);
 
       if (warehouseId) {

@@ -5,9 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 
 // Import warehouse components
-import { MockStockInquiry } from '@/components/warehouses/MockStockInquiry';
-import { StockInquiry } from '@/components/warehouses/StockInquiry';
-import { ReceiveGoods } from '@/components/warehouses/ReceiveGoods';
+import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
+import { SimpleReceiveGoods } from '@/components/warehouses/SimpleReceiveGoods';
+import { SupplierBilling } from '@/components/warehouses/SupplierBilling';
 import { WithdrawDispatch } from '@/components/warehouses/WithdrawDispatch';
 import { Transfer } from '@/components/warehouses/Transfer';
 import { RealTimeStockMonitor } from '@/components/warehouses/RealTimeStockMonitor';
@@ -35,7 +35,8 @@ import {
   Layers,
   Edit,
   History,
-  Printer
+  Printer,
+  Receipt
 } from 'lucide-react';
 import { useBranchData } from '../hooks/useBranchData';
 import { BranchSelector } from '../components/branch/BranchSelector';
@@ -119,6 +120,15 @@ export default function Warehouses() {
         <Button
           variant="outline"
           className="h-20 flex-col gap-2"
+          onClick={() => setActiveTab('billing')}
+        >
+          <Receipt className="h-6 w-6" />
+          <span className="text-xs">ใบวางบิล</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          className="h-20 flex-col gap-2"
           onClick={() => setActiveTab('withdraw')}
         >
           <Upload className="h-6 w-6" />
@@ -176,7 +186,7 @@ export default function Warehouses() {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
           <TabsTrigger value="overview" className="flex items-center gap-1">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">ภาพรวม</span>
@@ -188,6 +198,10 @@ export default function Warehouses() {
           <TabsTrigger value="receive" className="flex items-center gap-1">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">รับสินค้า</span>
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-1">
+            <Receipt className="w-4 h-4" />
+            <span className="hidden sm:inline">ใบวางบิล</span>
           </TabsTrigger>
           <TabsTrigger value="withdraw" className="flex items-center gap-1">
             <Upload className="w-4 h-4" />
@@ -329,11 +343,15 @@ export default function Warehouses() {
         </TabsContent>
 
         <TabsContent value="inquiry" className="space-y-6">
-          <StockInquiry />
+          <SimpleStockInquiry />
         </TabsContent>
 
         <TabsContent value="receive" className="space-y-6">
-          <ReceiveGoods />
+          <SimpleReceiveGoods />
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-6">
+          <SupplierBilling />
         </TabsContent>
 
         <TabsContent value="withdraw" className="space-y-6">

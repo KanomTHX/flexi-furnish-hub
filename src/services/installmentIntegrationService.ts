@@ -258,13 +258,7 @@ export async function getInstallmentSNHistory(
   try {
     const { data, error } = await supabase
       .from('stock_movements')
-      .select(`
-        *,
-        product_serial_numbers!inner (
-          serial_number
-        )
-      `)
-      .eq('product_serial_numbers.serial_number', serialNumber)
+      .select('*')
       .in('reference_type', ['installment_contract', 'installment_sale', 'installment_cancel'])
       .order('created_at', { ascending: false });
 

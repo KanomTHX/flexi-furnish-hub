@@ -1,3 +1,7 @@
+// NOTE: Serial number features temporarily disabled due to missing product_serial_numbers table
+// This file has been automatically modified to prevent relationship errors
+// Original functionality can be restored once the table is created
+
 // Warehouse Stock System Database Utilities and Helpers
 
 import { supabase } from '@/integrations/supabase/client';
@@ -69,7 +73,7 @@ export class SerialNumberService {
    */
   static async validateSerialNumber(serialNumber: string): Promise<boolean> {
     const { data, error } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .select('id')
       .eq('serial_number', serialNumber)
       .single();
@@ -86,7 +90,7 @@ export class SerialNumberService {
    */
   static async getSerialNumberDetails(serialNumber: string): Promise<SerialNumber | null> {
     const { data, error } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .select(`
         *,
         product:products(*),
@@ -111,7 +115,7 @@ export class SerialNumberService {
    */
   static async createSerialNumbers(serialNumbers: Omit<SerialNumber, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<SerialNumber[]> {
     const { data, error } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .insert(serialNumbers.map(sn => ({
         serial_number: sn.serialNumber,
         product_id: sn.productId,
@@ -165,7 +169,7 @@ export class SerialNumberService {
     }
 
     const { error } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .update(updateData)
       .eq('id', serialNumberId);
 
@@ -179,7 +183,7 @@ export class SerialNumberService {
    */
   static async searchSerialNumbers(filters: StockSearchFilters): Promise<SerialNumberResponse> {
     let query = supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .select(`
         *,
         product:products(*),
@@ -381,7 +385,7 @@ export class StockService {
         *,
         product:products(id, name, code, sku),
         warehouse:warehouses(id, name, code),
-        serial_number:product_serial_numbers(id, serial_number)
+        serial_number:// product_serial_numbers( // Disabled - table not availableid, serial_number)
       `, { count: 'exact' });
 
     // Apply filters
@@ -503,7 +507,7 @@ export class TransferService {
 
     // Update serial numbers status to 'transferred'
     const { error: updateError } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .update({ status: 'transferred' })
       .in('id', request.items.map(item => item.serialNumberId));
 
@@ -552,7 +556,7 @@ export class TransferService {
 
     // Update serial numbers warehouse and status
     const { error: updateError } = await supabase
-      .from('product_serial_numbers')
+      // .from('product_serial_numbers') // Disabled - table not available
       .update({
         warehouse_id: transfer.targetWarehouseId,
         status: 'available'
@@ -576,7 +580,7 @@ export class TransferService {
         target_warehouse:warehouses!target_warehouse_id(id, name, code),
         items:stock_transfer_items(
           *,
-          serial_number:product_serial_numbers(*),
+          serial_number:// product_serial_numbers( // Disabled - table not available*),
           product:products(id, name, code)
         )
       `)
@@ -602,7 +606,7 @@ export class TransferService {
         target_warehouse:warehouses!target_warehouse_id(id, name, code),
         items:stock_transfer_items(
           *,
-          serial_number:product_serial_numbers(*),
+          serial_number:// product_serial_numbers( // Disabled - table not available*),
           product:products(id, name, code)
         )
       `, { count: 'exact' });

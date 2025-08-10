@@ -23,7 +23,9 @@ import {
 } from 'lucide-react';
 import { StockTransfer, TransferStatus } from '@/types/warehouse';
 import { transferService } from '@/lib/transferService';
+import { notificationService } from '@/lib/notificationService';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TransferConfirmationProps {
   warehouseId: string;
@@ -41,6 +43,7 @@ export function TransferConfirmation({ warehouseId, onTransferConfirmed }: Trans
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // โหลดรายการโอนที่รอยืนยัน
   const loadPendingTransfers = async () => {
@@ -75,7 +78,7 @@ export function TransferConfirmation({ warehouseId, onTransferConfirmed }: Trans
     try {
       const confirmedTransfer = await transferService.confirmTransfer({
         transferId: selectedTransfer.id,
-        confirmedBy: 'current-user', // TODO: ใช้ user ID จริง
+        confirmedBy: user?.id || 'anonymous',
         notes: confirmationNotes || undefined
       });
 
@@ -83,6 +86,15 @@ export function TransferConfirmation({ warehouseId, onTransferConfirmed }: Trans
         title: "ยืนยันการรับสินค้าสำเร็จ",
         description: `ยืนยันการรับสินค้า ${confirmedTransfer.transferNumber} เรียบร้อยแล้ว`,
       });
+
+      // ส่งการแจ้งเตือน
+      await notificationService.notifyTransferConfirmed(
+        confirmedTransfer.id,
+        confirmedTransfer.sourceWarehouseId,
+        confirmedTransfer.transferNumber,
+        confirmedTransfer.targetWarehouse?.name || 'คลังปลายทาง',
+        user?.name || 'ผู้ใช้'
+      );
 
       // รีเซ็ตและโหลดข้อมูลใหม่
       setShowConfirmDialog(false);
@@ -114,13 +126,22 @@ export function TransferConfirmation({ warehouseId, onTransferConfirmed }: Trans
       await transferService.cancelTransfer(
         selectedTransfer.id,
         cancelReason,
-        'current-user' // TODO: ใช้ user ID จริง
+        user?.id || 'anonymous'
       );
 
       toast({
         title: "ยกเลิกการโอนสำเร็จ",
         description: `ยกเลิกการโอน ${selectedTransfer.transferNumber} เรียบร้อยแล้ว`,
       });
+
+      // ส่งการแจ้งเตือน
+      await notificationService.notifyTransferCancelled(
+        selectedTransfer.id,
+        selectedTransfer.sourceWarehouseId,
+        selectedTransfer.targetWarehouseId,
+        selectedTransfer.transferNumber,
+        cancelReason
+      );
 
       // รีเซ็ตและโหลดข้อมูลใหม่
       setShowCancelDialog(false);

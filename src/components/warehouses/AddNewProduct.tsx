@@ -1,0 +1,496 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Package, 
+  Plus, 
+  CheckCircle, 
+  AlertCircle, 
+  Loader2,
+  Hash,
+  DollarSign,
+  Tag,
+  FileText
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+// Types
+interface NewProduct {
+  product_code: string;
+  name: string;
+  description?: string;
+  category?: string;
+  cost_price: number;
+  selling_price: number;
+  min_stock_level: number;
+  max_stock_level: number;
+  unit: string;
+  status: string;
+}
+
+interface AddNewProductProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onProductAdded?: (product: any) => void;
+  defaultData?: Partial<NewProduct>;
+}
+
+export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: AddNewProductProps) {
+  const { toast } = useToast();
+  
+  // Form state
+  const [formData, setFormData] = useState<NewProduct>({
+    product_code: defaultData?.product_code || '',
+    name: defaultData?.name || '',
+    description: defaultData?.description || '',
+    category: defaultData?.category || 'เฟอร์นิเจอร์',
+    cost_price: defaultData?.cost_price || 0,
+    selling_price: defaultData?.selling_price || 0,
+    min_stock_level: defaultData?.min_stock_level || 5,
+    max_stock_level: defaultData?.max_stock_level || 1000,
+    unit: defaultData?.unit || 'piece',
+    status: 'active'
+  });
+  
+  // UI state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Categories
+  const categories = [
+    'เฟอร์นิเจอร์',
+    'เครื่องใช้ไฟฟ้า',
+    'เครื่องใช้ในบ้าน',
+    'อุปกรณ์แต่งบ้าน',
+    'เครื่องมือ',
+    'อื่นๆ'
+  ];
+
+  // Units
+  const units = [
+    { value: 'piece', label: 'ชิ้น' },
+    { value: 'set', label: 'ชุด' },
+    { value: 'pair', label: 'คู่' },
+    { value: 'box', label: 'กล่อง' },
+    { value: 'pack', label: 'แพ็ค' },
+    { value: 'meter', label: 'เมตร' },
+    { value: 'kg', label: 'กิโลกรัม' },
+    { value: 'liter', label: 'ลิตร' }
+  ];
+
+  const handleInputChange = (field: keyof NewProduct, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const generateProductCode = () => {
+    if (formData.name && formData.category) {
+      // Generate code from category and name
+      const categoryCode = formData.category.substring(0, 3).toUpperCase();
+      const nameCode = formData.name.substring(0, 3).toUpperCase();
+      const timestamp = Date.now().toString().slice(-4);
+      const code = `${categoryCode}-${nameCode}-${timestamp}`;
+      
+      setFormData(prev => ({ ...prev, product_code: code }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Required fields
+    if (!formData.product_code.trim()) {
+      newErrors.product_code = 'กรุณาระบุรหัสสินค้า';
+    }
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'กรุณาระบุชื่อสินค้า';
+    }
+
+    if (!formData.category) {
+      newErrors.category = 'กรุณาเลือกหมวดหมู่';
+    }
+
+    if (!formData.unit) {
+      newErrors.unit = 'กรุณาเลือกหน่วยนับ';
+    }
+
+    // Numeric validations
+    if (formData.cost_price < 0) {
+      newErrors.cost_price = 'ราคาทุนต้องไม่ติดลบ';
+    }
+
+    if (formData.selling_price < 0) {
+      newErrors.selling_price = 'ราคาขายต้องไม่ติดลบ';
+    }
+
+    if (formData.selling_price > 0 && formData.cost_price > formData.selling_price) {
+      newErrors.selling_price = 'ราคาขายควรมากกว่าราคาทุน';
+    }
+
+    if (formData.min_stock_level < 0) {
+      newErrors.min_stock_level = 'สต็อกขั้นต่ำต้องไม่ติดลบ';
+    }
+
+    if (formData.max_stock_level <= formData.min_stock_level) {
+      newErrors.max_stock_level = 'สต็อกสูงสุดต้องมากกว่าสต็อกขั้นต่ำ';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const checkProductCodeExists = async (code: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id')
+        .eq('product_code', code)
+        .limit(1);
+
+      if (error) throw error;
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking product code:', error);
+      return false;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "ข้อมูลไม่ครบถ้วน",
+        description: "กรุณาตรวจสอบข้อมูลและแก้ไขข้อผิดพลาด",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Check if product code already exists
+      const codeExists = await checkProductCodeExists(formData.product_code);
+      if (codeExists) {
+        setErrors({ product_code: 'รหัสสินค้านี้มีอยู่แล้ว กรุณาใช้รหัสอื่น' });
+        toast({
+          title: "รหัสสินค้าซ้ำ",
+          description: "รหัสสินค้านี้มีอยู่แล้วในระบบ กรุณาใช้รหัสอื่น",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Insert new product
+      const { data: newProduct, error: insertError } = await supabase
+        .from('products')
+        .insert([formData])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Success
+      toast({
+        title: "เพิ่มสินค้าสำเร็จ",
+        description: `เพิ่มสินค้า "${formData.name}" เรียบร้อยแล้ว`,
+        variant: "default",
+      });
+
+      // Call callback with new product
+      if (onProductAdded) {
+        onProductAdded(newProduct);
+      }
+
+      // Reset form and close
+      resetForm();
+      onClose();
+
+    } catch (error) {
+      console.error('Error adding product:', error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: error instanceof Error ? error.message : "ไม่สามารถเพิ่มสินค้าได้",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      product_code: '',
+      name: '',
+      description: '',
+      category: 'เฟอร์นิเจอร์',
+      cost_price: 0,
+      selling_price: 0,
+      min_stock_level: 5,
+      max_stock_level: 1000,
+      unit: 'piece',
+      status: 'active'
+    });
+    setErrors({});
+  };
+
+  const handleClose = () => {
+    if (!isProcessing) {
+      resetForm();
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            เพิ่มสินค้าใหม่
+          </DialogTitle>
+          <DialogDescription>
+            เพิ่มข้อมูลสินค้าใหม่เข้าสู่ระบบ
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Product Code and Name */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="product_code">รหัสสินค้า *</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="product_code"
+                  value={formData.product_code}
+                  onChange={(e) => handleInputChange('product_code', e.target.value)}
+                  placeholder="เช่น SOFA-001"
+                  className={errors.product_code ? 'border-red-500' : ''}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={generateProductCode}
+                  disabled={!formData.name || !formData.category}
+                >
+                  <Hash className="h-4 w-4" />
+                </Button>
+              </div>
+              {errors.product_code && (
+                <p className="text-sm text-red-500">{errors.product_code}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="name">ชื่อสินค้า *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="เช่น โซฟา 3 ที่นั่ง สีน้ำตาล"
+                className={errors.name ? 'border-red-500' : ''}
+              />
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">คำอธิบายสินค้า</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="รายละเอียดเพิ่มเติมเกี่ยวกับสินค้า"
+              rows={3}
+            />
+          </div>
+
+          {/* Category and Unit */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>หมวดหมู่ *</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => handleInputChange('category', value)}
+              >
+                <SelectTrigger className={errors.category ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="เลือกหมวดหมู่" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-4 w-4" />
+                        {category}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.category && (
+                <p className="text-sm text-red-500">{errors.category}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>หน่วยนับ *</Label>
+              <Select 
+                value={formData.unit} 
+                onValueChange={(value) => handleInputChange('unit', value)}
+              >
+                <SelectTrigger className={errors.unit ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="เลือกหน่วยนับ" />
+                </SelectTrigger>
+                <SelectContent>
+                  {units.map((unit) => (
+                    <SelectItem key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.unit && (
+                <p className="text-sm text-red-500">{errors.unit}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Pricing */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="cost_price">ราคาทุน (บาท)</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="cost_price"
+                  type="number"
+                  value={formData.cost_price}
+                  onChange={(e) => handleInputChange('cost_price', parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                  className={`pl-10 ${errors.cost_price ? 'border-red-500' : ''}`}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              {errors.cost_price && (
+                <p className="text-sm text-red-500">{errors.cost_price}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="selling_price">ราคาขาย (บาท)</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="selling_price"
+                  type="number"
+                  value={formData.selling_price}
+                  onChange={(e) => handleInputChange('selling_price', parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                  className={`pl-10 ${errors.selling_price ? 'border-red-500' : ''}`}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              {errors.selling_price && (
+                <p className="text-sm text-red-500">{errors.selling_price}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Stock Levels */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="min_stock_level">สต็อกขั้นต่ำ</Label>
+              <Input
+                id="min_stock_level"
+                type="number"
+                value={formData.min_stock_level}
+                onChange={(e) => handleInputChange('min_stock_level', parseInt(e.target.value) || 0)}
+                placeholder="5"
+                className={errors.min_stock_level ? 'border-red-500' : ''}
+                min="0"
+              />
+              {errors.min_stock_level && (
+                <p className="text-sm text-red-500">{errors.min_stock_level}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="max_stock_level">สต็อกสูงสุด</Label>
+              <Input
+                id="max_stock_level"
+                type="number"
+                value={formData.max_stock_level}
+                onChange={(e) => handleInputChange('max_stock_level', parseInt(e.target.value) || 0)}
+                placeholder="1000"
+                className={errors.max_stock_level ? 'border-red-500' : ''}
+                min="1"
+              />
+              {errors.max_stock_level && (
+                <p className="text-sm text-red-500">{errors.max_stock_level}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Profit Margin Display */}
+          {formData.cost_price > 0 && formData.selling_price > 0 && (
+            <Alert>
+              <FileText className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-1">
+                  <div>กำไรต่อหน่วย: ฿{(formData.selling_price - formData.cost_price).toLocaleString()}</div>
+                  <div>อัตรากำไร: {(((formData.selling_price - formData.cost_price) / formData.cost_price) * 100).toFixed(2)}%</div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={handleSubmit}
+              disabled={isProcessing}
+              className="flex-1"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  กำลังเพิ่มสินค้า...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  เพิ่มสินค้า
+                </>
+              )}
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isProcessing}
+            >
+              ยกเลิก
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

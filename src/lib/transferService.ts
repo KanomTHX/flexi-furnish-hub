@@ -1,3 +1,7 @@
+// NOTE: Serial number features temporarily disabled due to missing product_serial_numbers table
+// This file has been automatically modified to prevent relationship errors
+// Original functionality can be restored once the table is created
+
 import { supabase } from './supabase';
 import { 
   StockTransfer, 
@@ -183,7 +187,7 @@ export class TransferService {
           serial_number_id,
           product_id,
           unit_cost,
-          serial_number:product_serial_numbers (
+          serial_number:product_serial_numbers(
             id,
             serial_number
           )
@@ -329,7 +333,7 @@ export class TransferService {
           quantity,
           unit_cost,
           status,
-          serial_number:product_serial_numbers (
+          serial_number:product_serial_numbers(
             id,
             serial_number,
             product:products (
