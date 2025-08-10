@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 export interface SystemSettings {
   // General Settings
@@ -246,19 +247,42 @@ export const useSystemSettings = () => {
   const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [settingsId, setSettingsId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load settings from localStorage on mount
+  // Load settings from Supabase (fallback to localStorage) on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('systemSettings');
-    if (savedSettings) {
+    const load = async () => {
       try {
-        const parsed = JSON.parse(savedSettings);
-        setSettings({ ...defaultSettings, ...parsed });
-      } catch (error) {
-        console.error('Failed to parse saved settings:', error);
+        const { data, error } = await supabase
+          .from('system_settings')
+          .select('id, settings, updated_at')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (data?.settings) {
+          setSettings({ ...defaultSettings, ...data.settings });
+          setSettingsId(data.id);
+          return;
+        }
+      } catch (e) {
+        console.warn('Supabase settings fetch failed, using local cache', e);
       }
-    }
+
+      const savedSettings = localStorage.getItem('systemSettings');
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings);
+          setSettings({ ...defaultSettings, ...parsed });
+        } catch (error) {
+          console.error('Failed to parse saved settings:', error);
+        }
+      }
+    };
+
+    load();
   }, []);
 
   const updateSettings = (section: keyof SystemSettings, updates: Partial<SystemSettings[keyof SystemSettings]>) => {
@@ -275,21 +299,36 @@ export const useSystemSettings = () => {
   const saveSettings = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Save to localStorage
+      // Persist to Supabase
+      if (settingsId) {
+        const { error } = await supabase
+          .from('system_settings')
+          .update({ settings })
+          .eq('id', settingsId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('system_settings')
+          .insert({ settings })
+          .select('id')
+          .single();
+        if (error) throw error;
+        if (data?.id) setSettingsId(data.id);
+      }
+
+      // Cache locally for faster loads
       localStorage.setItem('systemSettings', JSON.stringify(settings));
-      
+
       setHasChanges(false);
       toast({
         title: "บันทึกการตั้งค่าสำเร็จ! ✅",
         description: "การตั้งค่าระบบได้รับการอัปเดตแล้ว"
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Save settings error:', error);
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถบันทึกการตั้งค่าได้",
+        description: error?.message?.includes('permission') ? "ไม่มีสิทธิ์บันทึกการตั้งค่า" : "ไม่สามารถบันทึกการตั้งค่าได้",
         variant: "destructive"
       });
     } finally {
