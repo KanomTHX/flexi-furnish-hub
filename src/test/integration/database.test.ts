@@ -461,8 +461,7 @@ describe('Database Integration Tests', () => {
     });
   });
 });
-  descri
-be('Receive Goods Integration', () => {
+describe('Receive Goods Integration', () => {
     it('should integrate receive goods workflow end-to-end', async () => {
       // Mock the complete receive goods flow
       vi.mocked(receiveGoodsService.receiveGoods).mockResolvedValue({
@@ -1062,4 +1061,3 @@ be('Receive Goods Integration', () => {
       await expect(WarehouseService.getWarehouses()).rejects.toThrow('Network timeout');
     });
   });
-});

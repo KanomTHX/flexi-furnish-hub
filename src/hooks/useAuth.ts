@@ -40,7 +40,7 @@ export function useAuth(): AuthContextType {
       // Direct query since RPC doesn't exist
       const { data: profileData, error: profileError } = await supabase
         .from('employee_profiles')
-        .select('*')
+        .select('id, employee_code, full_name, role, branch_id, phone, is_active')
         .eq('user_id', userId)
         .single();
 
@@ -83,32 +83,31 @@ export function useAuth(): AuthContextType {
     let mounted = true;
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      console.log('Auth state changed:', event, session?.user?.id);
+      setSession(session);
+      setUser(session?.user ?? null);
+      // Auth ready immediately; don't block UI on profile fetching
+      setLoading(false);
 
-        console.log('Auth state changed:', event, session?.user?.id);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          // Fetch employee profile
-          const userProfile = await fetchProfile(session.user.id);
-          if (mounted) {
-            setProfile(userProfile);
+      if (session?.user) {
+        // Defer to avoid potential deadlocks and fetch profile in background
+        setTimeout(async () => {
+          if (!mounted) return;
+          try {
+            const userProfile = await fetchProfile(session.user!.id);
+            if (mounted) setProfile(userProfile);
+          } catch (e) {
+            // ignore profile fetch errors here
           }
-        } else {
-          setProfile(null);
-          // Clear all cached data on sign out
-          queryClient.clear();
-        }
-
-        if (mounted) {
-          setLoading(false);
-        }
+        }, 0);
+      } else {
+        setProfile(null);
+        // Clear all cached data on sign out
+        queryClient.clear();
       }
-    );
+    });
 
     // Check for existing session
     const initializeAuth = async () => {
@@ -127,14 +126,23 @@ export function useAuth(): AuthContextType {
           setSession(session);
           setUser(session?.user ?? null);
 
-          if (session?.user) {
-            const userProfile = await fetchProfile(session.user.id);
-            if (mounted) {
-              setProfile(userProfile);
-            }
-          }
-
+          // Mark auth ready immediately to avoid blocking UI
           setLoading(false);
+
+          if (session?.user) {
+            // Fetch profile in background
+            setTimeout(async () => {
+              if (!mounted) return;
+              try {
+                const userProfile = await fetchProfile(session.user!.id);
+                if (mounted) setProfile(userProfile);
+              } catch (e) {
+                // ignore profile fetch errors here
+              }
+            }, 0);
+          } else {
+            setProfile(null);
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
