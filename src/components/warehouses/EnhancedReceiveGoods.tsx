@@ -27,8 +27,9 @@ import {
   Edit
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';/
-/ Types for the component
+import { supabase } from '@/integrations/supabase/client';
+
+// Types for the component
 interface Product {
   id: string;
   name: string;
@@ -118,8 +119,9 @@ export function EnhancedReceiveGoods({ onReceiveComplete, defaultWarehouseId }: 
     } else {
       setFilteredProducts(products);
     }
-  }, [productSearchTerm, products]);  c
-onst loadInitialData = async () => {
+  }, [productSearchTerm, products]);
+
+  const loadInitialData = async () => {
     setIsLoading(true);
     try {
       // Load warehouses

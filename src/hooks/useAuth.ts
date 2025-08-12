@@ -15,6 +15,8 @@ export interface UseAuthReturn {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -74,6 +76,26 @@ export function useAuth(): UseAuthReturn {
     }
   };
 
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
+  };
+
+  const signUp = async (email: string, password: string, metadata?: any) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata,
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -113,6 +135,8 @@ export function useAuth(): UseAuthReturn {
     user,
     isLoading,
     isAuthenticated: !!user,
+    signIn,
+    signUp,
     signOut,
     refreshUser
   };
