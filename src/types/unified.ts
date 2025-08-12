@@ -344,8 +344,8 @@ export interface ContractStatus {
   overduePayments: any[];
   nextPaymentDate?: string;
   totalOverdue: number;
-  paidInstallments?: number;
-  remainingBalance?: number;
+  paidInstallments: number;
+  remainingBalance: number;
 }
 
 // Re-export commonly used types

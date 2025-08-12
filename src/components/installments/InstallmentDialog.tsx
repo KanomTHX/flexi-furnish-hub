@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Customer, InstallmentPlan, InstallmentContract } from '@/types/pos';
+import { Customer, InstallmentPlan, InstallmentContract, Guarantor } from '@/types/unified';
 // import { installmentPlans, getActiveInstallmentPlans } from '@/data/constants';
 import {
   createInstallmentContract,

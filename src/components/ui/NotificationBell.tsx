@@ -6,7 +6,6 @@ import { Separator } from '@/components/ui/separator';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuHeader,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
@@ -75,7 +74,7 @@ export function NotificationBell() {
       </DropdownMenuTrigger>
       
       <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuHeader className="flex items-center justify-between p-4">
+        <div className="flex items-center justify-between p-4">
           <h3 className="font-semibold">การแจ้งเตือน</h3>
           {unreadCount > 0 && (
             <Button
@@ -88,7 +87,7 @@ export function NotificationBell() {
               อ่านทั้งหมด
             </Button>
           )}
-        </DropdownMenuHeader>
+        </div>
         
         <Separator />
         
