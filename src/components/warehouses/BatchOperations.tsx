@@ -118,7 +118,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
           {/* Operation Selection */}
           <div>
             <label className="text-sm font-medium mb-2 block">Operation Type</label>
-            <Select value={operation} onValueChange={setOperation}>
+            <Select value={operation} onValueChange={(value: BatchOperationType | "") => setOperation(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select operation" />
               </SelectTrigger>

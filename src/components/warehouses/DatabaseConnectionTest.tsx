@@ -51,7 +51,7 @@ export function DatabaseConnectionTest() {
       const tests = [
         { name: 'products', query: () => supabase.from('products').select('count').limit(1) },
         { name: 'warehouses', query: () => supabase.from('warehouses').select('count').limit(1) },
-        { name: 'product_serial_numbers', query: () => supabase.from('product_serial_numbers').select('count').limit(1) },
+        { name: 'product_inventory', query: () => supabase.from('product_inventory').select('count').limit(1) },
         { name: 'stock_movements', query: () => supabase.from('stock_movements').select('count').limit(1) }
       ];
 
