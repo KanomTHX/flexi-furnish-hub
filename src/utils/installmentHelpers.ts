@@ -324,6 +324,8 @@ export function calculateContractStatus(contract: any): {
   overduePayments: any[];
   nextPaymentDate?: string;
   totalOverdue: number;
+  paidInstallments: number;
+  remainingBalance: number;
 } {
   const overduePayments = contract.payments?.filter((payment: any) => {
     return isPaymentOverdue(payment.dueDate, payment.paidDate);
@@ -358,11 +360,16 @@ export function calculateContractStatus(contract: any): {
     sum + (payment.amount || 0), 0
   );
 
+  const paidInstallments = contract.paidInstallments || 0;
+  const remainingBalance = contract.remainingBalance || 0;
+
   return {
     status,
     overduePayments,
     nextPaymentDate: nextPayment?.dueDate,
-    totalOverdue
+    totalOverdue,
+    paidInstallments,
+    remainingBalance
   };
 }
 
@@ -465,7 +472,7 @@ export function getPaymentStatusText(status: string): string {
 /**
  * ส่งออกข้อมูลสัญญาเป็น CSV
  */
-export function exportContractsToCSV(contracts: any[]): void {
+export function exportContractsToCSV(contracts: any[]): string {
   const headers = [
     'เลขที่สัญญา',
     'ชื่อลูกค้า',
@@ -493,18 +500,7 @@ export function exportContractsToCSV(contracts: any[]): void {
     ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
   ].join('\n');
 
-  // สร้างและดาวน์โหลดไฟล์
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  
-  link.setAttribute('href', url);
-  link.setAttribute('download', `installment-contracts-${new Date().toISOString().split('T')[0]}.csv`);
-  link.style.visibility = 'hidden';
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  return '\uFEFF' + csvContent;
 }
 
 /**

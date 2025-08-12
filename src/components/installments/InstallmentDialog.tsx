@@ -373,6 +373,13 @@ export function InstallmentDialog({
       if (requireGuarantor && guarantor.name) {
         const guarantorData = {
           ...guarantor,
+          // Required fields for Guarantor type
+          name: guarantor.name,
+          phone: guarantor.phone || '',
+          address: guarantor.address || 'ไม่ระบุ',
+          id_card: guarantor.idCard || '',
+          occupation: guarantor.occupation || 'ไม่ระบุ',
+          monthly_income: guarantor.monthlyIncome || 0,
           // แปลง emergencyContact ให้เป็น format ที่ถูกต้อง
           emergencyContact: {
             name: guarantor.emergencyContact?.name || '',
