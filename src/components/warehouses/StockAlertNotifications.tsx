@@ -18,7 +18,7 @@ import {
   X 
 } from 'lucide-react';
 import { useRealTimeStock } from '@/hooks/useRealTimeStock';
-import { RealTimeStockService } from '@/services/realTimeStockService';
+import { realTimeStockService } from '@/services/realTimeStockServicePlaceholder';
 import type { StockAlert } from '@/types/warehouseStock';
 import { formatDistanceToNow } from 'date-fns';
 import { th } from 'date-fns/locale';

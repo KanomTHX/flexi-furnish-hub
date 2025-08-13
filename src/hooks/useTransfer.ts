@@ -113,7 +113,7 @@ export function useTransfer(options: UseTransferOptions = {}): UseTransferReturn
       // Refresh transfers list
       await loadTransfers();
       
-      return transfer;
+      return transfer as unknown as StockTransfer;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถสร้างการโอนได้';
       setError(errorMessage);
@@ -144,7 +144,7 @@ export function useTransfer(options: UseTransferOptions = {}): UseTransferReturn
       // Refresh transfers list
       await loadTransfers();
       
-      return transfer;
+      return transfer as unknown as StockTransfer;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถยืนยันการรับสินค้าได้';
       setError(errorMessage);

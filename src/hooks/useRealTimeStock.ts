@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { RealTimeStockService, type StockUpdateEvent, type StockSubscriptionOptions } from '@/services/realTimeStockService';
+import { realTimeStockService } from '@/services/realTimeStockServicePlaceholder';
 import type { StockLevel, StockAlert, StockMovement, SerialNumber } from '@/types/warehouseStock';
 
 export interface UseRealTimeStockOptions extends StockSubscriptionOptions {

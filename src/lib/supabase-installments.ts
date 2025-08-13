@@ -361,17 +361,17 @@ function mapPaymentFromDB(data: any): InstallmentPayment {
     payment_number: data.payment_number, // use correct field name
     due_date: data.due_date,
     amount_due: data.amount_due, // map amount_due -> amount_due
-    principalAmount: data.principal_amount || 0,
-    interestAmount: data.interest_amount || 0,
+    principal_amount: data.principal_amount || 0,
+    interest_amount: data.interest_amount || 0,
     status: data.status,
-    paidDate: data.payment_date, // map payment_date -> paidDate
-    paidAmount: data.amount_paid, // map amount_paid -> paidAmount
-    paymentMethod: data.payment_method,
-    receiptNumber: data.receipt_number,
-    lateFee: data.late_fee || 0,
+    payment_date: data.payment_date, // map payment_date -> payment_date
+    amount_paid: data.amount_paid, // map amount_paid -> amount_paid
+    payment_method: data.payment_method,
+    receipt_number: data.receipt_number,
+    late_fee: data.late_fee || 0,
     discount: data.discount || 0,
     notes: data.notes,
-    createdAt: data.created_at,
+    created_at: data.created_at,
     updatedAt: data.updated_at,
     processedBy: data.processed_by,
     branchId: data.branch_id

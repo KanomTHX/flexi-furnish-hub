@@ -11,6 +11,24 @@ export interface AuditLogEntry {
   record_id?: string;
   ip_address?: string;
   user_agent?: string;
+  user_name?: string;
+  description?: string;
+  metadata?: any;
+}
+
+export interface AuditFilter {
+  startDate?: string;
+  endDate?: string;
+  tableName?: string;
+  table_name?: string;
+  userId?: string;
+  user_id?: string;
+  action?: string;
+  operation_type?: string;
+  record_id?: string;
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
 }
 
 export const auditTrailService = {
