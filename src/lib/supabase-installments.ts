@@ -306,6 +306,7 @@ function getLastPaymentDate(months: number): string {
 function mapContractFromDB(data: any): InstallmentContract {
   return {
     id: data.id,
+    transaction_id: data.transaction_id,
     contractNumber: data.contract_number,
     customerId: data.customer_id,
     customer: data.customers,
@@ -314,13 +315,20 @@ function mapContractFromDB(data: any): InstallmentContract {
     guarantorId: data.guarantor_id,
     guarantor: data.guarantors,
     totalAmount: data.remaining_amount + data.down_payment,
+    total_months: data.total_months,
     downPayment: data.down_payment,
+    down_payment: data.down_payment,
+    monthly_payment: data.monthly_payment,
+    remaining_amount: data.remaining_amount,
     financedAmount: data.financed_amount || data.remaining_amount,
     totalInterest: data.total_interest || 0,
     processingFee: data.processing_fee || 0,
     totalPayable: data.total_payable || data.remaining_amount,
     monthlyPayment: data.monthly_payment,
     contractDate: data.contract_date || data.created_at,
+    start_date: data.start_date,
+    end_date: data.end_date,
+    interest_rate: data.interest_rate,
     firstPaymentDate: data.first_payment_date,
     lastPaymentDate: data.last_payment_date,
     status: data.status,
@@ -347,7 +355,7 @@ function mapContractFromDB(data: any): InstallmentContract {
 function mapPaymentFromDB(data: any): InstallmentPayment {
   return {
     id: data.id,
-    contractId: data.contract_id,
+    contract_id: data.contract_id,
     installmentNumber: data.payment_number, // map payment_number -> installmentNumber
     dueDate: data.due_date,
     amount: data.amount_due, // map amount_due -> amount
