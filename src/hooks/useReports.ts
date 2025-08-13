@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   SalesReport, 
   InventoryReport, 
@@ -45,7 +45,12 @@ export const useReports = () => {
       setInventoryReports(mockInventoryReports);
       setFinancialReports(mockFinancialReports);
       setCustomReportConfigs(mockCustomReportConfigs);
-      setReportStats(mockReportStats);
+      setReportStats({
+        totalReports: 25,
+        reportsThisMonth: 8,
+        mostUsedReportType: 'sales' as ReportType,
+        averageGenerationTime: 2.5
+      });
     } catch (err) {
       setError('เกิดข้อผิดพลาดในการโหลดข้อมูลรายงาน');
       console.error('Error loading reports data:', err);
@@ -104,9 +109,9 @@ export const useReports = () => {
     }
   };
 
-  const getSalesData = (days: number = 30) => {
-    return generateMockSalesData(days);
-  };
+  const getSalesData = useCallback((days: number = 30) => {
+    return generateMockSalesData();
+  }, []);
 
   // Inventory Reports
   const generateInventoryReport = async () => {
@@ -198,9 +203,9 @@ export const useReports = () => {
     }
   };
 
-  const getFinancialData = (months: number = 12) => {
-    return generateMockFinancialData(months);
-  };
+  const getFinancialData = useCallback((months: number = 12) => {
+    return generateMockFinancialData();
+  }, []);
 
   // Custom Reports
   const saveCustomReportConfig = async (config: CustomReportConfig) => {

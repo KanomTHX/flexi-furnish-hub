@@ -263,7 +263,7 @@ export const useSystemSettings = () => {
 
         if (error) throw error;
         if (data?.settings) {
-          setSettings({ ...defaultSettings, ...data.settings });
+          setSettings({ ...defaultSettings, ...(data.settings as any) });
           setSettingsId(data.id);
           return;
         }
@@ -303,13 +303,13 @@ export const useSystemSettings = () => {
       if (settingsId) {
         const { error } = await supabase
           .from('system_settings')
-          .update({ settings })
+          .update({ settings: settings as any })
           .eq('id', settingsId);
         if (error) throw error;
       } else {
         const { data, error } = await supabase
           .from('system_settings')
-          .insert({ settings })
+          .insert({ settings: settings as any })
           .select('id')
           .single();
         if (error) throw error;

@@ -130,9 +130,23 @@ export function useClaims() {
       urgentClaims: claims.filter(c => c.priority === 'urgent').length,
       overdueRate: 15, // Mock percentage
       resolutionRate: completedClaims / totalClaims * 100 || 0,
-      claimsByType: { warranty: 50, damage: 30, defect: 20 },
-      claimsByStatus: { pending: pendingClaims, completed: completedClaims, cancelled: claims.filter(c => c.status === 'cancelled').length },
-      claimsByPriority: { urgent: claims.filter(c => c.priority === 'urgent').length, high: claims.filter(c => c.priority === 'high').length },
+      claimsByType: { warranty: 50, damage: 30, defect: 20, other: 0, missing_parts: 0, installation: 0 },
+      claimsByStatus: { 
+        submitted: claims.filter(c => c.status === 'submitted').length,
+        under_review: claims.filter(c => c.status === 'under_review').length,
+        approved: claims.filter(c => c.status === 'approved').length,
+        rejected: claims.filter(c => c.status === 'rejected').length,
+        in_progress: claims.filter(c => c.status === 'in_progress').length,
+        waiting_parts: claims.filter(c => c.status === 'waiting_parts').length,
+        completed: completedClaims,
+        cancelled: claims.filter(c => c.status === 'cancelled').length
+      },
+      claimsByPriority: { 
+        urgent: claims.filter(c => c.priority === 'urgent').length, 
+        high: claims.filter(c => c.priority === 'high').length,
+        medium: claims.filter(c => c.priority === 'medium').length,
+        low: claims.filter(c => c.priority === 'low').length
+      },
       monthlyTrends: [{ month: 'Jan', claims: 10 }, { month: 'Feb', claims: 15 }],
       topIssues: [{ issue: 'ชำรุด', count: 10 }]
     };

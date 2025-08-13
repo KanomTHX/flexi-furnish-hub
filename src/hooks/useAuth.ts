@@ -31,14 +31,9 @@ export function useAuth(): UseAuthReturn {
         .from('employee_profiles')
         .select(`
           id,
-          name,
+          full_name,
           role,
-          warehouse_id,
-          warehouses (
-            id,
-            name,
-            code
-          )
+          branch_id
         `)
         .eq('user_id', authUser.id)
         .single();
@@ -49,10 +44,10 @@ export function useAuth(): UseAuthReturn {
         setUser({
           id: authUser.id,
           email: authUser.email || '',
-          name: profile.name,
+          name: profile.full_name,
           role: profile.role,
-          warehouseId: profile.warehouse_id,
-          warehouseName: profile.warehouses?.name
+          warehouseId: profile.branch_id,
+          warehouseName: ''
         });
       }
     } catch (error) {

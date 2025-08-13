@@ -56,10 +56,10 @@ export function useAudit() {
         module: 'system' as SystemModule,
         description: log.action,
         details: { 
-          oldValues: log.old_values, 
-          newValues: log.new_values 
+          oldValues: log.old_values as any, 
+          newValues: log.new_values as any
         },
-        ipAddress: log.ip_address || '',
+        ipAddress: String(log.ip_address || ''),
         userAgent: log.user_agent || '',
         severity: 'medium' as AuditSeverity,
         status: 'success' as AuditStatus,
@@ -69,7 +69,7 @@ export function useAudit() {
           username: 'user',
           fullName: 'Unknown User',
           email: '',
-          role: 'staff' as const,
+          role: 'admin' as any,
           isActive: true
         }
       }));
@@ -123,9 +123,9 @@ export function useAudit() {
       mostActiveUser: auditLogs.length > 0 ? auditLogs[0].user.fullName : 'ไม่มีข้อมูล',
       mostCommonAction: 'read',
       mostAffectedResource: 'user',
-      topActions: [{ action: 'read', count: 10 }],
-      topModules: [{ module: 'system', count: 5 }],
-      topUsers: [{ user: 'admin', count: 15 }],
+      topActions: [{ action: 'read', count: 10, percentage: 50 }],
+      topModules: [{ module: 'system', count: 5, percentage: 100 }],
+      topUsers: [{ userId: 'admin', username: 'admin', fullName: 'Administrator', count: 15, lastActivity: new Date().toISOString() }],
       hourlyActivity: [{ hour: 9, events: 5 }],
       dailyTrends: [{ date: '2024-01-01', events: 20 }]
     };
@@ -216,8 +216,7 @@ export function useAudit() {
         username: 'user',
         fullName: 'Unknown User',
         email: '',
-        role: 'staff' as const,
-        isActive: true
+        role: 'admin' as any
       }
     };
     setAuditLogs(prev => [newLog, ...prev]);

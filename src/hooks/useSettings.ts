@@ -12,34 +12,107 @@ import {
   SettingsAuditLog,
   SettingsModule
 } from '@/types/settings';
-import {
-  mockGeneralSettings,
-  mockUsers,
-  mockUserRoles,
-  mockPermissions,
-  mockSystemConfiguration,
-  mockBusinessSettings,
-  mockSecuritySettings,
-  mockIntegrationSettings,
-  mockSettingsCategories,
-  mockSettingsAuditLog,
-  getSettingsByCategory,
-  getActiveUsers,
-  getUsersByRole,
-  getRecentAuditLogs
-} from '@/hooks/useSupabaseHooks';
 
 export const useSettings = () => {
-  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>(mockGeneralSettings);
-  const [users, setUsers] = useState<UserSettings[]>(mockUsers);
-  const [userRoles, setUserRoles] = useState<UserRole[]>(mockUserRoles);
-  const [permissions, setPermissions] = useState<Permission[]>(mockPermissions);
-  const [systemConfiguration, setSystemConfiguration] = useState<SystemConfiguration>(mockSystemConfiguration);
-  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>(mockBusinessSettings);
-  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>(mockSecuritySettings);
-  const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettings>(mockIntegrationSettings);
-  const [settingsCategories, setSettingsCategories] = useState<SettingsCategory[]>(mockSettingsCategories);
-  const [auditLogs, setAuditLogs] = useState<SettingsAuditLog[]>(mockSettingsAuditLog);
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
+    companyName: 'บริษัท เฟอร์นิเจอร์ เฟล็กซี่ จำกัด',
+    companyPhone: '02-123-4567',
+    companyEmail: 'info@furniturecompany.com',
+    companyWebsite: 'www.furniturecompany.com',
+    companyLogo: '',
+    companyAddress: '123 ถนนสุขุมวิท กรุงเทพฯ 10110',
+    currency: 'THB',
+    timezone: 'Asia/Bangkok',
+    dateFormat: 'DD/MM/YYYY',
+    language: 'th',
+    defaultPaymentTerms: 30
+  });
+  const [users, setUsers] = useState<UserSettings[]>([]);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [systemConfiguration, setSystemConfiguration] = useState<SystemConfiguration>({
+    version: '1.0.0',
+    environment: 'production',
+    maintenanceMode: false,
+    debugMode: false,
+    logLevel: 'info',
+    maxFileSize: 10,
+    allowedFileTypes: ['.jpg', '.png', '.pdf', '.docx'],
+    sessionTimeout: 30,
+    autoBackup: true,
+    backupFrequency: 'daily'
+  });
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({
+    discountPolicy: {
+      maxDiscount: 20,
+      requireApproval: true,
+      approvalThreshold: 15
+    },
+    returnPolicy: {
+      returnPeriod: 30,
+      restockingFee: 5,
+      allowPartialReturns: true
+    },
+    shippingPolicy: {
+      freeShippingThreshold: 5000,
+      standardRate: 100,
+      expressRate: 200
+    },
+    loyaltyProgram: {
+      enabled: true,
+      pointsPerBaht: 1,
+      redemptionRate: 0.01
+    }
+  });
+  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
+    passwordPolicy: {
+      minLength: 8,
+      requireUppercase: true,
+      requireNumbers: true,
+      requireSpecialChars: true
+    },
+    lockoutPolicy: {
+      maxAttempts: 5,
+      lockoutDuration: 30,
+      resetAfter: 60
+    },
+    sessionSecurity: {
+      sessionTimeout: 30,
+      requireReauth: true,
+      logoutInactive: true
+    },
+    auditLogging: {
+      enabled: true,
+      logLevel: 'detailed',
+      retentionDays: 365
+    },
+    twoFactorAuth: {
+      enabled: false,
+      methods: ['sms'],
+      required: false
+    }
+  });
+  const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettings>({
+    email: {
+      provider: 'sendgrid',
+      apiKey: '',
+      fromEmail: 'noreply@company.com',
+      fromName: 'Furniture Company'
+    },
+    sms: {
+      provider: 'twilio',
+      accountSid: '',
+      authToken: '',
+      fromNumber: ''
+    },
+    analytics: {
+      provider: 'google',
+      trackingId: '',
+      enhanced: true
+    }
+  });
+  const [settingsCategories, setSettingsCategories] = useState<SettingsCategory[]>([]);
+  const [auditLogs, setAuditLogs] = useState<SettingsAuditLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,296 +188,9 @@ export const useSettings = () => {
       
       setUsers(prev => [newUser, ...prev]);
       
-      // Create audit log
-      const auditLog: SettingsAuditLog = {
-        id: `audit-${Date.now()}`,
-        module: 'users',
-        setting: 'user.created',
-        oldValue: null,
-        newValue: newUser,
-        changedBy: 'current-user',
-        changedAt: new Date(),
-        reason: `สร้างผู้ใช้ใหม่: ${newUser.username}`
-      };
-      
-      setAuditLogs(prev => [auditLog, ...prev]);
-      
       return newUser;
     } catch (err) {
       setError('เกิดข้อผิดพลาดในการสร้างผู้ใช้');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateUser = async (userId: string, userData: Partial<UserSettings>) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setUsers(prev => prev.map(user => {
-        if (user.id === userId) {
-          const updatedUser = { ...user, ...userData, updatedAt: new Date() };
-          
-          // Create audit log
-          const auditLog: SettingsAuditLog = {
-            id: `audit-${Date.now()}`,
-            module: 'users',
-            setting: 'user.updated',
-            oldValue: user,
-            newValue: updatedUser,
-            changedBy: 'current-user',
-            changedAt: new Date(),
-            reason: `อัปเดตผู้ใช้: ${user.username}`
-          };
-          
-          setAuditLogs(prev => [auditLog, ...prev]);
-          
-          return updatedUser;
-        }
-        return user;
-      }));
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการอัปเดตผู้ใช้');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteUser = async (userId: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const userToDelete = users.find(user => user.id === userId);
-      if (userToDelete) {
-        setUsers(prev => prev.filter(user => user.id !== userId));
-        
-        // Create audit log
-        const auditLog: SettingsAuditLog = {
-          id: `audit-${Date.now()}`,
-          module: 'users',
-          setting: 'user.deleted',
-          oldValue: userToDelete,
-          newValue: null,
-          changedBy: 'current-user',
-          changedAt: new Date(),
-          reason: `ลบผู้ใช้: ${userToDelete.username}`
-        };
-        
-        setAuditLogs(prev => [auditLog, ...prev]);
-      }
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการลบผู้ใช้');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Role Management
-  const createRole = async (roleData: Omit<UserRole, 'id'>) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newRole: UserRole = {
-        ...roleData,
-        id: `role-${Date.now()}`
-      };
-      
-      setUserRoles(prev => [newRole, ...prev]);
-      
-      // Create audit log
-      const auditLog: SettingsAuditLog = {
-        id: `audit-${Date.now()}`,
-        module: 'users',
-        setting: 'role.created',
-        oldValue: null,
-        newValue: newRole,
-        changedBy: 'current-user',
-        changedAt: new Date(),
-        reason: `สร้างบทบาทใหม่: ${newRole.name}`
-      };
-      
-      setAuditLogs(prev => [auditLog, ...prev]);
-      
-      return newRole;
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการสร้างบทบาท');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateRole = async (roleId: string, roleData: Partial<UserRole>) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setUserRoles(prev => prev.map(role => {
-        if (role.id === roleId) {
-          const updatedRole = { ...role, ...roleData };
-          
-          // Create audit log
-          const auditLog: SettingsAuditLog = {
-            id: `audit-${Date.now()}`,
-            module: 'users',
-            setting: 'role.updated',
-            oldValue: role,
-            newValue: updatedRole,
-            changedBy: 'current-user',
-            changedAt: new Date(),
-            reason: `อัปเดตบทบาท: ${role.name}`
-          };
-          
-          setAuditLogs(prev => [auditLog, ...prev]);
-          
-          return updatedRole;
-        }
-        return role;
-      }));
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการอัปเดตบทบาท');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // System Configuration
-  const updateSystemConfiguration = async (newConfig: SystemConfiguration) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Create audit log
-      const auditLog: SettingsAuditLog = {
-        id: `audit-${Date.now()}`,
-        module: 'system',
-        setting: 'systemConfiguration',
-        oldValue: systemConfiguration,
-        newValue: newConfig,
-        changedBy: 'current-user',
-        changedAt: new Date(),
-        reason: 'อัปเดตการตั้งค่าระบบ'
-      };
-      
-      setSystemConfiguration(newConfig);
-      setAuditLogs(prev => [auditLog, ...prev]);
-      
-      return newConfig;
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการอัปเดตการตั้งค่าระบบ');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Business Settings
-  const updateBusinessSettings = async (newSettings: BusinessSettings) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create audit log
-      const auditLog: SettingsAuditLog = {
-        id: `audit-${Date.now()}`,
-        module: 'business',
-        setting: 'businessSettings',
-        oldValue: businessSettings,
-        newValue: newSettings,
-        changedBy: 'current-user',
-        changedAt: new Date(),
-        reason: 'อัปเดตการตั้งค่าธุรกิจ'
-      };
-      
-      setBusinessSettings(newSettings);
-      setAuditLogs(prev => [auditLog, ...prev]);
-      
-      return newSettings;
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการอัปเดตการตั้งค่าธุรกิจ');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Security Settings
-  const updateSecuritySettings = async (newSettings: SecuritySettings) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create audit log
-      const auditLog: SettingsAuditLog = {
-        id: `audit-${Date.now()}`,
-        module: 'security',
-        setting: 'securitySettings',
-        oldValue: securitySettings,
-        newValue: newSettings,
-        changedBy: 'current-user',
-        changedAt: new Date(),
-        reason: 'อัปเดตการตั้งค่าความปลอดภัย'
-      };
-      
-      setSecuritySettings(newSettings);
-      setAuditLogs(prev => [auditLog, ...prev]);
-      
-      return newSettings;
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการอัปเดตการตั้งค่าความปลอดภัย');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Integration Settings
-  const updateIntegrationSettings = async (newSettings: IntegrationSettings) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create audit log
-      const auditLog: SettingsAuditLog = {
-        id: `audit-${Date.now()}`,
-        module: 'integration',
-        setting: 'integrationSettings',
-        oldValue: integrationSettings,
-        newValue: newSettings,
-        changedBy: 'current-user',
-        changedAt: new Date(),
-        reason: 'อัปเดตการตั้งค่าการเชื่อมต่อ'
-      };
-      
-      setIntegrationSettings(newSettings);
-      setAuditLogs(prev => [auditLog, ...prev]);
-      
-      return newSettings;
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการอัปเดตการตั้งค่าการเชื่อมต่อ');
       throw err;
     } finally {
       setLoading(false);
@@ -475,24 +261,12 @@ export const useSettings = () => {
     loadSettingsData,
     updateGeneralSettings,
     createUser,
-    updateUser,
-    deleteUser,
-    createRole,
-    updateRole,
-    updateSystemConfiguration,
-    updateBusinessSettings,
-    updateSecuritySettings,
-    updateIntegrationSettings,
     
     // Search and Filter
     searchUsers,
     searchAuditLogs,
     
     // Helpers
-    getSettingsByCategory,
-    getActiveUsers: () => getActiveUsers(),
-    getUsersByRole,
-    getRecentAuditLogs,
     getSettingsStats
   };
 };

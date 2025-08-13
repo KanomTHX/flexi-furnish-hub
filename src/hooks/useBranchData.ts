@@ -65,7 +65,12 @@ export function useBranchData() {
             taxId: '',
             registrationNumber: '',
             businessType: 'retail',
-            establishedDate: branch.created_at
+            establishedDate: branch.created_at,
+            businessHours: {
+              open: '09:00',
+              close: '18:00',
+              workingDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+            }
           },
           address: {
             street: branch.address || '',
@@ -84,26 +89,18 @@ export function useBranchData() {
           settings: {
             timezone: 'Asia/Bangkok',
             currency: 'THB',
+            language: 'th',
+            dateFormat: 'DD/MM/YYYY',
+            numberFormat: '0,0.00',
             taxRate: 7,
-            operatingHours: {
-              open: '09:00',
-              close: '18:00',
-              workDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-            },
-            features: {
-              enablePOS: true,
-              enableInventory: true,
-              enableAccounting: true,
-              enableCRM: true
-            },
-            requireManagerApproval: false,
-            autoBackup: true,
-            dataRetentionDays: 365
+            allowNegativeStock: false,
+            autoApproveTransfers: false,
+            requireManagerApproval: false
           },
           permissions: {
             canAccessOtherBranches: false,
             canTransferToBranches: [],
-            canViewFinancialData: true,
+            canViewReports: ['sales', 'inventory'],
             dataIsolationLevel: 'partial' as const
           },
           stats: {
