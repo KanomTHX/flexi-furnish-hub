@@ -1,5 +1,7 @@
 // Report helpers placeholder
 export const generateReport = (type: string, data: any) => Promise.resolve([]);
 export const formatReportData = (data: any) => data;
+export const formatCurrency = (amount: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);
+export const formatNumber = (number: number) => new Intl.NumberFormat('th-TH').format(number);
 
-export default { generateReport, formatReportData };
+export default { generateReport, formatReportData, formatCurrency, formatNumber };

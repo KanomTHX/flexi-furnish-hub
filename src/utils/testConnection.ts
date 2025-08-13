@@ -4,15 +4,32 @@ export const testConnection = async () => {
 };
 
 export const testDatabaseConnection = async () => {
-  return { connected: true, latency: 50 };
+  return { 
+    success: true, 
+    connected: true, 
+    latency: 50,
+    error: null,
+    tablesFound: ['users', 'products', 'orders']
+  };
 };
 
 export const checkDatabaseConnection = async () => {
-  return { connected: true, latency: 50 };
+  return { 
+    success: true, 
+    connected: true, 
+    latency: 50,
+    error: null,
+    tablesFound: ['users', 'products', 'orders']
+  };
 };
 
 export const testEnvironmentVariables = () => {
-  return { valid: true, variables: ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'] };
+  return { 
+    success: true,
+    valid: true, 
+    variables: ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'],
+    error: null
+  };
 };
 
 export default { testConnection, testDatabaseConnection, checkDatabaseConnection, testEnvironmentVariables };

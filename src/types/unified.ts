@@ -16,6 +16,14 @@ export interface Customer {
   monthlyIncome?: number;
   branchId?: string;
   emergencyContact?: EmergencyContact;
+  houseNumber?: string;
+  province?: string;
+  district?: string;
+  subdistrict?: string;
+  zipCode?: string;
+  workplace?: string;
+  workAddress?: string;
+  created_at?: string;
 }
 
 export interface Guarantor {
@@ -24,6 +32,14 @@ export interface Guarantor {
   phone: string;
   email?: string;
   address: string;
+  idCard?: string;
+  occupation?: string;
+  monthlyIncome?: number;
+  workplace?: string;
+  workAddress?: string;
+  emergencyContact?: EmergencyContact;
+  createdBy?: string;
+  branchId?: string;
 }
 
 export interface InstallmentPlan {
@@ -34,6 +50,7 @@ export interface InstallmentPlan {
   processingFee: number;
   isActive: boolean;
   downPaymentPercent?: number;
+  description?: string;
 }
 
 export interface InstallmentPayment {

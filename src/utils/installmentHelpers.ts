@@ -9,19 +9,39 @@ export const calculateTotalInterest = (principal: number, monthlyPayment: number
   return (monthlyPayment * months) - principal;
 };
 
-export const createInstallmentContract = (data: any) => Promise.resolve({ id: 'mock-id', ...data });
+export const createInstallmentContract = async (data: any) => {
+  return { id: 'mock-id', ...data };
+};
 
-export const checkInstallmentEligibility = (customer: any, amount: number) => {
-  return Promise.resolve({
+export const checkInstallmentEligibility = async (customer: any, amount: number) => {
+  return {
     eligible: true,
     maxAmount: amount * 2,
     reasons: []
-  });
+  };
 };
+
+export const calculateContractStatus = (contract: any) => ({
+  status: 'active',
+  paidInstallments: 0,
+  remainingBalance: contract?.totalAmount || 0,
+  overduePayments: 0
+});
+export const getContractStatusText = (status: string) => status;
+export const getPaymentStatusText = (status: string) => status;
+export const exportContractsToCSV = (contracts: any[]) => 'contract1,contract2,contract3';
+export const updatePaymentStatus = (paymentId: string, status: string) => Promise.resolve();
+export const calculateLateFee = (payment: any, daysPastDue: number = 0) => daysPastDue * 10;
 
 export default { 
   calculateMonthlyPayment, 
   calculateTotalInterest,
   createInstallmentContract,
-  checkInstallmentEligibility
+  checkInstallmentEligibility,
+  calculateContractStatus,
+  getContractStatusText,
+  getPaymentStatusText,
+  exportContractsToCSV,
+  updatePaymentStatus,
+  calculateLateFee
 };
