@@ -123,9 +123,9 @@ export function useNotifications(): UseNotificationsReturn {
 
   // ตั้งค่า real-time subscription
   useEffect(() => {
-    if (!user?.warehouseId) return;
+    if (!(user as any)?.warehouseId) return;
 
-    const channel = supabase.channel(`warehouse_${user.warehouseId}`);
+    const channel = supabase.channel(`warehouse_${(user as any)?.warehouseId}`);
     
     channel
       .on('broadcast', { event: 'notification' }, (payload) => {
@@ -146,7 +146,7 @@ export function useNotifications(): UseNotificationsReturn {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.warehouseId, toast]);
+  }, [(user as any)?.warehouseId, toast]);
 
   // ตั้งค่า database subscription สำหรับการแจ้งเตือนใหม่
   useEffect(() => {
