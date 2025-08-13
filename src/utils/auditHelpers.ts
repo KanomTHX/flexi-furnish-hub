@@ -1,6 +1,9 @@
 // Audit helpers placeholder
 export const formatAuditLog = (log: any) => log;
 export const exportAuditLogs = (logs: any[]) => Promise.resolve();
+export const exportAuditLogsToCSV = (logs: any[]) => 'audit,logs';
+export const exportSecurityEventsToCSV = (events: any[]) => 'security,events';
+export const exportUsersToCSV = (users: any[]) => 'user,data';
 export const formatDateTime = (date: string | Date) => new Date(date).toLocaleString('th-TH');
 
 export const auditActionLabels = {

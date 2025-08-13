@@ -3,6 +3,9 @@ export const calculateClaimAmount = (claim: any) => 0;
 export const validateClaim = (claim: any) => true;
 export const formatCurrency = (amount: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);
 export const formatDate = (date: string | Date) => new Date(date).toLocaleDateString('th-TH');
+export const exportClaimsToCSV = (claims: any[]) => 'claims,data';
+export const exportCustomersToCSV = (customers: any[]) => 'customers,data';
+export const exportProductsToCSV = (products: any[]) => 'products,data';
 
 export const claimStatusLabels = {
   pending: 'รอดำเนินการ',

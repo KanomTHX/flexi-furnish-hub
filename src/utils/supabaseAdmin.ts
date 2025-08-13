@@ -7,7 +7,7 @@ export const adminOperations = {
   dropTable,
   resetDatabase: () => Promise.resolve(),
   backupDatabase: () => Promise.resolve(),
-  listTables: () => Promise.resolve(['users', 'products', 'orders']),
+  listTables: () => Promise.resolve({ success: true, tables: ['users', 'products', 'orders'] }),
   executeSQL: (query: string) => Promise.resolve({ success: true, data: [] })
 };
 

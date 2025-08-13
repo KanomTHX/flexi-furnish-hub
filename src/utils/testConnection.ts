@@ -9,7 +9,7 @@ export const testDatabaseConnection = async () => {
     connected: true, 
     latency: 50,
     error: null,
-    tablesFound: ['users', 'products', 'orders']
+    tablesFound: 3
   };
 };
 
@@ -19,7 +19,7 @@ export const checkDatabaseConnection = async () => {
     connected: true, 
     latency: 50,
     error: null,
-    tablesFound: ['users', 'products', 'orders']
+    tablesFound: 3
   };
 };
 

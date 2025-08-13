@@ -155,4 +155,4 @@ export type SNStatus = 'available' | 'sold' | 'transferred' | 'claimed' | 'damag
 export type TransferStatus = 'pending' | 'in_transit' | 'completed' | 'cancelled';
 
 // Import TransferStatus into warehouse.ts exports
-export { TransferStatus as WarehouseTransferStatus };
+export type { TransferStatus as WarehouseTransferStatus };

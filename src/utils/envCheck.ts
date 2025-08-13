@@ -7,4 +7,6 @@ export const checkEnvironment = () => {
   };
 };
 
-export default { checkEnvironment };
+export const checkEnvironmentVariables = () => ({ success: true, variables: [] });
+
+export default { checkEnvironment, checkEnvironmentVariables };

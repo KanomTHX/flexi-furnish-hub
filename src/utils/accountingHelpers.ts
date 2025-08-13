@@ -3,6 +3,9 @@ export const calculateTaxAmount = (amount: number, rate: number) => amount * rat
 export const formatCurrency = (amount: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);
 export const validateAccountingEntry = (entry: any) => true;
 export const formatDate = (date: string | Date) => new Date(date).toLocaleDateString('th-TH');
+export const exportAccountsToCSV = (accounts: any[]) => 'account,data';
+export const exportJournalEntriesToCSV = (entries: any[]) => 'journal,entries';
+export const exportTransactionsToCSV = (transactions: any[]) => 'transaction,data';
 
 export const accountTypeLabels = {
   asset: 'สินทรัพย์',

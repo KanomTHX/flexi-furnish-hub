@@ -39,11 +39,9 @@ export function AdminDatabaseManager() {
     setResult(null)
     
     try {
-      const tableCreator = new SupabaseTableCreator()
-      
       // ตรวจสอบตารางที่มีอยู่
       console.log('🔍 Checking existing tables...')
-      const checkResult = await tableCreator.checkTablesExist()
+      const checkResult = await SupabaseTableCreator.checkTablesExist()
       
       if (checkResult.success) {
         console.log(`📊 Found ${checkResult.totalExisting}/${checkResult.totalRequired} tables`)
@@ -51,7 +49,7 @@ export function AdminDatabaseManager() {
         if (checkResult.missingTables.length === 0) {
           // ถ้ามีตารางครบแล้ว ให้ insert ข้อมูลตัวอย่าง
           console.log('✅ All tables exist, inserting sample data...')
-          const dataResult = await tableCreator.insertSampleData()
+          const dataResult = await SupabaseTableCreator.insertSampleData()
           
           setResult({
             success: true,
@@ -63,13 +61,13 @@ export function AdminDatabaseManager() {
         } else {
           // ถ้ายังไม่ครบ ให้สร้างตารางที่ขาด
           console.log(`📋 Creating ${checkResult.missingTables.length} missing tables...`)
-          const createResult = await tableCreator.createAllTables()
+          const createResult = await SupabaseTableCreator.createAllTables()
           
           // หลังสร้างตารางแล้ว ให้ insert ข้อมูลตัวอย่าง
           let dataResult = null
           if (createResult.successCount > 0) {
             console.log('📝 Inserting sample data...')
-            dataResult = await tableCreator.insertSampleData()
+            dataResult = await SupabaseTableCreator.insertSampleData()
           }
           
           setResult({
@@ -80,13 +78,13 @@ export function AdminDatabaseManager() {
           })
           
           // อัปเดตรายชื่อตาราง
-          const updatedCheck = await tableCreator.checkTablesExist()
+          const updatedCheck = await SupabaseTableCreator.checkTablesExist()
           if (updatedCheck.success) {
             setTables(updatedCheck.existingTables)
           }
         }
       } else {
-        throw new Error(checkResult.error)
+        throw new Error('Database check failed')
       }
       
     } catch (error) {
@@ -105,7 +103,7 @@ export function AdminDatabaseManager() {
     
     try {
       const tablesResult = await adminOperations.listTables()
-      setTables(tablesResult.success ? tablesResult.tables : [])
+      setTables(tablesResult.tables || [])
       setResult(tablesResult)
     } catch (error) {
       setResult({
