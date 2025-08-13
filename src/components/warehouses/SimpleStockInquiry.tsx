@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSimpleStock } from '@/hooks/useSimpleStock';
-import { useWarehouses } from '@/hooks/useWarehousesEnhanced';
+import { useWarehouses } from '@/hooks/useWarehouses';
 
 export function SimpleStockInquiry() {
   // State for search and filters
