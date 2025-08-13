@@ -147,7 +147,10 @@ export function useClaims() {
         medium: claims.filter(c => c.priority === 'medium').length,
         low: claims.filter(c => c.priority === 'low').length
       },
-      monthlyTrends: [{ month: 'Jan', claims: 10 }, { month: 'Feb', claims: 15 }],
+      monthlyTrends: [
+        { month: 'Jan', totalClaims: 10, completedClaims: 8, averageCost: 2500, satisfactionRating: 4.2 }, 
+        { month: 'Feb', totalClaims: 15, completedClaims: 12, averageCost: 2300, satisfactionRating: 4.5 }
+      ],
       topIssues: [{ issue: 'ชำรุด', count: 10 }]
     };
   }, [claims]);

@@ -108,6 +108,7 @@ export function useBranchData() {
             totalCustomers: 0,
             totalProducts: 0,
             totalSales: 0,
+            totalOrders: 0,
             averageOrderValue: 0,
             monthlyRevenue: 0,
             yearlyRevenue: 0

@@ -126,8 +126,8 @@ export function useAudit() {
       topActions: [{ action: 'read', count: 10, percentage: 50 }],
       topModules: [{ module: 'system', count: 5, percentage: 100 }],
       topUsers: [{ userId: 'admin', username: 'admin', fullName: 'Administrator', count: 15, lastActivity: new Date().toISOString() }],
-      hourlyActivity: [{ hour: 9, events: 5 }],
-      dailyTrends: [{ date: '2024-01-01', events: 20 }]
+      hourlyActivity: [{ hour: 9, count: 5 }],
+      dailyTrends: [{ date: '2024-01-01', totalLogs: 20, successCount: 18, failedCount: 2, criticalCount: 0 }]
     };
   }, [auditLogs, securityEvents]);
 
