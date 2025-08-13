@@ -126,4 +126,30 @@ export interface SerialNumber {
   updated_at: string;
 }
 
+export interface StockTransfer {
+  id: string;
+  transferNumber: string;
+  sourceWarehouseId: string;
+  targetWarehouseId: string;
+  totalItems: number;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    serialNumbers?: string[];
+  }>;
+  status: TransferStatus;
+  initiatedBy: string;
+  createdAt: string;
+  notes?: string;
+}
+
+export interface StockTransaction {
+  id: string;
+  type: MovementType;
+  reference: string;
+  timestamp: string;
+}
+
 export type SNStatus = 'available' | 'sold' | 'transferred' | 'claimed' | 'damaged';
+
+export type TransferStatus = 'pending' | 'in_transit' | 'completed' | 'cancelled';

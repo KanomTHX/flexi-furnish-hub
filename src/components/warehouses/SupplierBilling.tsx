@@ -1,13 +1,11 @@
+// Placeholder components for warehouse functionality
 import React from 'react';
-import { DisabledWarehouseComponent } from './DisabledWarehouseComponent';
 
-const SupplierBilling: React.FC = () => {
+export default function SupplierBilling() {
   return (
-    <DisabledWarehouseComponent 
-      title="Supplier Billing"
-      description="Manage supplier billing and invoices"
-    />
+    <div className="p-4">
+      <h3 className="text-lg font-semibold mb-2">Supplier Billing</h3>
+      <p className="text-muted-foreground">Supplier billing functionality not available</p>
+    </div>
   );
-};
-
-export default SupplierBilling;
+}

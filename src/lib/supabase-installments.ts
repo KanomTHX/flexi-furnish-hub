@@ -340,6 +340,8 @@ function mapContractFromDB(data: any): InstallmentContract {
     collateral: data.collateral,
     terms: data.terms,
     notes: data.notes,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     createdBy: data.created_by,
@@ -356,7 +358,7 @@ function mapPaymentFromDB(data: any): InstallmentPayment {
   return {
     id: data.id,
     contract_id: data.contract_id,
-    installmentNumber: data.payment_number, // map payment_number -> installmentNumber
+    payment_number: data.payment_number, // use correct field name
     dueDate: data.due_date,
     amount: data.amount_due, // map amount_due -> amount
     principalAmount: data.principal_amount || 0,

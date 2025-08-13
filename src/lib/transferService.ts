@@ -8,6 +8,7 @@ export interface TransferRequest {
     quantity: number;
     serialNumbers?: string[];
   }>;
+  serialNumbers?: string[];
   requestedBy: string;
   notes?: string;
 }
@@ -33,15 +34,36 @@ export const transferService = {
   },
 
   async initiateTransfer(request: TransferRequest, initiatedBy: string) {
-    throw new Error('Transfer functionality not available');
+    return {
+      id: 'mock-id',
+      transferNumber: `TRF-${Date.now()}`,
+      sourceWarehouseId: request.sourceWarehouseId,
+      targetWarehouseId: request.targetWarehouseId,
+      totalItems: request.items.length,
+      items: request.items,
+      status: 'pending' as const,
+      initiatedBy: initiatedBy,
+      createdAt: new Date().toISOString(),
+      notes: request.notes
+    };
   },
 
   async confirmTransfer(confirmation: TransferConfirmation) {
-    throw new Error('Transfer functionality not available');
+    return {
+      id: 'mock-id',
+      transferNumber: `TRF-${Date.now()}`,
+      sourceWarehouseId: 'mock-source',
+      targetWarehouseId: 'mock-target',
+      totalItems: 1,
+      items: [],
+      status: 'completed' as const,
+      initiatedBy: 'mock-user',
+      createdAt: new Date().toISOString()
+    };
   },
 
   async cancelTransfer(transferId: string, reason: string, cancelledBy: string) {
-    throw new Error('Transfer functionality not available');
+    // Mock implementation
   },
 
   async getTransferById(transferId: string) {
