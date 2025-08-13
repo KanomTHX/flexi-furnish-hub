@@ -48,8 +48,7 @@ export default function ManualDatabaseSetup() {
   const checkTables = async () => {
     setLoading(true)
     try {
-      const tableCreator = new SupabaseTableCreator()
-      const result = await tableCreator.checkTablesExist()
+      const result = await SupabaseTableCreator.checkTablesExist()
       setCheckResult(result)
       
       if (result.success) {

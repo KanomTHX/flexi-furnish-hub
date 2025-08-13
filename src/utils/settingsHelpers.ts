@@ -1,7 +1,7 @@
 // Settings helpers placeholder
 export const validateSettings = (settings: any) => true;
-export const validateGeneralSettings = (settings: any) => true;
-export const validateUserSettings = (settings: any) => true;
+export const validateGeneralSettings = (settings: any) => [];
+export const validateUserSettings = (settings: any) => [];
 export const saveSettings = (settings: any) => Promise.resolve();
 export const formatSystemInfo = (info: any) => info;
 export const validateUserRole = (role: string) => true;

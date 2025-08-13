@@ -6,11 +6,11 @@ export interface EmergencyContact {
 }
 
 export interface Customer {
-  id: string;
+  id?: string;
   name: string;
-  phone: string;
+  phone?: string;
   email?: string;
-  address: string;
+  address?: string;
   idCard?: string;
   occupation?: string;
   monthlyIncome?: number;
@@ -24,6 +24,7 @@ export interface Customer {
   workplace?: string;
   workAddress?: string;
   created_at?: string;
+  saleId?: string;
 }
 
 export interface Guarantor {
@@ -40,6 +41,8 @@ export interface Guarantor {
   emergencyContact?: EmergencyContact;
   createdBy?: string;
   branchId?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface InstallmentPlan {
@@ -49,19 +52,26 @@ export interface InstallmentPlan {
   interestRate: number;
   processingFee: number;
   isActive: boolean;
-  downPaymentPercent?: number;
+  downPaymentPercent: number;
   description?: string;
 }
 
 export interface InstallmentPayment {
   id: string;
+  contractId: string;
   contract_id: string;
+  installmentNumber: number;
   payment_number: number;
+  dueDate: string;
   due_date: string;
+  amount: number;
   amount_due: number;
   principal_amount: number;
+  principalAmount: number;
   interest_amount: number;
-  status: string;
+  interestAmount: number;
+  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  paidDate?: string;
   payment_date?: string;
   amount_paid: number;
   payment_method?: string;
@@ -78,11 +88,11 @@ export interface InstallmentPayment {
 export interface InstallmentContract {
   id: string;
   transaction_id: string;
-  contractNumber?: string;
+  contractNumber: string;
   customerId: string;
-  customer?: Customer;
+  customer: Customer;
   planId: string;
-  plan?: InstallmentPlan;
+  plan: InstallmentPlan;
   guarantorId?: string;
   guarantor?: Guarantor;
   totalAmount: number;
@@ -100,9 +110,9 @@ export interface InstallmentContract {
   start_date?: string;
   end_date?: string;
   interest_rate?: number;
-  firstPaymentDate?: string;
-  lastPaymentDate?: string;
-  status: string;
+  firstPaymentDate: string;
+  lastPaymentDate: string;
+  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'defaulted';
   payments: InstallmentPayment[];
   paidInstallments: number;
   remainingInstallments: number;
@@ -115,10 +125,11 @@ export interface InstallmentContract {
   updated_at: string;
   createdAt: string;
   updatedAt: string;
-  createdBy?: string;
+  createdBy: string;
   approvedBy?: string;
   approvedAt?: string;
   branchId?: string;
+  saleId: string;
 }
 
 export interface Product {

@@ -305,6 +305,7 @@ function getLastPaymentDate(months: number): string {
  */
 function mapContractFromDB(data: any): InstallmentContract {
   return {
+    saleId: data.sale_id || data.transaction_id || '',
     id: data.id,
     transaction_id: data.transaction_id,
     contractNumber: data.contract_number,
@@ -356,6 +357,12 @@ function mapContractFromDB(data: any): InstallmentContract {
  */
 function mapPaymentFromDB(data: any): InstallmentPayment {
   return {
+    contractId: data.contract_id,
+    installmentNumber: data.payment_number,
+    dueDate: data.due_date,
+    amount: data.amount_due,
+    principalAmount: data.principal_amount,
+    interestAmount: data.interest_amount,
     id: data.id,
     contract_id: data.contract_id,
     payment_number: data.payment_number, // use correct field name

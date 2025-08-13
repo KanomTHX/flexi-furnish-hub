@@ -29,7 +29,7 @@ export const calculateContractStatus = (contract: any) => ({
 });
 export const getContractStatusText = (status: string) => status;
 export const getPaymentStatusText = (status: string) => status;
-export const exportContractsToCSV = (contracts: any[]) => contracts;
+export const exportContractsToCSV = (contracts: any[]) => 'contract,data,test';
 export const updatePaymentStatus = (contracts: any[]) => contracts;
 export const calculateLateFee = (payment: any, daysPastDue: number = 0) => daysPastDue * 10;
 

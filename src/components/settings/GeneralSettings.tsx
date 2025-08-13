@@ -22,7 +22,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { GeneralSettings as GeneralSettingsType } from '@/types/settings';
-import { validateGeneralSettings, getAvailableLanguages, getAvailableTimezones, getAvailableCurrencies } from '@/utils/settingsHelpers';
+import { validateGeneralSettings, getLanguages, getTimezones, getCurrencies } from '@/utils/settingsHelpers';
 
 interface GeneralSettingsProps {
   settings: GeneralSettingsType;
@@ -39,9 +39,9 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
   const [errors, setErrors] = useState<string[]>([]);
   const [isDirty, setIsDirty] = useState(false);
 
-  const languages = getAvailableLanguages();
-  const timezones = getAvailableTimezones();
-  const currencies = getAvailableCurrencies();
+  const languages = getLanguages();
+  const timezones = getTimezones();
+  const currencies = getCurrencies();
 
   const handleInputChange = (field: keyof GeneralSettingsType, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

@@ -459,8 +459,8 @@ function mapGuarantorFromDB(data: any): Guarantor {
       phone: data.emergency_contact_phone,
       relationship: data.emergency_contact_relationship
     } : undefined,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
     createdBy: data.created_by,
     branchId: data.branch_id
   };
