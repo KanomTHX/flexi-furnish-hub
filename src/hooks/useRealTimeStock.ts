@@ -3,7 +3,9 @@ import { useToast } from '@/hooks/use-toast';
 import { realTimeStockService } from '@/services/realTimeStockServicePlaceholder';
 import type { StockLevel, StockAlert, StockMovement, SerialNumber } from '@/types/warehouseStock';
 
-export interface UseRealTimeStockOptions extends StockSubscriptionOptions {
+export interface UseRealTimeStockOptions {
+  warehouseId?: string;
+  productId?: string;
   enabled?: boolean;
   showNotifications?: boolean;
   notificationTypes?: ('stock_level_changed' | 'movement_logged' | 'serial_number_updated' | 'alert_triggered')[];
@@ -15,7 +17,7 @@ export interface UseRealTimeStockReturn {
   connectionStatus: string;
   
   // Real-time data
-  recentUpdates: StockUpdateEvent[];
+  recentUpdates: any[];
   activeAlerts: StockAlert[];
   
   // Statistics
@@ -49,7 +51,7 @@ export function useRealTimeStock(
   // State
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const [recentUpdates, setRecentUpdates] = useState<StockUpdateEvent[]>([]);
+  const [recentUpdates, setRecentUpdates] = useState<any[]>([]);
   const [activeAlerts, setActiveAlerts] = useState<StockAlert[]>([]);
   const [updateCount, setUpdateCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
@@ -71,7 +73,7 @@ export function useRealTimeStock(
   const { toast } = useToast();
 
   // Handle stock updates
-  const handleStockUpdate = useCallback((event: StockUpdateEvent) => {
+  const handleStockUpdate = useCallback((event: any) => {
     // Update statistics
     setUpdateCount(prev => prev + 1);
     setLastUpdateTime(new Date());
@@ -185,7 +187,7 @@ export function useRealTimeStock(
     setConnectionStatus('connecting');
     
     try {
-      const unsubscribe = RealTimeStockService.subscribe(
+      const unsubscribe = realTimeStockService.subscribe(
         subscriptionId,
         subscriptionOptions,
         handleStockUpdate
@@ -302,7 +304,7 @@ export function useRealTimeStock(
   // Monitor connection status
   useEffect(() => {
     const interval = setInterval(() => {
-      const status = RealTimeStockService.getConnectionStatus();
+      const status = realTimeStockService.getConnectionStatus();
       const currentStatus = status[subscriptionId];
       
       if (currentStatus && currentStatus !== connectionStatus) {

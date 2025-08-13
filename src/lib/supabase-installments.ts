@@ -372,8 +372,8 @@ function mapPaymentFromDB(data: any): InstallmentPayment {
     discount: data.discount || 0,
     notes: data.notes,
     created_at: data.created_at,
-    updatedAt: data.updated_at,
-    processedBy: data.processed_by,
+    updated_at: data.updated_at,
+    processed_by: data.processed_by,
     branchId: data.branch_id
   };
 }
