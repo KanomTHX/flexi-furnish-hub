@@ -153,3 +153,6 @@ export interface StockTransaction {
 export type SNStatus = 'available' | 'sold' | 'transferred' | 'claimed' | 'damaged';
 
 export type TransferStatus = 'pending' | 'in_transit' | 'completed' | 'cancelled';
+
+// Import TransferStatus into warehouse.ts exports
+export { TransferStatus as WarehouseTransferStatus };

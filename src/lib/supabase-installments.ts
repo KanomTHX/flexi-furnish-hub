@@ -359,8 +359,8 @@ function mapPaymentFromDB(data: any): InstallmentPayment {
     id: data.id,
     contract_id: data.contract_id,
     payment_number: data.payment_number, // use correct field name
-    dueDate: data.due_date,
-    amount: data.amount_due, // map amount_due -> amount
+    due_date: data.due_date,
+    amount_due: data.amount_due, // map amount_due -> amount_due
     principalAmount: data.principal_amount || 0,
     interestAmount: data.interest_amount || 0,
     status: data.status,

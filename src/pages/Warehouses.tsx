@@ -4,18 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 
-// Import warehouse components
+// Import warehouse components - using placeholders
 import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
 import { SimpleReceiveGoods } from '@/components/warehouses/SimpleReceiveGoods';
-import { SupplierBilling } from '@/components/warehouses/SupplierBilling';
-import { WithdrawDispatch } from '@/components/warehouses/WithdrawDispatch';
-import { Transfer } from '@/components/warehouses/Transfer';
+import SupplierBilling from '@/components/warehouses/SupplierBilling';
+import { 
+  WithdrawDispatch, 
+  Transfer, 
+  BarcodeScanner, 
+  BatchOperations, 
+  StockAdjustment 
+} from '@/components/warehouses/WarehousePlaceholders';
 import { RealTimeStockMonitor } from '@/components/warehouses/RealTimeStockMonitor';
-import { BarcodeScanner } from '@/components/warehouses/BarcodeScanner';
-import { BatchOperations } from '@/components/warehouses/BatchOperations';
-import { StockAdjustment } from '@/components/warehouses/StockAdjustment';
-import { AuditTrail } from '@/components/warehouses/AuditTrail';
-import { PrintButton } from '@/components/warehouses/PrintButton';
+import AuditTrail from '@/components/warehouses/AuditTrail';
+import PrintButton from '@/components/warehouses/PrintButton';
 
 import { 
   Warehouse as WarehouseIcon, 
@@ -355,23 +357,23 @@ export default function Warehouses() {
         </TabsContent>
 
         <TabsContent value="withdraw" className="space-y-6">
-          <WithdrawDispatch />
+          <WithdrawDispatch warehouses={[]} />
         </TabsContent>
 
         <TabsContent value="transfer" className="space-y-6">
-          <Transfer />
+          <Transfer warehouses={[]} currentWarehouseId="" />
         </TabsContent>
 
         <TabsContent value="barcode" className="space-y-6">
-          <BarcodeScanner />
+          <BarcodeScanner onScan={() => {}} />
         </TabsContent>
 
         <TabsContent value="batch" className="space-y-6">
-          <BatchOperations />
+          <BatchOperations onBatchProcess={() => {}} availableOperations={[]} />
         </TabsContent>
 
         <TabsContent value="adjust" className="space-y-6">
-          <StockAdjustment />
+          <StockAdjustment warehouseId="" onAdjustmentComplete={() => {}} />
         </TabsContent>
 
         <TabsContent value="audit" className="space-y-6">
