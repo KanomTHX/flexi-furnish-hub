@@ -8,6 +8,7 @@ import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { AuthProvider } from "@/hooks/useAuth";
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -62,9 +63,10 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
           <Routes>
             <Route path="/auth" element={
               <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดหน้าเข้าสู่ระบบ..." />}>
@@ -378,6 +380,7 @@ const App = () => (
             } />
           </Routes>
         </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
