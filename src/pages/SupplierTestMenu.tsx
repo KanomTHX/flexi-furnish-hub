@@ -26,6 +26,21 @@ const SupplierTestMenu = () => {
       recommended: true
     },
     {
+      title: 'Supplier Billing Fixed2 Test',
+      description: 'ทดสอบเวอร์ชันที่แก้ไข Select Error แล้ว - ใช้งานได้เต็มที่',
+      path: '/supplier-billing-fixed2-test',
+      icon: FileText,
+      color: 'text-emerald-600',
+      recommended: true
+    },
+    {
+      title: 'Supplier Billing Functional Test',
+      description: 'ทดสอบฟังก์ชันการทำงานจริงของปุ่มต่างๆ พร้อม Modal',
+      path: '/supplier-billing-functional-test',
+      icon: FileText,
+      color: 'text-indigo-600'
+    },
+    {
       title: 'Supplier Debug Test',
       description: 'ทดสอบแบบ step-by-step พร้อม debug information',
       path: '/supplier-debug-test',

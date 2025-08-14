@@ -54,6 +54,8 @@ const SimpleSupplierTest = lazy(() => import("./pages/SimpleSupplierTest"));
 const SupplierTestMenu = lazy(() => import("./pages/SupplierTestMenu"));
 const SupplierBillingDebug = lazy(() => import("./pages/SupplierBillingDebug"));
 const SupplierBillingSimpleTest = lazy(() => import("./pages/SupplierBillingSimpleTest"));
+const SupplierBillingFunctionalTest = lazy(() => import("./pages/SupplierBillingFunctionalTest"));
+const SupplierBillingFixed2Test = lazy(() => import("./pages/SupplierBillingFixed2Test"));
 
 // Testing components would go here if needed
 
@@ -437,6 +439,24 @@ const App = () => (
                 <AdminLayout>
                   <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลด Supplier Billing Simple Test..." />}>
                     <SupplierBillingSimpleTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/supplier-billing-functional-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลด Supplier Billing Functional Test..." />}>
+                    <SupplierBillingFunctionalTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/supplier-billing-fixed2-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลด Supplier Billing Fixed2 Test..." />}>
+                    <SupplierBillingFixed2Test />
                   </SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>

@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 // Import warehouse components - using placeholders
 import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
 import { SimpleReceiveGoods } from '@/components/warehouses/SimpleReceiveGoods';
-import SupplierBillingSimple from '@/components/warehouses/SupplierBillingSimple';
+import SupplierBillingFixed2 from '@/components/warehouses/SupplierBillingFixed2';
 import { IntegrationDashboard } from '@/components/integration/IntegrationDashboard';
 import { 
   WithdrawDispatch, 
@@ -351,7 +351,7 @@ export default function Warehouses() {
         </TabsContent>
 
         <TabsContent value="billing" className="space-y-6">
-          <SupplierBillingSimple />
+          <SupplierBillingFixed2 />
         </TabsContent>
 
         <TabsContent value="withdraw" className="space-y-6">

@@ -167,3 +167,202 @@ export interface POSState {
     total: number;
     sales: Sale[];
 }
+
+// POS Integration Types
+export interface StockAlert {
+    id: string;
+    productId: string;
+    productName: string;
+    productCode: string;
+    currentStock: number;
+    minimumStock: number;
+    reorderPoint: number;
+    reorderQuantity: number;
+    preferredSupplierId?: string;
+    preferredSupplier?: {
+        id: string;
+        name: string;
+        contactInfo: string;
+    };
+    urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+    category: string;
+    location: string;
+    lastSaleDate?: string;
+    averageDailySales: number;
+    daysOfStockRemaining: number;
+    status: 'pending' | 'processing' | 'ordered' | 'resolved' | 'ignored';
+    processedAt?: string;
+    processedBy?: string;
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface AutoPurchaseOrder {
+    id: string;
+    orderNumber: string;
+    supplierId: string;
+    supplier: {
+        id: string;
+        name: string;
+        contactPerson?: string;
+        email?: string;
+        phone?: string;
+    };
+    items: AutoPurchaseOrderItem[];
+    subtotal: number;
+    taxAmount: number;
+    totalAmount: number;
+    expectedDeliveryDate: string;
+    status: 'draft' | 'pending_approval' | 'approved' | 'sent' | 'confirmed' | 'partially_received' | 'received' | 'cancelled';
+    automationReason: string;
+    triggerType: 'low_stock' | 'scheduled_reorder' | 'seasonal_demand' | 'manual_trigger';
+    stockAlertIds: string[];
+    approvalRequired: boolean;
+    approvedBy?: string;
+    approvedAt?: string;
+    sentAt?: string;
+    confirmedAt?: string;
+    deliveredAt?: string;
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface AutoPurchaseOrderItem {
+    id: string;
+    orderId: string;
+    productId: string;
+    productName: string;
+    productCode: string;
+    quantity: number;
+    unitCost: number;
+    totalCost: number;
+    receivedQuantity: number;
+    remainingQuantity: number;
+    stockAlertId?: string;
+    supplierProductCode?: string;
+    leadTimeDays: number;
+    notes?: string;
+}
+
+export interface POSIntegrationConfig {
+    id: string;
+    name: string;
+    type: 'square' | 'shopify' | 'woocommerce' | 'custom';
+    configuration: POSSystemConfig;
+    status: 'active' | 'inactive' | 'error';
+    lastSyncAt?: string;
+    nextSyncAt?: string;
+    syncFrequency: 'real_time' | 'every_5_minutes' | 'hourly' | 'daily';
+    syncSettings: POSSyncSettings;
+    errorMessage?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface POSSystemConfig {
+    apiUrl?: string;
+    apiKey?: string;
+    secretKey?: string;
+    storeId?: string;
+    locationId?: string;
+    webhookUrl?: string;
+    customFields?: Record<string, any>;
+}
+
+export interface POSSyncSettings {
+    syncInventory: boolean;
+    syncSales: boolean;
+    syncCustomers: boolean;
+    syncProducts: boolean;
+    autoCreatePurchaseOrders: boolean;
+    stockAlertThreshold: number;
+    reorderPointMultiplier: number;
+    conflictResolution: 'pos_wins' | 'supplier_wins' | 'manual_review';
+}
+
+export interface InventorySyncResult {
+    id: string;
+    integrationId: string;
+    syncType: 'full' | 'incremental' | 'real_time';
+    status: 'success' | 'partial' | 'failed';
+    startedAt: string;
+    completedAt?: string;
+    productsProcessed: number;
+    productsUpdated: number;
+    stockAlertsGenerated: number;
+    purchaseOrdersCreated: number;
+    errors: InventorySyncError[];
+    summary: InventorySyncSummary;
+}
+
+export interface InventorySyncError {
+    productId: string;
+    productCode?: string;
+    errorType: 'product_not_found' | 'invalid_stock_level' | 'supplier_not_mapped' | 'api_error';
+    errorMessage: string;
+    details?: any;
+}
+
+export interface InventorySyncSummary {
+    totalProducts: number;
+    stockUpdated: number;
+    lowStockDetected: number;
+    outOfStockDetected: number;
+    newProductsAdded: number;
+    discontinuedProducts: number;
+    averageStockLevel: number;
+    totalInventoryValue: number;
+}
+
+export interface SupplierProductMapping {
+    id: string;
+    productId: string;
+    productCode: string;
+    productName: string;
+    supplierId: string;
+    supplierName: string;
+    supplierProductCode?: string;
+    supplierProductName?: string;
+    unitCost: number;
+    minimumOrderQuantity: number;
+    leadTimeDays: number;
+    isPreferred: boolean;
+    priority: number; // 1 = highest priority
+    lastOrderDate?: string;
+    lastUnitCost?: number;
+    qualityRating: number; // 1-5
+    reliabilityRating: number; // 1-5
+    costRating: number; // 1-5
+    overallRating: number; // 1-5
+    notes?: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface IntegrationHealthCheck {
+    integrationId: string;
+    integrationType: string;
+    status: 'healthy' | 'warning' | 'error' | 'offline';
+    lastCheckAt: string;
+    responseTime: number; // in milliseconds
+    uptime: number; // percentage
+    errorRate: number; // percentage
+    lastError?: string;
+    metrics: IntegrationMetrics;
+}
+
+export interface IntegrationMetrics {
+    totalRequests: number;
+    successfulRequests: number;
+    failedRequests: number;
+    averageResponseTime: number;
+    peakResponseTime: number;
+    dataTransferred: number; // in bytes
+    recordsProcessed: number;
+    lastSuccessfulSync?: string;
+}// 
+// Export error types for easy importing
+export * from './errors';

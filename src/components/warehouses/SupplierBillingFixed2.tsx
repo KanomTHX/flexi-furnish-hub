@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import SupplierServiceSimple from '@/services/supplierServiceSimple';
 import { AddSupplierModal, AddInvoiceModal, AddPaymentModal } from './SupplierModals';
 
-export default function SupplierBillingSimple() {
+export default function SupplierBillingFixed2() {
   // State
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -119,7 +119,7 @@ export default function SupplierBillingSimple() {
       supplier.supplierName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       supplier.supplierCode?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = !selectedStatus || supplier.status === selectedStatus;
+    const matchesStatus = !selectedStatus || selectedStatus === 'all' || supplier.status === selectedStatus;
     
     return matchesSearch && matchesStatus;
   });
@@ -129,8 +129,8 @@ export default function SupplierBillingSimple() {
       invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.supplier?.supplierName?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesSupplier = !selectedSupplier || invoice.supplierId === selectedSupplier;
-    const matchesStatus = !selectedStatus || invoice.status === selectedStatus;
+    const matchesSupplier = !selectedSupplier || selectedSupplier === 'all' || invoice.supplierId === selectedSupplier;
+    const matchesStatus = !selectedStatus || selectedStatus === 'all' || invoice.status === selectedStatus;
     
     return matchesSearch && matchesSupplier && matchesStatus;
   });
@@ -140,7 +140,7 @@ export default function SupplierBillingSimple() {
       payment.payment_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.supplier?.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesSupplier = !selectedSupplier || payment.supplier_id === selectedSupplier;
+    const matchesSupplier = !selectedSupplier || selectedSupplier === 'all' || payment.supplier_id === selectedSupplier;
     
     return matchesSearch && matchesSupplier;
   });
@@ -262,7 +262,7 @@ export default function SupplierBillingSimple() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">การเรียกเก็บเงินซัพพลายเออร์</h2>
-          <p className="text-muted-foreground">จัดการใบแจ้งหนี้และการชำระเงินซัพพลายเออร์ (Simple Version)</p>
+          <p className="text-muted-foreground">จัดการใบแจ้งหนี้และการชำระเงินซัพพลายเออร์ (Fixed Version 2)</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowAddSupplier(true)}>
@@ -522,7 +522,7 @@ export default function SupplierBillingSimple() {
                     <SelectValue placeholder="เลือกซัพพลายเออร์" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกซัพพลายเออร์</SelectItem>
+                    <SelectItem value="all">ทุกซัพพลายเออร์</SelectItem>
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.supplierName}
@@ -535,7 +535,7 @@ export default function SupplierBillingSimple() {
                     <SelectValue placeholder="สถานะ" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกสถานะ</SelectItem>
+                    <SelectItem value="all">ทุกสถานะ</SelectItem>
                     <SelectItem value="pending">รอชำระ</SelectItem>
                     <SelectItem value="paid">ชำระแล้ว</SelectItem>
                     <SelectItem value="overdue">เกินกำหนด</SelectItem>
@@ -618,7 +618,7 @@ export default function SupplierBillingSimple() {
                     <SelectValue placeholder="เลือกซัพพลายเออร์" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกซัพพลายเออร์</SelectItem>
+                    <SelectItem value="all">ทุกซัพพลายเออร์</SelectItem>
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.supplierName}
