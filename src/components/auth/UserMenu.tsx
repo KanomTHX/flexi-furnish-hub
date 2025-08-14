@@ -11,74 +11,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, LogOut, Settings, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
-interface UserMenuProps {
-  user: {
-    email?: string;
-    user_metadata?: {
-      full_name?: string;
-      avatar_url?: string;
-    };
-  };
-}
-
-export const UserMenu = ({ user }: UserMenuProps) => {
+export const UserMenu = () => {
   const [signingOut, setSigningOut] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const cleanupAuthState = () => {
-    // Clean up all auth-related storage
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        localStorage.removeItem(key);
-      }
-    });
-    
-    Object.keys(sessionStorage || {}).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        sessionStorage.removeItem(key);
-      }
-    });
-  };
+  const { user, profile, signOut } = useAuth();
 
   const handleSignOut = async () => {
     setSigningOut(true);
     
     try {
-      // Clean up auth state first
-      cleanupAuthState();
-      
-      // Attempt global sign out
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        console.log('Sign out completed');
-      }
-      
-      toast({
-        title: "ออกจากระบบสำเร็จ",
-        description: "ขอบคุณที่ใช้บริการ",
-      });
-      
-      // Force page redirect for clean state
-      window.location.href = '/auth';
+      await signOut();
     } catch (error) {
       console.error('Sign out error:', error);
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถออกจากระบบได้ กรุณาลองใหม่อีกครั้ง",
-        variant: "destructive",
-      });
     } finally {
       setSigningOut(false);
     }
   };
 
-  const displayName = user.user_metadata?.full_name || user.email || 'ผู้ใช้งาน';
-  const avatarUrl = user.user_metadata?.avatar_url;
+  const displayName = profile?.full_name || profile?.username || user?.email || 'Admin';
+  const avatarUrl = profile?.avatar_url;
   const initials = displayName
     .split(' ')
     .map(name => name.charAt(0))
@@ -103,7 +56,10 @@ export const UserMenu = ({ user }: UserMenuProps) => {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
+              {user?.email}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              Admin
             </p>
           </div>
         </DropdownMenuLabel>

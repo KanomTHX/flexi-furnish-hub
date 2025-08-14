@@ -18,7 +18,7 @@ import { NotificationCenter } from "@/components/notifications/NotificationCente
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export function AdminHeader() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, profile } = useAuth();
   const navigate = useNavigate();
   const { unreadCount } = usePushNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -76,8 +76,8 @@ export function AdminHeader() {
                   <User className="w-4 h-4" />
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium">{(user as any)?.user_metadata?.full_name || user?.email || 'ผู้ดูแลระบบ'}</p>
-                  <p className="text-xs text-muted-foreground">ผู้จัดการ</p>
+                  <p className="text-sm font-medium">{profile?.full_name || profile?.username || user?.email || 'Admin'}</p>
+                  <p className="text-xs text-muted-foreground">Admin</p>
                 </div>
                 <ChevronDown className="w-4 h-4" />
               </Button>
