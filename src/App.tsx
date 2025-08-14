@@ -28,6 +28,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const DatabaseSetup = lazy(() => import("./pages/DatabaseSetup"));
 const DatabaseInstaller = lazy(() => import("./pages/DatabaseInstaller"));
 const DatabaseQuickStart = lazy(() => import("./pages/DatabaseQuickStart"));
+const DatabaseTest = lazy(() => import("./pages/DatabaseTest"));
 const TestConnection = lazy(() => import("./pages/TestConnection"));
 const QuickTest = lazy(() => import("./pages/QuickTest"));
 const SimpleTest = lazy(() => import("./pages/SimpleTest"));
@@ -47,6 +48,12 @@ const WarehousesSupabaseTest = lazy(() => import("./pages/WarehousesSupabaseTest
 const WarehouseCreationTest = lazy(() => import("./pages/WarehouseCreationTest"));
 const WarehouseStockTest = lazy(() => import("./pages/WarehouseStockTest"));
 const WarehouseTestSuite = lazy(() => import("./pages/WarehouseTestSuite"));
+const SupplierBillingTest = lazy(() => import("./pages/SupplierBillingTestFixed"));
+const SupplierDebugTest = lazy(() => import("./pages/SupplierDebugTest"));
+const SimpleSupplierTest = lazy(() => import("./pages/SimpleSupplierTest"));
+const SupplierTestMenu = lazy(() => import("./pages/SupplierTestMenu"));
+const SupplierBillingDebug = lazy(() => import("./pages/SupplierBillingDebug"));
+const SupplierBillingSimpleTest = lazy(() => import("./pages/SupplierBillingSimpleTest"));
 
 // Testing components would go here if needed
 
@@ -196,6 +203,15 @@ const App = () => (
                 <AdminLayout>
                   <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดคู่มือเริ่มต้น..." />}>
                     <DatabaseQuickStart />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/database-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบฐานข้อมูล..." />}>
+                    <DatabaseTest />
                   </SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>
@@ -367,6 +383,60 @@ const App = () => (
                 <AdminLayout>
                   <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดชุดทดสอบคลังสินค้า..." />}>
                     <WarehouseTestSuite />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/supplier-billing-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบระบบ Supplier Billing..." />}>
+                    <SupplierBillingTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/supplier-debug-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการ Debug ระบบ Supplier..." />}>
+                    <SupplierDebugTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/simple-supplier-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการทดสอบ Supplier แบบง่าย..." />}>
+                    <SimpleSupplierTest />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/supplier-test-menu" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดเมนูทดสอบ Supplier..." />}>
+                    <SupplierTestMenu />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/supplier-billing-debug" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลด Supplier Billing Debug..." />}>
+                    <SupplierBillingDebug />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/supplier-billing-simple-test" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลด Supplier Billing Simple Test..." />}>
+                    <SupplierBillingSimpleTest />
                   </SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>

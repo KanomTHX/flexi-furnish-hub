@@ -103,42 +103,6 @@ export function useSettings() {
   };
 }
 
-export function useWarehouseStock() {
-  const [stock, setStock] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  
-  return {
-    stockLevels: [],
-    stockMovements: [],
-    stockAlerts: [],
-    loading,
-    error,
-    updateStockLevel: () => {},
-    createStockMovement: () => {},
-    getStockByWarehouse: () => [],
-    getLowStockItems: () => [],
-    generateStockReport: () => {},
-  };
-}
-
-export function useWarehouses() {
-  const [warehouses, setWarehouses] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  
-  return {
-    warehouses,
-    warehouseTransfers: [],
-    warehouseTasks: [],
-    loading,
-    error,
-    createWarehouse: () => {},
-    updateWarehouse: () => {},
-    deleteWarehouse: () => {},
-    createTransfer: () => {},
-    updateTransfer: () => {},
-    assignTask: () => {},
-    completeTask: () => {},
-  };
-}
+// Re-export real warehouse hooks for compatibility
+export { useWarehouseStock } from './useWarehouseStock';
+export { useWarehouses } from './useWarehouses';

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, Eye, Package, Warehouse, Calendar, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useSimpleStock } from '@/hooks/useSimpleStock';
+import { useWarehouseStock } from '@/hooks/useWarehouseStock';
 import { useWarehouses } from '@/hooks/useWarehouses';
 
 export function SimpleStockInquiry() {
@@ -17,16 +17,23 @@ export function SimpleStockInquiry() {
 
   // Hooks
   const { warehouses, loading: warehousesLoading } = useWarehouses();
-  const { stockLevels, loading, error, filters, setFilters, refetch, summary } = useSimpleStock();
+  const { 
+    stockLevels, 
+    loading, 
+    error, 
+    summary,
+    fetchStockLevels 
+  } = useWarehouseStock();
 
   // Update filters when they change
-  React.useEffect(() => {
-    setFilters({
-      searchTerm: searchTerm.trim() || undefined,
+  useEffect(() => {
+    const filters = {
+      search: searchTerm.trim() || undefined,
       warehouseId: selectedWarehouse && selectedWarehouse !== 'all' ? selectedWarehouse : undefined,
       status: selectedStatus && selectedStatus !== 'all' ? selectedStatus : undefined
-    });
-  }, [searchTerm, selectedWarehouse, selectedStatus, setFilters]);
+    };
+    fetchStockLevels(filters);
+  }, [searchTerm, selectedWarehouse, selectedStatus, fetchStockLevels]);
 
   // Group stock levels by product for better display
   const groupedStock = useMemo(() => {
@@ -45,9 +52,9 @@ export function SimpleStockInquiry() {
       productName: stocks[0].productName,
       productCode: stocks[0].productCode,
       warehouses: stocks,
-      totalQuantity: stocks.reduce((sum, s) => sum + s.quantity, 0),
+      totalQuantity: stocks.reduce((sum, s) => sum + s.totalQuantity, 0),
       totalAvailable: stocks.reduce((sum, s) => sum + s.availableQuantity, 0),
-      totalValue: stocks.reduce((sum, s) => sum + s.totalValue, 0)
+      totalValue: stocks.reduce((sum, s) => sum + s.availableValue, 0)
     }));
   }, [stockLevels]);
 
@@ -93,7 +100,7 @@ export function SimpleStockInquiry() {
         <CardContent className="p-6">
           <div className="text-center text-red-600">
             <p>เกิดข้อผิดพลาด: {error}</p>
-            <Button onClick={refetch} className="mt-2">
+            <Button onClick={() => fetchStockLevels()} className="mt-2">
               ลองใหม่
             </Button>
           </div>
@@ -126,7 +133,7 @@ export function SimpleStockInquiry() {
                 className="w-full"
               />
             </div>
-            <Button onClick={refetch} disabled={loading}>
+            <Button onClick={() => fetchStockLevels()} disabled={loading}>
               {loading ? 'กำลังโหลด...' : 'ค้นหา'}
             </Button>
           </div>
@@ -206,7 +213,7 @@ export function SimpleStockInquiry() {
               <div>
                 <p className="text-sm text-muted-foreground">มูลค่ารวม</p>
                 <p className="text-2xl font-bold">
-                  ฿{summary.totalValue.toLocaleString()}
+                  ฿{(summary.totalValue || 0).toLocaleString()}
                 </p>
               </div>
               <Calendar className="h-8 w-8 text-purple-600" />
@@ -247,15 +254,15 @@ export function SimpleStockInquiry() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {stockLevels.map((stock) => (
-                    <TableRow key={stock.id}>
+                  {stockLevels.map((stock, index) => (
+                    <TableRow key={`${stock.productId}-${stock.warehouseId}-${index}`}>
                       <TableCell className="font-medium">{stock.productCode}</TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{stock.productName}</p>
-                          {stock.productDescription && (
+                          {stock.brand && (
                             <p className="text-sm text-muted-foreground">
-                              {stock.productDescription}
+                              {stock.brand} {stock.model && `- ${stock.model}`}
                             </p>
                           )}
                         </div>
@@ -267,24 +274,25 @@ export function SimpleStockInquiry() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {stock.quantity}
+                        {stock.totalQuantity}
                       </TableCell>
                       <TableCell className="text-right font-medium text-green-600">
                         {stock.availableQuantity}
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        ฿{stock.totalValue.toLocaleString()}
+                        ฿{(stock.availableValue || 0).toLocaleString()}
                       </TableCell>
                       <TableCell>
                         <Badge 
-                          variant={stock.status === 'in_stock' ? 'default' : 
-                                  stock.status === 'low_stock' ? 'secondary' : 'destructive'}
+                          variant={stock.availableQuantity > 5 ? 'default' : 
+                                  stock.availableQuantity > 0 ? 'secondary' : 'destructive'}
                         >
-                          {getStatusText(stock.status)}
+                          {stock.availableQuantity > 5 ? 'พร้อมจำหน่าย' : 
+                           stock.availableQuantity > 0 ? 'เหลือน้อย' : 'หมด'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {stock.lastUpdated.toLocaleDateString('th-TH', {
+                        {new Date().toLocaleDateString('th-TH', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',
@@ -343,11 +351,11 @@ export function SimpleStockInquiry() {
                             <div>
                               <p className="font-medium text-sm">{stock.warehouseName}</p>
                               <p className="text-xs text-muted-foreground">
-                                {stock.availableQuantity}/{stock.quantity} ชิ้น
+                                {stock.availableQuantity}/{stock.totalQuantity} ชิ้น
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              {getStockStatusBadge(stock.availableQuantity, stock.quantity)}
+                              {getStockStatusBadge(stock.availableQuantity, stock.totalQuantity)}
                             </div>
                           </div>
                         ))}

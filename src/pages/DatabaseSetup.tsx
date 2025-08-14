@@ -14,12 +14,14 @@ import {
   ExternalLink,
   Download
 } from 'lucide-react'
-import { DatabaseConnection } from '@/components/accounting/DatabaseConnection'
-import { AdminDatabaseManager } from '@/components/database/AdminDatabaseManager'
-import { EnvironmentCheck } from '@/components/database/EnvironmentCheck'
+import { DatabaseStatus } from '@/components/database/DatabaseStatus'
+import { DatabaseInspectorComponent } from '@/components/database/DatabaseInspector'
+import { AuthManagerComponent } from '@/components/auth/AuthManager'
+import { useDatabaseConnection } from '@/hooks/useDatabaseConnection'
 
 export default function DatabaseSetup() {
   const [copiedStep, setCopiedStep] = useState<string | null>(null)
+  const { isConnected, isHealthy, hasData } = useDatabaseConnection()
 
   const copyToClipboard = (text: string, stepId: string) => {
     navigator.clipboard.writeText(text)
@@ -97,21 +99,31 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here`
       </div>
 
       <Tabs defaultValue="setup" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="setup">การติดตั้ง</TabsTrigger>
           <TabsTrigger value="admin">Admin Mode</TabsTrigger>
           <TabsTrigger value="connection">การเชื่อมต่อ</TabsTrigger>
+          <TabsTrigger value="inspector">ตรวจสอบ DB</TabsTrigger>
+          <TabsTrigger value="auth">JWT Auth</TabsTrigger>
           <TabsTrigger value="files">ไฟล์ที่จำเป็น</TabsTrigger>
         </TabsList>
 
         {/* Setup Tab */}
         <TabsContent value="setup" className="space-y-6">
-          <EnvironmentCheck />
+          <DatabaseStatus />
           
-          <Alert>
+          <Alert className={isConnected ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"}>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>สำคัญ:</strong> ทำตามขั้นตอนเหล่านี้เพื่อเชื่อมต่อระบบกับฐานข้อมูลจริง
+              {isConnected ? (
+                <span className="text-green-800">
+                  <strong>เชื่อมต่อสำเร็จ!</strong> ระบบเชื่อมต่อกับฐานข้อมูลได้แล้ว
+                </span>
+              ) : (
+                <span className="text-yellow-800">
+                  <strong>ยังไม่ได้เชื่อมต่อ:</strong> ทำตามขั้นตอนเหล่านี้เพื่อเชื่อมต่อระบบกับฐานข้อมูลจริง
+                </span>
+              )}
             </AlertDescription>
           </Alert>
 
@@ -174,14 +186,33 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here`
 
                   {step.id === 'test-connection' && (
                     <div className="mt-4 space-y-4">
-                      <DatabaseConnection />
+                      <div className="p-4 border rounded-lg bg-muted/50">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          ทดสอบการเชื่อมต่อด่วน:
+                        </p>
+                        <Button
+                          onClick={async () => {
+                            const { testConnection } = await import('@/utils/databaseConnection');
+                            const result = await testConnection();
+                            alert(result.connected ? 
+                              `เชื่อมต่อสำเร็จ! (${result.latency}ms)` : 
+                              `เชื่อมต่อไม่สำเร็จ: ${result.error}`
+                            );
+                          }}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Database className="h-4 w-4 mr-2" />
+                          ทดสอบด่วน
+                        </Button>
+                      </div>
                       <Button
-                        onClick={() => window.open('/test-connection', '_blank')}
+                        onClick={() => window.open('/database', '_blank')}
                         variant="outline"
                         className="w-full"
                       >
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        เปิดหน้าทดสอบการเชื่อมต่อแบบละเอียด
+                        เปิดหน้าจัดการฐานข้อมูลแบบละเอียด
                       </Button>
                     </div>
                   )}
@@ -193,12 +224,41 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here`
 
         {/* Admin Tab */}
         <TabsContent value="admin" className="space-y-6">
-          <AdminDatabaseManager />
+          <DatabaseStatus />
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>เครื่องมือสำหรับผู้ดูแลระบบ</CardTitle>
+              <CardDescription>
+                เครื่องมือขั้นสูงสำหรับการจัดการฐานข้อมูล
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button variant="outline" className="h-20 flex-col">
+                  <Database className="h-6 w-6 mb-2" />
+                  <span>สำรองข้อมูล</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex-col">
+                  <Settings className="h-6 w-6 mb-2" />
+                  <span>จัดการ Schema</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex-col">
+                  <FileText className="h-6 w-6 mb-2" />
+                  <span>ดู Logs</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex-col">
+                  <CheckCircle className="h-6 w-6 mb-2" />
+                  <span>ตรวจสอบความสมบูรณ์</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Connection Tab */}
         <TabsContent value="connection" className="space-y-6">
-          <DatabaseConnection />
+          <DatabaseStatus />
           
           <Card>
             <CardHeader>
@@ -236,6 +296,16 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here`
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Database Inspector Tab */}
+        <TabsContent value="inspector" className="space-y-6">
+          <DatabaseInspectorComponent />
+        </TabsContent>
+
+        {/* Auth Manager Tab */}
+        <TabsContent value="auth" className="space-y-6">
+          <AuthManagerComponent />
         </TabsContent>
 
         {/* Files Tab */}

@@ -7,7 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 // Import warehouse components - using placeholders
 import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
 import { SimpleReceiveGoods } from '@/components/warehouses/SimpleReceiveGoods';
-import SupplierBilling from '@/components/warehouses/SupplierBilling';
+import SupplierBillingSimple from '@/components/warehouses/SupplierBillingSimple';
+import { IntegrationDashboard } from '@/components/integration/IntegrationDashboard';
 import { 
   WithdrawDispatch, 
   Transfer, 
@@ -229,6 +230,10 @@ export default function Warehouses() {
             <History className="w-4 h-4" />
             <span className="hidden sm:inline">ประวัติ</span>
           </TabsTrigger>
+          <TabsTrigger value="integration" className="flex items-center gap-1">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Integration</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -353,7 +358,7 @@ export default function Warehouses() {
         </TabsContent>
 
         <TabsContent value="billing" className="space-y-6">
-          <SupplierBilling />
+          <SupplierBillingSimple />
         </TabsContent>
 
         <TabsContent value="withdraw" className="space-y-6">
@@ -378,6 +383,10 @@ export default function Warehouses() {
 
         <TabsContent value="audit" className="space-y-6">
           <AuditTrail />
+        </TabsContent>
+
+        <TabsContent value="integration" className="space-y-6">
+          <IntegrationDashboard />
         </TabsContent>
 
 

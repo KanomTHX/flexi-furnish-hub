@@ -1,5 +1,5 @@
-// Real Supplier Billing Component - Connected to Database
-import React, { useState } from 'react';
+// Fixed Supplier Billing Component - No flickering issues
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, 
   Search, 
@@ -22,39 +22,123 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useSupplierBilling } from '@/hooks/useSupplierBilling';
-import { useSystemIntegration } from '@/hooks/useSystemIntegration';
+import { toast } from 'sonner';
+import SupplierServiceSimple from '@/services/supplierServiceSimple';
 import type { Supplier, SupplierInvoice, SupplierPayment } from '@/types/supplier';
 
-export default function SupplierBilling() {
-  const {
-    suppliers,
-    invoices,
-    payments,
-    summary,
-    billingSummary,
-    loading,
-    error,
-    fetchSuppliers,
-    fetchInvoices,
-    fetchPayments,
-    getOverdueInvoices,
-    getPendingInvoices,
-    createInvoice,
-    createPayment
-  } = useSupplierBilling();
-
-  const {
-    createInvoiceWithJournalEntry,
-    createPaymentWithJournalEntry,
-    isIntegrationEnabled
-  } = useSystemIntegration();
+export default function SupplierBillingFixed() {
+  // State
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [invoices, setInvoices] = useState<SupplierInvoice[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const [summary, setSummary] = useState({
+    totalSuppliers: 0,
+    activeSuppliers: 0,
+    totalOutstanding: 0,
+    overdueAmount: 0,
+    totalPaidThisMonth: 0,
+    averagePaymentDays: 0
+  });
+  const [billingSummary, setBillingSummary] = useState<any[]>([]);
 
   // State for filters and search
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Clear filters when switching tabs
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchTerm('');
+    setSelectedSupplier('');
+    setSelectedStatus('');
+  };
+
+  // Memoized fetch functions to prevent re-creation
+  const fetchSuppliers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('Fetching suppliers...');
+      const data = await SupplierServiceSimple.getSuppliers();
+      console.log('Suppliers fetched:', data);
+      setSuppliers(data);
+    } catch (err: any) {
+      console.error('Error fetching suppliers:', err);
+      const errorMessage = err.message || 'ไม่สามารถดึงข้อมูลซัพพลายเออร์ได้';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Remove loading dependency
+
+  const fetchInvoices = useCallback(async () => {
+    try {
+      console.log('Fetching invoices...');
+      const result = await SupplierServiceSimple.getSupplierInvoices({ limit: 50 });
+      console.log('Invoices fetched:', result);
+      setInvoices(result.data);
+    } catch (err: any) {
+      console.error('Error fetching invoices:', err);
+      toast.error('ไม่สามารถดึงข้อมูลใบแจ้งหนี้ได้');
+    }
+  }, []);
+
+  const fetchPayments = useCallback(async () => {
+    try {
+      console.log('Fetching payments...');
+      const result = await SupplierServiceSimple.getSupplierPayments({ limit: 50 });
+      console.log('Payments fetched:', result);
+      setPayments(result.data);
+    } catch (err: any) {
+      console.error('Error fetching payments:', err);
+      toast.error('ไม่สามารถดึงข้อมูลการชำระเงินได้');
+    }
+  }, []);
+
+  const fetchSummary = useCallback(async () => {
+    try {
+      const summaryData = await SupplierServiceSimple.getSupplierSummary();
+      setSummary(summaryData);
+    } catch (err: any) {
+      console.error('Error fetching summary:', err);
+    }
+  }, []);
+
+  const fetchBillingSummary = useCallback(async () => {
+    try {
+      const billingSummaryData = await SupplierServiceSimple.getSupplierBillingSummary();
+      setBillingSummary(billingSummaryData);
+    } catch (err: any) {
+      console.error('Error fetching billing summary:', err);
+    }
+  }, []);
+
+  // Load data only once on mount
+  useEffect(() => {
+    if (!initialized) {
+      const loadInitialData = async () => {
+        try {
+          await Promise.all([
+            fetchSuppliers(),
+            fetchInvoices(),
+            fetchPayments(),
+            fetchSummary(),
+            fetchBillingSummary()
+          ]);
+        } finally {
+          setInitialized(true);
+        }
+      };
+      loadInitialData();
+    }
+  }, [initialized, fetchSuppliers, fetchInvoices, fetchPayments, fetchSummary, fetchBillingSummary]);
 
   // Filter functions
   const filteredSuppliers = suppliers.filter(supplier => {
@@ -80,10 +164,10 @@ export default function SupplierBilling() {
 
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = !searchTerm || 
-      payment.paymentNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.supplier?.supplierName.toLowerCase().includes(searchTerm.toLowerCase());
+      payment.payment_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.supplier?.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesSupplier = !selectedSupplier || payment.supplierId === selectedSupplier;
+    const matchesSupplier = !selectedSupplier || payment.supplier_id === selectedSupplier;
     
     return matchesSearch && matchesSupplier;
   });
@@ -127,6 +211,28 @@ export default function SupplierBilling() {
     }).format(date);
   };
 
+  // Show loading state during initialization
+  if (!initialized) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>กำลังโหลดข้อมูล Supplier Billing...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading component for tabs
+  const LoadingContent = () => (
+    <div className="text-center py-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+      <p className="text-muted-foreground">กำลังโหลดข้อมูล...</p>
+    </div>
+  );
+
   if (error) {
     return (
       <Card>
@@ -150,7 +256,7 @@ export default function SupplierBilling() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">การเรียกเก็บเงินซัพพลายเออร์</h2>
-          <p className="text-muted-foreground">จัดการใบแจ้งหนี้และการชำระเงินซัพพลายเออร์</p>
+          <p className="text-muted-foreground">จัดการใบแจ้งหนี้และการชำระเงินซัพพลายเออร์ (Fixed Version)</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
@@ -160,9 +266,6 @@ export default function SupplierBilling() {
           <Button>
             <FileText className="h-4 w-4 mr-2" />
             สร้างใบแจ้งหนี้
-            {isIntegrationEnabled.journalEntries && (
-              <Badge variant="secondary" className="ml-2 text-xs">+JE</Badge>
-            )}
           </Button>
         </div>
       </div>
@@ -223,7 +326,7 @@ export default function SupplierBilling() {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">ภาพรวม</TabsTrigger>
           <TabsTrigger value="suppliers">ซัพพลายเออร์</TabsTrigger>
@@ -241,12 +344,7 @@ export default function SupplierBilling() {
                 <CardDescription>ยอดค้างชำระตามซัพพลายเออร์</CardDescription>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-2 text-muted-foreground">กำลังโหลด...</p>
-                  </div>
-                ) : billingSummary.length === 0 ? (
+                {billingSummary.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>ไม่มีข้อมูลการเรียกเก็บเงิน</p>
@@ -281,12 +379,7 @@ export default function SupplierBilling() {
                 <CardDescription>รายการชำระเงินที่ผ่านมา</CardDescription>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-2 text-muted-foreground">กำลังโหลด...</p>
-                  </div>
-                ) : payments.length === 0 ? (
+                {payments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>ไม่มีข้อมูลการชำระเงิน</p>
@@ -296,15 +389,15 @@ export default function SupplierBilling() {
                     {payments.slice(0, 5).map((payment) => (
                       <div key={payment.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
-                          <p className="font-medium">{payment.supplier?.supplierName}</p>
+                          <p className="font-medium">{payment.supplier?.supplier_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {payment.paymentNumber} • {formatDate(payment.paymentDate)}
+                            {payment.payment_number} • {formatDate(new Date(payment.payment_date))}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium text-green-600">{formatCurrency(payment.paymentAmount)}</p>
+                          <p className="font-medium text-green-600">{formatCurrency(payment.payment_amount)}</p>
                           <p className="text-sm text-muted-foreground capitalize">
-                            {payment.paymentMethod.replace('_', ' ')}
+                            {payment.payment_method?.replace('_', ' ')}
                           </p>
                         </div>
                       </div>
@@ -355,12 +448,7 @@ export default function SupplierBilling() {
               <CardTitle>รายการซัพพลายเออร์ ({filteredSuppliers.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">กำลังโหลด...</p>
-                </div>
-              ) : filteredSuppliers.length === 0 ? (
+              {filteredSuppliers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>ไม่พบซัพพลายเออร์ที่ตรงกับเงื่อนไขการค้นหา</p>
@@ -415,9 +503,6 @@ export default function SupplierBilling() {
                               </Button>
                               <Button variant="ghost" size="sm">
                                 <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600">
-                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -474,79 +559,34 @@ export default function SupplierBilling() {
             </CardContent>
           </Card>
 
-          {/* Invoices Table */}
           <Card>
             <CardHeader>
               <CardTitle>รายการใบแจ้งหนี้ ({filteredInvoices.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">กำลังโหลด...</p>
-                </div>
-              ) : filteredInvoices.length === 0 ? (
+              {filteredInvoices.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>ไม่พบใบแจ้งหนี้ที่ตรงกับเงื่อนไขการค้นหา</p>
+                  <p>ไม่พบใบแจ้งหนี้ในระบบ</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>เลขที่ใบแจ้งหนี้</TableHead>
-                        <TableHead>ซัพพลายเออร์</TableHead>
-                        <TableHead>วันที่ออกใบแจ้งหนี้</TableHead>
-                        <TableHead>วันครบกำหนด</TableHead>
-                        <TableHead className="text-right">จำนวนเงิน</TableHead>
-                        <TableHead className="text-right">ชำระแล้ว</TableHead>
-                        <TableHead className="text-right">คงเหลือ</TableHead>
-                        <TableHead>สถานะ</TableHead>
-                        <TableHead>การดำเนินการ</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredInvoices.map((invoice) => (
-                        <TableRow key={invoice.id}>
-                          <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                          <TableCell>{invoice.supplier?.supplierName}</TableCell>
-                          <TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
-                          <TableCell>
-                            <span className={invoice.dueDate < new Date() && invoice.remainingAmount > 0 ? 'text-red-600' : ''}>
-                              {formatDate(invoice.dueDate)}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(invoice.totalAmount)}
-                          </TableCell>
-                          <TableCell className="text-right text-green-600">
-                            {formatCurrency(invoice.paidAmount)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className={invoice.remainingAmount > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>
-                              {formatCurrency(invoice.remainingAmount)}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(invoice.status)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {invoice.remainingAmount > 0 && (
-                                <Button variant="ghost" size="sm" className="text-green-600">
-                                  <CreditCard className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="space-y-4">
+                  {filteredInvoices.slice(0, 10).map((invoice) => (
+                    <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{invoice.invoiceNumber}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {invoice.supplier?.supplierName} • {formatDate(invoice.invoiceDate)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatCurrency(invoice.totalAmount)}</p>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(invoice.status)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
@@ -583,72 +623,39 @@ export default function SupplierBilling() {
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   บันทึกการชำระเงิน
-                  {isIntegrationEnabled.journalEntries && (
-                    <Badge variant="secondary" className="ml-2 text-xs">+JE</Badge>
-                  )}
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Payments Table */}
           <Card>
             <CardHeader>
               <CardTitle>รายการการชำระเงิน ({filteredPayments.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">กำลังโหลด...</p>
-                </div>
-              ) : filteredPayments.length === 0 ? (
+              {filteredPayments.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>ไม่พบการชำระเงินที่ตรงกับเงื่อนไขการค้นหา</p>
+                  <p>ไม่พบการชำระเงินในระบบ</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>เลขที่การชำระ</TableHead>
-                        <TableHead>ซัพพลายเออร์</TableHead>
-                        <TableHead>ใบแจ้งหนี้</TableHead>
-                        <TableHead>วันที่ชำระ</TableHead>
-                        <TableHead className="text-right">จำนวนเงิน</TableHead>
-                        <TableHead>วิธีชำระ</TableHead>
-                        <TableHead>เลขที่อ้างอิง</TableHead>
-                        <TableHead>การดำเนินการ</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell className="font-medium">{payment.paymentNumber}</TableCell>
-                          <TableCell>{payment.supplier?.supplierName}</TableCell>
-                          <TableCell>{payment.invoice?.invoiceNumber}</TableCell>
-                          <TableCell>{formatDate(payment.paymentDate)}</TableCell>
-                          <TableCell className="text-right font-medium text-green-600">
-                            {formatCurrency(payment.paymentAmount)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="capitalize">
-                              {payment.paymentMethod.replace('_', ' ')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {payment.referenceNumber || '-'}
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="space-y-4">
+                  {filteredPayments.slice(0, 10).map((payment) => (
+                    <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{payment.payment_number}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {payment.supplier?.supplier_name} • {formatDate(new Date(payment.payment_date))}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-green-600">{formatCurrency(payment.payment_amount)}</p>
+                        <p className="text-sm text-muted-foreground capitalize">
+                          {payment.payment_method?.replace('_', ' ')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

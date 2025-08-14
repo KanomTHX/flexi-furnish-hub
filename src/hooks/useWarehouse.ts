@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { WarehouseService, type Warehouse, type StockLevel, type StockMovement } from '@/lib/warehouseService';
+import { WarehouseService } from '@/services/warehouseService';
+import type { Warehouse, StockLevel, StockMovement } from '@/types/warehouse';
 import { useToast } from '@/hooks/use-toast';
 
 export interface UseWarehouseOptions {
@@ -32,10 +33,10 @@ export function useWarehouse(options: UseWarehouseOptions = {}): UseWarehouseRet
       const data = await WarehouseService.getWarehouses(filters);
       setWarehouses(data);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch warehouses';
+      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถดึงข้อมูลคลังสินค้าได้';
       setError(errorMessage);
       toast({
-        title: 'Error',
+        title: 'ข้อผิดพลาด',
         description: errorMessage,
         variant: 'destructive',
       });
@@ -50,15 +51,15 @@ export function useWarehouse(options: UseWarehouseOptions = {}): UseWarehouseRet
       const newWarehouse = await WarehouseService.createWarehouse(warehouse);
       setWarehouses(prev => [...prev, newWarehouse]);
       toast({
-        title: 'Success',
-        description: 'Warehouse created successfully',
+        title: 'สำเร็จ',
+        description: 'สร้างคลังสินค้าเรียบร้อยแล้ว',
       });
       return newWarehouse;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create warehouse';
+      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถสร้างคลังสินค้าได้';
       setError(errorMessage);
       toast({
-        title: 'Error',
+        title: 'ข้อผิดพลาด',
         description: errorMessage,
         variant: 'destructive',
       });
