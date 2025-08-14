@@ -100,14 +100,6 @@ export function BranchDashboard() {
             </button>
           </div>
 
-          {/* Branch Selector Button */}
-          <button
-            onClick={() => setShowBranchSelector(!showBranchSelector)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Eye className="h-4 w-4" />
-            <span>{viewMode === 'single' ? 'เปลี่ยนสาขา' : 'เลือกสาขา'}</span>
-          </button>
 
           {/* Export Button */}
           <button

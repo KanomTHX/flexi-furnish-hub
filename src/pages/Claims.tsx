@@ -172,13 +172,6 @@ export default function Claims() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowBranchSelector(!showBranchSelector)}
-            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-          >
-            <Eye className="h-4 w-4" />
-            <span>เปลี่ยนสาขา</span>
-          </button>
           {pendingClaims.length > 0 && (
             <Button
               variant="outline"

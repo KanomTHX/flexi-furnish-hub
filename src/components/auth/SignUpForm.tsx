@@ -67,6 +67,7 @@ export const SignUpForm = ({ onToggleMode, onSuccess }: SignUpFormProps) => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName.trim(),
+            username: fullName.trim().toLowerCase().replace(/\s+/g, '_'),
           }
         }
       });

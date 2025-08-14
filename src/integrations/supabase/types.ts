@@ -218,6 +218,7 @@ export type Database = {
       branches: {
         Row: {
           address: string | null
+          admin_user_id: string | null
           code: string
           created_at: string | null
           email: string | null
@@ -230,6 +231,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          admin_user_id?: string | null
           code: string
           created_at?: string | null
           email?: string | null
@@ -242,6 +244,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          admin_user_id?: string | null
           code?: string
           created_at?: string | null
           email?: string | null
@@ -1536,6 +1539,50 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          branch_id: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          role: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          branch_id?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          branch_id?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_order_items: {
         Row: {
           created_at: string | null
@@ -1875,6 +1922,229 @@ export type Database = {
           },
         ]
       }
+      supplier_invoice_items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          invoice_id: string | null
+          product_id: string | null
+          quantity: number
+          total_cost: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          product_id?: string | null
+          quantity: number
+          total_cost: number
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          product_id?: string | null
+          quantity?: number
+          total_cost?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_invoices: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          discount_amount: number | null
+          due_date: string
+          id: string
+          invoice_date: string
+          invoice_number: string
+          notes: string | null
+          paid_amount: number | null
+          payment_terms: number | null
+          purchase_order_id: string | null
+          remaining_amount: number
+          status: Database["public"]["Enums"]["payment_status"] | null
+          subtotal: number
+          supplier_id: string | null
+          tax_amount: number | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          discount_amount?: number | null
+          due_date: string
+          id?: string
+          invoice_date: string
+          invoice_number: string
+          notes?: string | null
+          paid_amount?: number | null
+          payment_terms?: number | null
+          purchase_order_id?: string | null
+          remaining_amount?: number
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          subtotal?: number
+          supplier_id?: string | null
+          tax_amount?: number | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          discount_amount?: number | null
+          due_date?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          notes?: string | null
+          paid_amount?: number | null
+          payment_terms?: number | null
+          purchase_order_id?: string | null
+          remaining_amount?: number
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          subtotal?: number
+          supplier_id?: string | null
+          tax_amount?: number | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_payments: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method: string | null
+          payment_number: string
+          reference_number: string | null
+          supplier_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method?: string | null
+          payment_number: string
+          reference_number?: string | null
+          supplier_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string
+          payment_method?: string | null
+          payment_number?: string
+          reference_number?: string | null
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string | null
+          credit_limit: number | null
+          current_balance: number | null
+          email: string | null
+          id: string
+          notes: string | null
+          payment_terms: number | null
+          phone: string | null
+          status: string | null
+          supplier_code: string
+          supplier_name: string
+          tax_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          credit_limit?: number | null
+          current_balance?: number | null
+          email?: string | null
+          id?: string
+          notes?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          status?: string | null
+          supplier_code: string
+          supplier_name: string
+          tax_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          credit_limit?: number | null
+          current_balance?: number | null
+          email?: string | null
+          id?: string
+          notes?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          status?: string | null
+          supplier_code?: string
+          supplier_name?: string
+          tax_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -2052,17 +2322,47 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invoice_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_journal_entry_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_payment_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_serial_number: {
         Args: { product_name: string }
+        Returns: string
+      }
+      generate_supplier_code: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_supplier_monthly_trends: {
+        Args: { supplier_id_param?: string }
+        Returns: {
+          month_year: string
+          total_invoices: number
+          total_amount: number
+          paid_amount: number
+          outstanding_amount: number
+        }[]
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      update_supplier_balance: {
+        Args: { supplier_id: string; amount: number }
+        Returns: undefined
       }
     }
     Enums: {
