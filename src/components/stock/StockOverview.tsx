@@ -47,13 +47,6 @@ export function StockOverview({ summary, alerts }: StockOverviewProps) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowBranchSelector(!showBranchSelector)}
-            className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-          >
-            <Eye className="h-4 w-4" />
-            <span>เปลี่ยนสาขา</span>
-          </button>
           <Badge variant="outline" className="text-green-600 border-green-200">
             ความแม่นยำ {summary.stockAccuracy}%
           </Badge>
