@@ -135,12 +135,12 @@ export function useBranchData() {
         setBranchStockMovements([]);
         setBranchStockAlerts([]);
         
-        // Set mock context for now
+        // Set mock context for now - disable branch switching
         setBranchContext({
           currentBranch: transformedBranches[0] || null,
           userPermissions: {
-            canSwitchBranch: true,
-            canViewAllBranches: true,
+            canSwitchBranch: false,
+            canViewAllBranches: false,
             canManageBranches: true,
             allowedOperations: ['view', 'create', 'update', 'delete']
           },
