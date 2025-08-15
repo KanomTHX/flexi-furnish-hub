@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -211,6 +211,111 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auto_purchase_order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          product_name: string
+          purchase_order_id: string | null
+          quantity: number
+          total_cost: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          product_name: string
+          purchase_order_id?: string | null
+          quantity: number
+          total_cost: number
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          product_name?: string
+          purchase_order_id?: string | null
+          quantity?: number
+          total_cost?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "auto_purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auto_purchase_orders: {
+        Row: {
+          automation_reason: string | null
+          created_at: string | null
+          created_by: string | null
+          expected_delivery_date: string | null
+          id: string
+          order_number: string
+          status: string | null
+          stock_alert_id: string | null
+          supplier_id: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          automation_reason?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          order_number: string
+          status?: string | null
+          stock_alert_id?: string | null
+          supplier_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Update: {
+          automation_reason?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          order_number?: string
+          status?: string | null
+          stock_alert_id?: string | null
+          supplier_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_purchase_orders_stock_alert_id_fkey"
+            columns: ["stock_alert_id"]
+            isOneToOne: false
+            referencedRelation: "stock_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_performance_dashboard"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "auto_purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -1136,6 +1241,48 @@ export type Database = {
           },
         ]
       }
+      integration_sync_log: {
+        Row: {
+          completed_at: string | null
+          error_details: Json | null
+          errors_count: number | null
+          id: string
+          integration_type: Database["public"]["Enums"]["integration_type"]
+          records_failed: number | null
+          records_processed: number | null
+          started_at: string | null
+          status: string
+          sync_data: Json | null
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error_details?: Json | null
+          errors_count?: number | null
+          id?: string
+          integration_type: Database["public"]["Enums"]["integration_type"]
+          records_failed?: number | null
+          records_processed?: number | null
+          started_at?: string | null
+          status: string
+          sync_data?: Json | null
+          sync_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          error_details?: Json | null
+          errors_count?: number | null
+          id?: string
+          integration_type?: Database["public"]["Enums"]["integration_type"]
+          records_failed?: number | null
+          records_processed?: number | null
+          started_at?: string | null
+          status?: string
+          sync_data?: Json | null
+          sync_type?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           branch_id: string | null
@@ -1145,11 +1292,15 @@ export type Database = {
           entry_date: string
           entry_number: string
           id: string
+          posted_at: string | null
           reference_id: string | null
           reference_type: string | null
+          source_id: string | null
+          source_type: string | null
           status: string | null
           total_credit: number
           total_debit: number
+          transaction_date: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1160,11 +1311,15 @@ export type Database = {
           entry_date: string
           entry_number: string
           id?: string
+          posted_at?: string | null
           reference_id?: string | null
           reference_type?: string | null
+          source_id?: string | null
+          source_type?: string | null
           status?: string | null
           total_credit?: number
           total_debit?: number
+          transaction_date?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1175,11 +1330,15 @@ export type Database = {
           entry_date?: string
           entry_number?: string
           id?: string
+          posted_at?: string | null
           reference_id?: string | null
           reference_type?: string | null
+          source_id?: string | null
+          source_type?: string | null
           status?: string | null
           total_credit?: number
           total_debit?: number
+          transaction_date?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1201,31 +1360,40 @@ export type Database = {
       }
       journal_entry_lines: {
         Row: {
+          account_code: string | null
           account_id: string | null
+          account_name: string | null
           created_at: string | null
           credit_amount: number | null
           debit_amount: number | null
           description: string | null
           id: string
           journal_entry_id: string | null
+          reference: string | null
         }
         Insert: {
+          account_code?: string | null
           account_id?: string | null
+          account_name?: string | null
           created_at?: string | null
           credit_amount?: number | null
           debit_amount?: number | null
           description?: string | null
           id?: string
           journal_entry_id?: string | null
+          reference?: string | null
         }
         Update: {
+          account_code?: string | null
           account_id?: string | null
+          account_name?: string | null
           created_at?: string | null
           credit_amount?: number | null
           debit_amount?: number | null
           description?: string | null
           id?: string
           journal_entry_id?: string | null
+          reference?: string | null
         }
         Relationships: [
           {
@@ -1289,6 +1457,86 @@ export type Database = {
           start_date?: string
           status?: Database["public"]["Enums"]["leave_status"] | null
           type?: Database["public"]["Enums"]["leave_type"]
+        }
+        Relationships: []
+      }
+      notification_history: {
+        Row: {
+          created_at: string | null
+          delivery_attempt: number | null
+          error_message: string | null
+          id: string
+          notification_id: string | null
+          response_data: Json | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_attempt?: number | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          response_data?: Json | null
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          delivery_attempt?: number | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          response_data?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_history_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          html_content: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          text_content: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          html_content?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          text_content?: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          html_content?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          text_content?: string | null
+          type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+          variables?: Json | null
         }
         Relationships: []
       }
@@ -1694,6 +1942,268 @@ export type Database = {
           },
         ]
       }
+      reconciliation_adjustments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          journal_entry_id: string
+          reason: string
+          reconciliation_id: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description: string
+          id?: string
+          journal_entry_id: string
+          reason: string
+          reconciliation_id: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          journal_entry_id?: string
+          reason?: string
+          reconciliation_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_adjustments_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliation_adjustments_reconciliation_id_fkey"
+            columns: ["reconciliation_id"]
+            isOneToOne: false
+            referencedRelation: "reconciliation_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliation_items: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          is_reconciled: boolean
+          notes: string | null
+          reconciled_date: string | null
+          reconciliation_id: string
+          transaction_id: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description: string
+          id?: string
+          is_reconciled?: boolean
+          notes?: string | null
+          reconciled_date?: string | null
+          reconciliation_id: string
+          transaction_id?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          is_reconciled?: boolean
+          notes?: string | null
+          reconciled_date?: string | null
+          reconciliation_id?: string
+          transaction_id?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_items_reconciliation_id_fkey"
+            columns: ["reconciliation_id"]
+            isOneToOne: false
+            referencedRelation: "reconciliation_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliation_reports: {
+        Row: {
+          account_id: string
+          book_balance: number
+          created_at: string | null
+          created_by: string
+          id: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          reconciled_at: string | null
+          reconciled_balance: number
+          reconciled_by: string | null
+          report_number: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          statement_balance: number
+          status: string
+          updated_at: string | null
+          variance: number
+        }
+        Insert: {
+          account_id: string
+          book_balance?: number
+          created_at?: string | null
+          created_by: string
+          id?: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          reconciled_at?: string | null
+          reconciled_balance?: number
+          reconciled_by?: string | null
+          report_number: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          statement_balance?: number
+          status?: string
+          updated_at?: string | null
+          variance?: number
+        }
+        Update: {
+          account_id?: string
+          book_balance?: number
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          reconciled_at?: string | null
+          reconciled_balance?: number
+          reconciled_by?: string | null
+          report_number?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          statement_balance?: number
+          status?: string
+          updated_at?: string | null
+          variance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_reports_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_definitions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parameters: Json | null
+          sql_query: string | null
+          type: Database["public"]["Enums"]["report_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parameters?: Json | null
+          sql_query?: string | null
+          type: Database["public"]["Enums"]["report_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parameters?: Json | null
+          sql_query?: string | null
+          type?: Database["public"]["Enums"]["report_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      report_execution_history: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          execution_end: string | null
+          execution_start: string | null
+          file_path: string | null
+          id: string
+          records_processed: number | null
+          report_definition_id: string | null
+          scheduled_report_id: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_end?: string | null
+          execution_start?: string | null
+          file_path?: string | null
+          id?: string
+          records_processed?: number | null
+          report_definition_id?: string | null
+          scheduled_report_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_end?: string | null
+          execution_start?: string | null
+          file_path?: string | null
+          id?: string
+          records_processed?: number | null
+          report_definition_id?: string | null
+          scheduled_report_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_execution_history_report_definition_id_fkey"
+            columns: ["report_definition_id"]
+            isOneToOne: false
+            referencedRelation: "report_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_execution_history_scheduled_report_id_fkey"
+            columns: ["scheduled_report_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sale_items: {
         Row: {
           created_at: string
@@ -1851,6 +2361,187 @@ export type Database = {
           },
         ]
       }
+      scheduled_notifications: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          error_message: string | null
+          html_content: string | null
+          id: string
+          max_retries: number | null
+          recipient_email: string
+          recipient_name: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          retry_count: number | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+          subject: string
+          template_id: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          html_content?: string | null
+          id?: string
+          max_retries?: number | null
+          recipient_email: string
+          recipient_name?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          retry_count?: number | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          template_id?: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          html_content?: string | null
+          id?: string
+          max_retries?: number | null
+          recipient_email?: string
+          recipient_name?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          retry_count?: number | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          template_id?: string | null
+          type?: Database["public"]["Enums"]["notification_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_notifications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_reports: {
+        Row: {
+          created_at: string | null
+          export_format: string | null
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          parameters: Json | null
+          recipients: string[] | null
+          report_definition_id: string | null
+          schedule_cron: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          export_format?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          parameters?: Json | null
+          recipients?: string[] | null
+          report_definition_id?: string | null
+          schedule_cron: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          export_format?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          parameters?: Json | null
+          recipients?: string[] | null
+          report_definition_id?: string | null
+          schedule_cron?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_reports_report_definition_id_fkey"
+            columns: ["report_definition_id"]
+            isOneToOne: false
+            referencedRelation: "report_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_alerts: {
+        Row: {
+          created_at: string | null
+          current_stock: number
+          id: string
+          preferred_supplier_id: string | null
+          processed_at: string | null
+          product_code: string | null
+          product_id: string
+          product_name: string
+          reorder_point: number
+          reorder_quantity: number
+          status: string | null
+          urgency_level: Database["public"]["Enums"]["urgency_level"] | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_stock: number
+          id?: string
+          preferred_supplier_id?: string | null
+          processed_at?: string | null
+          product_code?: string | null
+          product_id: string
+          product_name: string
+          reorder_point: number
+          reorder_quantity: number
+          status?: string | null
+          urgency_level?: Database["public"]["Enums"]["urgency_level"] | null
+        }
+        Update: {
+          created_at?: string | null
+          current_stock?: number
+          id?: string
+          preferred_supplier_id?: string | null
+          processed_at?: string | null
+          product_code?: string | null
+          product_id?: string
+          product_name?: string
+          reorder_point?: number
+          reorder_quantity?: number
+          status?: string | null
+          urgency_level?: Database["public"]["Enums"]["urgency_level"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_alerts_preferred_supplier_id_fkey"
+            columns: ["preferred_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_performance_dashboard"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "stock_alerts_preferred_supplier_id_fkey"
+            columns: ["preferred_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           branch_id: string | null
@@ -1918,6 +2609,57 @@ export type Database = {
             columns: ["warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_communication_preferences: {
+        Row: {
+          created_at: string | null
+          email_reminders: boolean | null
+          id: string
+          language_preference: string | null
+          preferred_contact_method: string | null
+          reminder_days_before: number[] | null
+          sms_reminders: boolean | null
+          supplier_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_reminders?: boolean | null
+          id?: string
+          language_preference?: string | null
+          preferred_contact_method?: string | null
+          reminder_days_before?: number[] | null
+          sms_reminders?: boolean | null
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_reminders?: boolean | null
+          id?: string
+          language_preference?: string | null
+          preferred_contact_method?: string | null
+          reminder_days_before?: number[] | null
+          sms_reminders?: boolean | null
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_communication_preferences_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: true
+            referencedRelation: "supplier_performance_dashboard"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "supplier_communication_preferences_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: true
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -2029,6 +2771,13 @@ export type Database = {
             foreignKeyName: "supplier_invoices_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
+            referencedRelation: "supplier_performance_dashboard"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "supplier_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
             referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
@@ -2084,6 +2833,136 @@ export type Database = {
           },
           {
             foreignKeyName: "supplier_payments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_performance_dashboard"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_performance_metrics: {
+        Row: {
+          average_payment_days: number | null
+          calculated_at: string | null
+          cost_efficiency_rating: number | null
+          id: string
+          invoice_count: number | null
+          on_time_delivery_rate: number | null
+          payment_count: number | null
+          period_end: string
+          period_start: string
+          quality_score: number | null
+          reliability_score: number | null
+          supplier_id: string | null
+          total_spend: number | null
+        }
+        Insert: {
+          average_payment_days?: number | null
+          calculated_at?: string | null
+          cost_efficiency_rating?: number | null
+          id?: string
+          invoice_count?: number | null
+          on_time_delivery_rate?: number | null
+          payment_count?: number | null
+          period_end: string
+          period_start: string
+          quality_score?: number | null
+          reliability_score?: number | null
+          supplier_id?: string | null
+          total_spend?: number | null
+        }
+        Update: {
+          average_payment_days?: number | null
+          calculated_at?: string | null
+          cost_efficiency_rating?: number | null
+          id?: string
+          invoice_count?: number | null
+          on_time_delivery_rate?: number | null
+          payment_count?: number | null
+          period_end?: string
+          period_start?: string
+          quality_score?: number | null
+          reliability_score?: number | null
+          supplier_id?: string | null
+          total_spend?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_performance_metrics_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_performance_dashboard"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "supplier_performance_metrics_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_products: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_preferred: boolean | null
+          lead_time_days: number | null
+          minimum_order_quantity: number | null
+          product_code: string | null
+          product_id: string
+          supplier_id: string | null
+          supplier_product_code: string | null
+          unit_cost: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_preferred?: boolean | null
+          lead_time_days?: number | null
+          minimum_order_quantity?: number | null
+          product_code?: string | null
+          product_id: string
+          supplier_id?: string | null
+          supplier_product_code?: string | null
+          unit_cost?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_preferred?: boolean | null
+          lead_time_days?: number | null
+          minimum_order_quantity?: number | null
+          product_code?: string | null
+          product_id?: string
+          supplier_id?: string | null
+          supplier_product_code?: string | null
+          unit_cost?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_performance_dashboard"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "supplier_products_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
@@ -2319,9 +3198,69 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      notification_performance: {
+        Row: {
+          failed_count: number | null
+          sent_count: number | null
+          success_rate: number | null
+          total_notifications: number | null
+          type: Database["public"]["Enums"]["notification_type"] | null
+        }
+        Relationships: []
+      }
+      stock_alerts_summary: {
+        Row: {
+          alert_count: number | null
+          avg_current_stock: number | null
+          avg_reorder_point: number | null
+          pending_count: number | null
+          processing_count: number | null
+          urgency_level: Database["public"]["Enums"]["urgency_level"] | null
+        }
+        Relationships: []
+      }
+      supplier_performance_dashboard: {
+        Row: {
+          auto_purchase_orders: number | null
+          average_payment_days: number | null
+          current_balance: number | null
+          invoice_count: number | null
+          overdue_amount: number | null
+          pending_stock_alerts: number | null
+          reliability_score: number | null
+          supplier_code: string | null
+          supplier_id: string | null
+          supplier_name: string | null
+          total_spend: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      calculate_supplier_performance_metrics: {
+        Args: {
+          period_end_param: string
+          period_start_param: string
+          supplier_id_param: string
+        }
+        Returns: undefined
+      }
+      cleanup_old_notification_history: {
+        Args: { days_to_keep?: number }
+        Returns: number
+      }
+      cleanup_old_report_history: {
+        Args: { days_to_keep?: number }
+        Returns: number
+      }
+      cleanup_old_sync_logs: {
+        Args: { days_to_keep?: number }
+        Returns: number
+      }
+      generate_auto_purchase_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_invoice_number: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2346,22 +3285,47 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_notification_statistics: {
+        Args: { days_back?: number }
+        Returns: {
+          avg_retry_count: number
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          success_rate: number
+          total_failed: number
+          total_sent: number
+        }[]
+      }
+      get_supplier_dashboard_metrics: {
+        Args: { supplier_id_param?: string }
+        Returns: {
+          auto_pos_this_month: number
+          avg_payment_days: number
+          overdue_amount: number
+          pending_stock_alerts: number
+          total_outstanding: number
+          total_suppliers: number
+        }[]
+      }
       get_supplier_monthly_trends: {
         Args: { supplier_id_param?: string }
         Returns: {
           month_year: string
-          total_invoices: number
-          total_amount: number
-          paid_amount: number
           outstanding_amount: number
+          paid_amount: number
+          total_amount: number
+          total_invoices: number
         }[]
       }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      process_stock_alert: {
+        Args: { alert_id: string }
+        Returns: string
+      }
       update_supplier_balance: {
-        Args: { supplier_id: string; amount: number }
+        Args: { amount: number; supplier_id: string }
         Returns: undefined
       }
     }
@@ -2403,6 +3367,11 @@ export type Database = {
         | "terminated"
         | "on-leave"
         | "probation"
+      integration_type:
+        | "pos_system"
+        | "accounting_system"
+        | "banking_system"
+        | "email_service"
       journal_entry_status: "draft" | "pending" | "approved" | "rejected"
       leave_status: "pending" | "approved" | "rejected" | "cancelled"
       leave_type:
@@ -2414,6 +3383,12 @@ export type Database = {
         | "unpaid"
         | "study"
         | "other"
+      notification_type:
+        | "payment_reminder"
+        | "overdue_notice"
+        | "monthly_statement"
+        | "custom_reminder"
+        | "system_alert"
       participant_status:
         | "enrolled"
         | "attending"
@@ -2423,6 +3398,13 @@ export type Database = {
       payment_status: "pending" | "completed" | "overdue" | "cancelled"
       payroll_status: "draft" | "calculated" | "approved" | "paid" | "cancelled"
       product_status: "available" | "sold" | "reserved" | "damaged" | "returned"
+      report_type:
+        | "supplier_performance"
+        | "spending_analysis"
+        | "aging_report"
+        | "cash_flow_projection"
+        | "supplier_comparison"
+        | "custom_report"
       training_status: "planned" | "ongoing" | "completed" | "cancelled"
       training_type:
         | "orientation"
@@ -2432,6 +3414,7 @@ export type Database = {
         | "technical"
         | "soft-skills"
       transaction_type: "cash" | "installment"
+      urgency_level: "low" | "medium" | "high" | "critical"
       user_role:
         | "admin"
         | "manager"
@@ -2607,6 +3590,12 @@ export const Constants = {
         "on-leave",
         "probation",
       ],
+      integration_type: [
+        "pos_system",
+        "accounting_system",
+        "banking_system",
+        "email_service",
+      ],
       journal_entry_status: ["draft", "pending", "approved", "rejected"],
       leave_status: ["pending", "approved", "rejected", "cancelled"],
       leave_type: [
@@ -2619,6 +3608,13 @@ export const Constants = {
         "study",
         "other",
       ],
+      notification_type: [
+        "payment_reminder",
+        "overdue_notice",
+        "monthly_statement",
+        "custom_reminder",
+        "system_alert",
+      ],
       participant_status: [
         "enrolled",
         "attending",
@@ -2629,6 +3625,14 @@ export const Constants = {
       payment_status: ["pending", "completed", "overdue", "cancelled"],
       payroll_status: ["draft", "calculated", "approved", "paid", "cancelled"],
       product_status: ["available", "sold", "reserved", "damaged", "returned"],
+      report_type: [
+        "supplier_performance",
+        "spending_analysis",
+        "aging_report",
+        "cash_flow_projection",
+        "supplier_comparison",
+        "custom_report",
+      ],
       training_status: ["planned", "ongoing", "completed", "cancelled"],
       training_type: [
         "orientation",
@@ -2639,6 +3643,7 @@ export const Constants = {
         "soft-skills",
       ],
       transaction_type: ["cash", "installment"],
+      urgency_level: ["low", "medium", "high", "critical"],
       user_role: [
         "admin",
         "manager",
