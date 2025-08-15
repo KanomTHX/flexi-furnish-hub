@@ -11,52 +11,42 @@ export default function AuditTrail() {
   );
 }
 
-// Placeholder WithdrawDispatch component
+// Import the real WithdrawDispatch component
+import WithdrawDispatchReal from './WithdrawDispatch';
+
+// WithdrawDispatch component (now using real implementation)
 export function WithdrawDispatch({ warehouses }: { warehouses: any[] }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Withdraw & Dispatch</h3>
-      <p className="text-muted-foreground">Withdraw dispatch functionality not available</p>
-    </div>
-  );
+  return <WithdrawDispatchReal warehouses={warehouses} />;
 }
 
-// Placeholder Transfer component
+// Import the real Transfer component
+import TransferReal from './Transfer';
+
+// Transfer component (now using real implementation)
 export function Transfer({ warehouses, currentWarehouseId }: { warehouses: any[], currentWarehouseId: string }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Transfer</h3>
-      <p className="text-muted-foreground">Transfer functionality not available</p>
-    </div>
-  );
+  return <TransferReal warehouses={warehouses} currentWarehouseId={currentWarehouseId} />;
 }
 
-// Placeholder BarcodeScanner component
-export function BarcodeScanner({ onScan }: { onScan: (data: string) => void }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Barcode Scanner</h3>
-      <p className="text-muted-foreground">Barcode scanner functionality not available</p>
-    </div>
-  );
+// Import the real BarcodeScanner component
+import BarcodeScannerReal from './BarcodeScanner';
+
+// BarcodeScanner component (now using real implementation)
+export function BarcodeScanner({ onScan, warehouses }: { onScan: (data: string) => void, warehouses?: any[] }) {
+  return <BarcodeScannerReal warehouses={warehouses || []} />;
 }
 
-// Placeholder BatchOperations component
-export function BatchOperations({ onBatchProcess, availableOperations }: { onBatchProcess: (operations: any[]) => void, availableOperations: any[] }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Batch Operations</h3>
-      <p className="text-muted-foreground">Batch operations functionality not available</p>
-    </div>
-  );
+// Import the real BatchOperations component
+import BatchOperationsReal from './BatchOperations';
+
+// BatchOperations component (now using real implementation)
+export function BatchOperations({ onBatchProcess, availableOperations, warehouses }: { onBatchProcess: (operations: any[]) => void, availableOperations: any[], warehouses?: any[] }) {
+  return <BatchOperationsReal warehouses={warehouses || []} />;
 }
 
-// Placeholder StockAdjustment component
-export function StockAdjustment({ warehouseId, onAdjustmentComplete }: { warehouseId: string, onAdjustmentComplete: () => void }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Stock Adjustment</h3>
-      <p className="text-muted-foreground">Stock adjustment functionality not available</p>
-    </div>
-  );
+// Import the real StockAdjustment component
+import StockAdjustmentReal from './StockAdjustment';
+
+// StockAdjustment component (now using real implementation)
+export function StockAdjustment({ warehouseId, onAdjustmentComplete, warehouses }: { warehouseId: string, onAdjustmentComplete: () => void, warehouses?: any[] }) {
+  return <StockAdjustmentReal warehouseId={warehouseId} warehouses={warehouses || []} />;
 }

@@ -1,5 +1,7 @@
 // Auth Manager - จัดการ JWT และการ refresh token
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from './logger';
+import { AuthenticationError, handleError } from './errorHandler';
 
 export class AuthManager {
   private static refreshPromise: Promise<any> | null = null;
@@ -55,7 +57,7 @@ export class AuthManager {
         needsRefresh
       };
     } catch (error) {
-      console.error('Error checking JWT status:', error);
+      logger.error('Error checking JWT status', error instanceof Error ? error : new Error(String(error)));
       return {
         isValid: false,
         needsRefresh: true
@@ -84,10 +86,11 @@ export class AuthManager {
       return result;
     } catch (error) {
       this.refreshPromise = null;
-      console.error('Error refreshing token:', error);
+      const authError = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error refreshing token', authError);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: authError.message
       };
     }
   }
@@ -282,7 +285,7 @@ export class AuthManager {
   /**
    * Decode JWT token (แบบง่าย)
    */
-  private static decodeJWT(token: string): any {
+  private static decodeJWT(token: string): Record<string, any> | null {
     try {
       const parts = token.split('.');
       if (parts.length !== 3) {

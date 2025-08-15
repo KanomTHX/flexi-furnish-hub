@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Search, Filter, Download, Eye, User, Clock } from 'lucide-react';
+import { Search, Filter, Download, Eye, User, Clock } from 'lucide-react';
 import { auditTrailService, AuditLogEntry, AuditFilter } from '@/services/auditTrailService';
 import { format } from 'date-fns';
 
@@ -165,14 +165,14 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
               <div>
                 <label className="text-sm font-medium mb-1 block">Operation Type</label>
                 <Select
-                  value={filter.operation_type || ''}
-                  onValueChange={(value) => handleFilterChange('operation_type', value)}
+                  value={filter.operation_type || 'ALL'}
+                  onValueChange={(value) => handleFilterChange('operation_type', value === 'ALL' ? '' : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All operations" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Operations</SelectItem>
+                    <SelectItem value="ALL">All Operations</SelectItem>
                     <SelectItem value="STOCK_RECEIVE">Stock Receive</SelectItem>
                     <SelectItem value="STOCK_WITHDRAW">Stock Withdraw</SelectItem>
                     <SelectItem value="STOCK_TRANSFER">Stock Transfer</SelectItem>

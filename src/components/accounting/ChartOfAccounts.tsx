@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Account, AccountFilter, AccountType, AccountCategory } from '@/types/accounting';
 import { formatCurrency, accountTypeLabels, accountCategoryLabels } from '@/utils/accountingHelpers';
 import { chartOfAccountsService, AccountHierarchy } from '@/services/chartOfAccountsService';
-import { AccountingIntegrationError } from '@/errors/accounting';
+import { ChartOfAccountsError, AccountingValidationError } from '@/errors/accounting';
 import { toast } from 'sonner';
 import { 
   Search, 

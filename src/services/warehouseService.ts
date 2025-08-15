@@ -1,5 +1,6 @@
 // Real Warehouse Service - Connected to Supabase Database
 import { supabase } from '@/integrations/supabase/client';
+import { auditTrailService } from './auditTrailService';
 import type { 
   Warehouse, 
   StockLevel, 
@@ -500,6 +501,754 @@ export class WarehouseService {
   }
 
   // ==================== STOCK OPERATIONS ====================
+
+  /**
+   * Withdraw goods from warehouse
+   */
+  static async withdrawGoods(withdrawData: {
+    warehouseId: string;
+    serialNumberIds: string[];
+    reason: string;
+    referenceType?: string;
+    referenceNumber?: string;
+    soldTo?: string;
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    notes?: string;
+    performedBy: string;
+  }): Promise<{
+    movements: StockMovement[];
+    updatedSerialNumbers: SerialNumber[];
+  }> {
+    try {
+      const movements: StockMovement[] = [];
+      const updatedSerialNumbers: SerialNumber[] = [];
+
+      // Process each serial number
+      for (const serialNumberId of withdrawData.serialNumberIds) {
+        // Get serial number details
+        const { data: serialNumber, error: snError } = await supabase
+          .from('product_serial_numbers')
+          .select(`
+            *,
+            product:products(id, name, code)
+          `)
+          .eq('id', serialNumberId)
+          .single();
+
+        if (snError) throw snError;
+
+        // Update serial number status
+        const newStatus = withdrawData.referenceType === 'sale' ? 'sold' : 
+                         withdrawData.referenceType === 'transfer' ? 'transferred' :
+                         withdrawData.referenceType === 'claim' ? 'claimed' : 'sold';
+
+        const { data: updatedSN, error: updateError } = await supabase
+          .from('product_serial_numbers')
+          .update({
+            status: newStatus,
+            sold_at: newStatus === 'sold' ? new Date().toISOString() : null,
+            sold_to: withdrawData.customerName || withdrawData.soldTo,
+            reference_number: withdrawData.referenceNumber,
+            notes: withdrawData.notes,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', serialNumberId)
+          .select(`
+            *,
+            product:products(id, name, code),
+            warehouse:warehouses(id, name, code)
+          `)
+          .single();
+
+        if (updateError) throw updateError;
+
+        // Log stock movement
+        const movement = await this.logStockMovement({
+          productId: serialNumber.product_id,
+          serialNumberId: serialNumberId,
+          warehouseId: withdrawData.warehouseId,
+          movementType: 'withdraw',
+          quantity: 1,
+          unitCost: serialNumber.unit_cost,
+          referenceType: withdrawData.referenceType || 'sale',
+          referenceNumber: withdrawData.referenceNumber,
+          notes: `${withdrawData.reason}${withdrawData.notes ? ` - ${withdrawData.notes}` : ''}`,
+          performedBy: withdrawData.performedBy
+        });
+
+        movements.push(movement);
+        updatedSerialNumbers.push({
+          id: updatedSN.id,
+          serialNumber: updatedSN.serial_number,
+          productId: updatedSN.product_id,
+          product: updatedSN.product,
+          warehouseId: updatedSN.warehouse_id,
+          warehouse: updatedSN.warehouse,
+          unitCost: updatedSN.unit_cost,
+          supplierId: updatedSN.supplier_id,
+          invoiceNumber: updatedSN.invoice_number,
+          status: updatedSN.status,
+          soldAt: updatedSN.sold_at ? new Date(updatedSN.sold_at) : undefined,
+          soldTo: updatedSN.sold_to,
+          referenceNumber: updatedSN.reference_number,
+          notes: updatedSN.notes,
+          createdAt: new Date(updatedSN.created_at),
+          updatedAt: new Date(updatedSN.updated_at)
+        });
+
+        // Log audit trail
+        await auditTrailService.logWarehouseOperation(
+          'STOCK_WITHDRAW',
+          'product_serial_numbers',
+          serialNumberId,
+          `จ่ายสินค้า ${serialNumber.product?.name} (${serialNumber.serial_number}) - ${withdrawData.reason}`,
+          { status: serialNumber.status },
+          { status: newStatus, sold_to: withdrawData.customerName || withdrawData.soldTo },
+          {
+            warehouse_id: withdrawData.warehouseId,
+            reference_type: withdrawData.referenceType,
+            reference_number: withdrawData.referenceNumber,
+            performed_by: withdrawData.performedBy
+          }
+        );
+      }
+
+      return {
+        movements,
+        updatedSerialNumbers
+      };
+    } catch (error) {
+      console.error('Error withdrawing goods:', error);
+      throw new Error('ไม่สามารถจ่ายสินค้าได้');
+    }
+  }
+
+  /**
+   * Transfer goods between warehouses
+   */
+  static async transferGoods(transferData: {
+    sourceWarehouseId: string;
+    targetWarehouseId: string;
+    serialNumberIds: string[];
+    reason: string;
+    priority?: string;
+    scheduledDate?: string;
+    notes?: string;
+    performedBy: string;
+  }): Promise<{
+    transferNumber: string;
+    outMovements: StockMovement[];
+    inMovements: StockMovement[];
+    updatedSerialNumbers: SerialNumber[];
+  }> {
+    try {
+      const transferNumber = `TRF-${Date.now()}`;
+      const outMovements: StockMovement[] = [];
+      const inMovements: StockMovement[] = [];
+      const updatedSerialNumbers: SerialNumber[] = [];
+
+      // Process each serial number
+      for (const serialNumberId of transferData.serialNumberIds) {
+        // Get serial number details
+        const { data: serialNumber, error: snError } = await supabase
+          .from('product_serial_numbers')
+          .select(`
+            *,
+            product:products(id, name, code)
+          `)
+          .eq('id', serialNumberId)
+          .single();
+
+        if (snError) throw snError;
+
+        // Update serial number warehouse and status
+        const { data: updatedSN, error: updateError } = await supabase
+          .from('product_serial_numbers')
+          .update({
+            warehouse_id: transferData.targetWarehouseId,
+            status: 'transferred',
+            reference_number: transferNumber,
+            notes: transferData.notes,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', serialNumberId)
+          .select(`
+            *,
+            product:products(id, name, code),
+            warehouse:warehouses(id, name, code)
+          `)
+          .single();
+
+        if (updateError) throw updateError;
+
+        // Log transfer out movement
+        const outMovement = await this.logStockMovement({
+          productId: serialNumber.product_id,
+          serialNumberId: serialNumberId,
+          warehouseId: transferData.sourceWarehouseId,
+          movementType: 'transfer_out',
+          quantity: 1,
+          unitCost: serialNumber.unit_cost,
+          referenceType: 'transfer',
+          referenceNumber: transferNumber,
+          notes: `Transfer to target warehouse - ${transferData.reason}`,
+          performedBy: transferData.performedBy
+        });
+
+        // Log transfer in movement
+        const inMovement = await this.logStockMovement({
+          productId: serialNumber.product_id,
+          serialNumberId: serialNumberId,
+          warehouseId: transferData.targetWarehouseId,
+          movementType: 'transfer_in',
+          quantity: 1,
+          unitCost: serialNumber.unit_cost,
+          referenceType: 'transfer',
+          referenceNumber: transferNumber,
+          notes: `Transfer from source warehouse - ${transferData.reason}`,
+          performedBy: transferData.performedBy
+        });
+
+        outMovements.push(outMovement);
+        inMovements.push(inMovement);
+        updatedSerialNumbers.push({
+          id: updatedSN.id,
+          serialNumber: updatedSN.serial_number,
+          productId: updatedSN.product_id,
+          product: updatedSN.product,
+          warehouseId: updatedSN.warehouse_id,
+          warehouse: updatedSN.warehouse,
+          unitCost: updatedSN.unit_cost,
+          supplierId: updatedSN.supplier_id,
+          invoiceNumber: updatedSN.invoice_number,
+          status: updatedSN.status,
+          soldAt: updatedSN.sold_at ? new Date(updatedSN.sold_at) : undefined,
+          soldTo: updatedSN.sold_to,
+          referenceNumber: updatedSN.reference_number,
+          notes: updatedSN.notes,
+          createdAt: new Date(updatedSN.created_at),
+          updatedAt: new Date(updatedSN.updated_at)
+        });
+
+        // Log audit trail
+        await auditTrailService.logWarehouseOperation(
+          'STOCK_TRANSFER',
+          'product_serial_numbers',
+          serialNumberId,
+          `โอนย้ายสินค้า ${serialNumber.product?.name} (${serialNumber.serial_number}) - ${transferData.reason}`,
+          { warehouse_id: transferData.sourceWarehouseId, status: serialNumber.status },
+          { warehouse_id: transferData.targetWarehouseId, status: 'transferred' },
+          {
+            transfer_number: transferNumber,
+            source_warehouse_id: transferData.sourceWarehouseId,
+            target_warehouse_id: transferData.targetWarehouseId,
+            priority: transferData.priority,
+            scheduled_date: transferData.scheduledDate,
+            performed_by: transferData.performedBy
+          }
+        );
+      }
+
+      return {
+        transferNumber,
+        outMovements,
+        inMovements,
+        updatedSerialNumbers
+      };
+    } catch (error) {
+      console.error('Error transferring goods:', error);
+      throw new Error('ไม่สามารถโอนย้ายสินค้าได้');
+    }
+  }
+
+  /**
+   * Adjust stock levels
+   */
+  static async adjustStock(adjustmentData: {
+    warehouseId: string;
+    adjustmentType: string;
+    serialNumberIds: string[];
+    reason: string;
+    notes?: string;
+    performedBy: string;
+  }): Promise<{
+    adjustmentNumber: string;
+    movements: StockMovement[];
+    updatedSerialNumbers: SerialNumber[];
+  }> {
+    try {
+      const adjustmentNumber = `ADJ-${Date.now()}`;
+      const movements: StockMovement[] = [];
+      const updatedSerialNumbers: SerialNumber[] = [];
+
+      // Process each serial number
+      for (const serialNumberId of adjustmentData.serialNumberIds) {
+        // Get serial number details
+        const { data: serialNumber, error: snError } = await supabase
+          .from('product_serial_numbers')
+          .select(`
+            *,
+            product:products(id, name, code)
+          `)
+          .eq('id', serialNumberId)
+          .single();
+
+        if (snError) throw snError;
+
+        // Update serial number if needed (for status changes)
+        let updatedSN = serialNumber;
+        if (adjustmentData.adjustmentType === 'damage') {
+          const { data: updated, error: updateError } = await supabase
+            .from('product_serial_numbers')
+            .update({
+              status: 'damaged',
+              reference_number: adjustmentNumber,
+              notes: adjustmentData.notes,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', serialNumberId)
+            .select(`
+              *,
+              product:products(id, name, code),
+              warehouse:warehouses(id, name, code)
+            `)
+            .single();
+
+          if (updateError) throw updateError;
+          updatedSN = updated;
+        }
+
+        // Log stock movement
+        const movement = await this.logStockMovement({
+          productId: serialNumber.product_id,
+          serialNumberId: serialNumberId,
+          warehouseId: adjustmentData.warehouseId,
+          movementType: 'adjustment',
+          quantity: adjustmentData.adjustmentType === 'loss' ? -1 : 
+                   adjustmentData.adjustmentType === 'found' ? 1 : 0,
+          unitCost: serialNumber.unit_cost,
+          referenceType: 'adjustment',
+          referenceNumber: adjustmentNumber,
+          notes: `${adjustmentData.adjustmentType}: ${adjustmentData.reason}`,
+          performedBy: adjustmentData.performedBy
+        });
+
+        movements.push(movement);
+        updatedSerialNumbers.push({
+          id: updatedSN.id,
+          serialNumber: updatedSN.serial_number,
+          productId: updatedSN.product_id,
+          product: updatedSN.product,
+          warehouseId: updatedSN.warehouse_id,
+          warehouse: updatedSN.warehouse,
+          unitCost: updatedSN.unit_cost,
+          supplierId: updatedSN.supplier_id,
+          invoiceNumber: updatedSN.invoice_number,
+          status: updatedSN.status,
+          soldAt: updatedSN.sold_at ? new Date(updatedSN.sold_at) : undefined,
+          soldTo: updatedSN.sold_to,
+          referenceNumber: updatedSN.reference_number,
+          notes: updatedSN.notes,
+          createdAt: new Date(updatedSN.created_at),
+          updatedAt: new Date(updatedSN.updated_at)
+        });
+
+        // Log audit trail
+        await auditTrailService.logWarehouseOperation(
+          'STOCK_ADJUSTMENT',
+          'product_serial_numbers',
+          serialNumberId,
+          `ปรับปรุงสต็อก ${serialNumber.product?.name} (${serialNumber.serial_number}) - ${adjustmentData.adjustmentType}: ${adjustmentData.reason}`,
+          { status: serialNumber.status },
+          { status: updatedSN.status },
+          {
+            adjustment_number: adjustmentNumber,
+            adjustment_type: adjustmentData.adjustmentType,
+            warehouse_id: adjustmentData.warehouseId,
+            performed_by: adjustmentData.performedBy
+          }
+        );
+      }
+
+      return {
+        adjustmentNumber,
+        movements,
+        updatedSerialNumbers
+      };
+    } catch (error) {
+      console.error('Error adjusting stock:', error);
+      throw new Error('ไม่สามารถปรับปรุงสต็อกได้');
+    }
+  }
+
+  /**
+   * Search by barcode or serial number
+   */
+  static async searchByBarcode(searchData: {
+    barcode: string;
+    warehouseId?: string;
+  }): Promise<{
+    found: boolean;
+    serialNumber?: SerialNumber;
+    suggestions?: SerialNumber[];
+  }> {
+    try {
+      // Search for exact match first
+      let query = supabase
+        .from('product_serial_numbers')
+        .select(`
+          *,
+          product:products(id, name, code, brand, model, category),
+          warehouse:warehouses(id, name, code),
+          supplier:suppliers(id, name, code)
+        `)
+        .or(`serial_number.eq.${searchData.barcode},product.barcode.eq.${searchData.barcode}`);
+
+      if (searchData.warehouseId) {
+        query = query.eq('warehouse_id', searchData.warehouseId);
+      }
+
+      const { data: exactMatch, error: exactError } = await query.limit(1);
+
+      if (exactError) throw exactError;
+
+      if (exactMatch && exactMatch.length > 0) {
+        const serialNumber = exactMatch[0];
+        return {
+          found: true,
+          serialNumber: {
+            id: serialNumber.id,
+            serialNumber: serialNumber.serial_number,
+            productId: serialNumber.product_id,
+            product: serialNumber.product,
+            warehouseId: serialNumber.warehouse_id,
+            warehouse: serialNumber.warehouse,
+            unitCost: serialNumber.unit_cost,
+            supplierId: serialNumber.supplier_id,
+            supplier: serialNumber.supplier,
+            invoiceNumber: serialNumber.invoice_number,
+            status: serialNumber.status,
+            soldAt: serialNumber.sold_at ? new Date(serialNumber.sold_at) : undefined,
+            soldTo: serialNumber.sold_to,
+            referenceNumber: serialNumber.reference_number,
+            notes: serialNumber.notes,
+            createdAt: new Date(serialNumber.created_at),
+            updatedAt: new Date(serialNumber.updated_at)
+          }
+        };
+      }
+
+      // If no exact match, search for similar items
+      let suggestionQuery = supabase
+        .from('product_serial_numbers')
+        .select(`
+          *,
+          product:products(id, name, code, brand, model, category),
+          warehouse:warehouses(id, name, code)
+        `)
+        .or(`serial_number.ilike.%${searchData.barcode}%,product.name.ilike.%${searchData.barcode}%,product.code.ilike.%${searchData.barcode}%`);
+
+      if (searchData.warehouseId) {
+        suggestionQuery = suggestionQuery.eq('warehouse_id', searchData.warehouseId);
+      }
+
+      const { data: suggestions, error: suggestionError } = await suggestionQuery.limit(5);
+
+      if (suggestionError) throw suggestionError;
+
+      const suggestionResults: SerialNumber[] = (suggestions || []).map(item => ({
+        id: item.id,
+        serialNumber: item.serial_number,
+        productId: item.product_id,
+        product: item.product,
+        warehouseId: item.warehouse_id,
+        warehouse: item.warehouse,
+        unitCost: item.unit_cost,
+        supplierId: item.supplier_id,
+        invoiceNumber: item.invoice_number,
+        status: item.status,
+        soldAt: item.sold_at ? new Date(item.sold_at) : undefined,
+        soldTo: item.sold_to,
+        referenceNumber: item.reference_number,
+        notes: item.notes,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at)
+      }));
+
+      return {
+        found: false,
+        suggestions: suggestionResults
+      };
+
+    } catch (error) {
+      console.error('Error searching by barcode:', error);
+      throw new Error('ไม่สามารถค้นหาบาร์โค้ดได้');
+    }
+  }
+
+  /**
+   * Log barcode scan activity
+   */
+  static async logBarcodeScan(scanData: {
+    barcode: string;
+    warehouseId: string;
+    found: boolean;
+    serialNumberId?: string;
+    performedBy: string;
+    notes?: string;
+  }): Promise<void> {
+    try {
+      // Log the scan activity
+      await this.logStockMovement({
+        productId: scanData.serialNumberId ? 'scan-activity' : 'unknown',
+        serialNumberId: scanData.serialNumberId,
+        warehouseId: scanData.warehouseId,
+        movementType: 'scan',
+        quantity: 0, // No quantity change for scans
+        referenceType: 'barcode_scan',
+        referenceNumber: `SCAN-${Date.now()}`,
+        notes: `Barcode scan: ${scanData.barcode} - ${scanData.found ? 'Found' : 'Not found'}${scanData.notes ? ` - ${scanData.notes}` : ''}`,
+        performedBy: scanData.performedBy
+      });
+    } catch (error) {
+      console.error('Error logging barcode scan:', error);
+      // Don't throw error for logging failures
+    }
+  }
+
+  /**
+   * Process batch operations
+   */
+  static async processBatchOperation(batchData: {
+    type: string;
+    warehouseId: string;
+    serialNumbers: string[];
+    targetWarehouseId?: string;
+    newStatus?: string;
+    newPrice?: number;
+    adjustmentReason?: string;
+    notes?: string;
+    performedBy: string;
+  }): Promise<{
+    batchNumber: string;
+    results: Array<{
+      serialNumber: string;
+      success: boolean;
+      message: string;
+    }>;
+  }> {
+    try {
+      const batchNumber = `BATCH-${Date.now()}`;
+      const results: Array<{
+        serialNumber: string;
+        success: boolean;
+        message: string;
+      }> = [];
+
+      // Process each serial number
+      for (const serialNumber of batchData.serialNumbers) {
+        try {
+          // Get serial number details first
+          const { data: snData, error: snError } = await supabase
+            .from('product_serial_numbers')
+            .select('*')
+            .eq('serial_number', serialNumber)
+            .eq('warehouse_id', batchData.warehouseId)
+            .single();
+
+          if (snError || !snData) {
+            results.push({
+              serialNumber,
+              success: false,
+              message: 'ไม่พบ Serial Number ในคลังนี้'
+            });
+            continue;
+          }
+
+          // Process based on operation type
+          switch (batchData.type) {
+            case 'status_update':
+              await this.updateSerialNumberStatus(snData.id, batchData.newStatus!, batchNumber);
+              results.push({
+                serialNumber,
+                success: true,
+                message: `อัปเดตสถานะเป็น ${batchData.newStatus} แล้ว`
+              });
+              break;
+
+            case 'transfer':
+              await this.transferSerialNumber(snData.id, batchData.targetWarehouseId!, batchNumber);
+              results.push({
+                serialNumber,
+                success: true,
+                message: `โอนย้ายไปคลังปลายทางแล้ว`
+              });
+              break;
+
+            case 'adjust':
+              await this.adjustSerialNumber(snData.id, batchData.adjustmentReason!, batchNumber);
+              results.push({
+                serialNumber,
+                success: true,
+                message: 'ปรับปรุงข้อมูลแล้ว'
+              });
+              break;
+
+            case 'price_update':
+              await this.updateSerialNumberPrice(snData.id, batchData.newPrice!, batchNumber);
+              results.push({
+                serialNumber,
+                success: true,
+                message: `อัปเดตราคาเป็น ฿${batchData.newPrice} แล้ว`
+              });
+              break;
+
+            default:
+              results.push({
+                serialNumber,
+                success: false,
+                message: `ไม่รองรับการดำเนินการ: ${batchData.type}`
+              });
+          }
+
+          // Log the batch operation
+          await this.logStockMovement({
+            productId: snData.product_id,
+            serialNumberId: snData.id,
+            warehouseId: batchData.warehouseId,
+            movementType: 'batch_operation',
+            quantity: 0, // No quantity change for batch operations
+            unitCost: snData.unit_cost,
+            referenceType: 'batch',
+            referenceNumber: batchNumber,
+            notes: `Batch ${batchData.type}: ${batchData.notes || ''}`,
+            performedBy: batchData.performedBy
+          });
+
+          // Log audit trail
+          await auditTrailService.logWarehouseOperation(
+            'BATCH_OPERATION',
+            'product_serial_numbers',
+            snData.id,
+            `ดำเนินการแบบกลุ่ม: ${batchData.type} สำหรับ ${serialNumber}`,
+            { status: snData.status },
+            { 
+              status: batchData.newStatus || snData.status,
+              warehouse_id: batchData.targetWarehouseId || snData.warehouse_id,
+              unit_cost: batchData.newPrice || snData.unit_cost
+            },
+            {
+              batch_number: batchNumber,
+              batch_type: batchData.type,
+              warehouse_id: batchData.warehouseId,
+              target_warehouse_id: batchData.targetWarehouseId,
+              performed_by: batchData.performedBy
+            }
+          );
+
+        } catch (error) {
+          console.error(`Error processing ${serialNumber}:`, error);
+          results.push({
+            serialNumber,
+            success: false,
+            message: 'เกิดข้อผิดพลาดในการดำเนินการ'
+          });
+        }
+      }
+
+      return {
+        batchNumber,
+        results
+      };
+
+    } catch (error) {
+      console.error('Error processing batch operation:', error);
+      throw new Error('ไม่สามารถดำเนินการแบบกลุ่มได้');
+    }
+  }
+
+  /**
+   * Update serial number status (for batch operations)
+   */
+  private static async updateSerialNumberStatus(
+    serialNumberId: string, 
+    newStatus: string, 
+    batchNumber: string
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('product_serial_numbers')
+      .update({
+        status: newStatus,
+        reference_number: batchNumber,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', serialNumberId);
+
+    if (error) throw error;
+  }
+
+  /**
+   * Transfer serial number (for batch operations)
+   */
+  private static async transferSerialNumber(
+    serialNumberId: string, 
+    targetWarehouseId: string, 
+    batchNumber: string
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('product_serial_numbers')
+      .update({
+        warehouse_id: targetWarehouseId,
+        status: 'transferred',
+        reference_number: batchNumber,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', serialNumberId);
+
+    if (error) throw error;
+  }
+
+  /**
+   * Adjust serial number (for batch operations)
+   */
+  private static async adjustSerialNumber(
+    serialNumberId: string, 
+    reason: string, 
+    batchNumber: string
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('product_serial_numbers')
+      .update({
+        notes: reason,
+        reference_number: batchNumber,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', serialNumberId);
+
+    if (error) throw error;
+  }
+
+  /**
+   * Update serial number price (for batch operations)
+   */
+  private static async updateSerialNumberPrice(
+    serialNumberId: string, 
+    newPrice: number, 
+    batchNumber: string
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('product_serial_numbers')
+      .update({
+        unit_cost: newPrice,
+        reference_number: batchNumber,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', serialNumberId);
+
+    if (error) throw error;
+  }
 
   /**
    * Receive goods into warehouse

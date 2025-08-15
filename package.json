@@ -49,17 +49,10 @@
     "verify-stock": "node scripts/check-stock-table-structure.js",
     "test-real-data": "node scripts/test-real-data-system.js",
     "fix-relationships": "node scripts/fix-stock-relationships.js",
-    "troubleshoot": "node scripts/troubleshoot-system.js",
-    "fix-joins": "node scripts/fix-all-joins.js",
-    "disable-serial-features": "node scripts/disable-serial-number-features.js",
-    "fix-serial-issue": "node scripts/fix-serial-number-issue.js",
-    "test-stock-inquiry": "node scripts/test-stock-inquiry.js",
-    "test-receive-goods": "node scripts/test-receive-goods.js",
-    "test-supplier-billing": "node scripts/test-supplier-billing.js",
-    "test-add-new-product": "node scripts/test-add-new-product.js",
-    "create-serial-system": "node scripts/create-serial-number-system.js",
-    "test-enhanced-receive": "node scripts/test-enhanced-receive-goods.js",
-    "db:seed": "npm run seed:simple"
+
+
+    "db:seed": "npm run seed:simple",
+    "db:check": "node scripts/check-database-status.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

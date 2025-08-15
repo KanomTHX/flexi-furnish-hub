@@ -2,18 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Plus, Minus, Save, X } from 'lucide-react';
-import { SerialNumber } from '@/types/warehouse';
-import BarcodeScanner from './BarcodeScanner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  AlertTriangle, 
+  Plus, 
+  Minus, 
+  Save, 
+  X, 
+  Search,
+  Edit,
+  CheckCircle,
+  Clock,
+  Eye,
+  QrCode,
+  Package,
+  History
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { WarehouseService } from '@/services/warehouseService';
+import type { SerialNumber, StockLevel, Warehouse } from '@/types/warehouse';
 
 interface StockAdjustmentProps {
   warehouseId: string;
-  onAdjustmentComplete: (adjustment: StockAdjustmentData) => void;
-  onCancel?: () => void;
+  warehouses: Warehouse[];
 }
 
 export interface StockAdjustmentData {
@@ -24,365 +40,806 @@ export interface StockAdjustmentData {
   reason: string;
   notes?: string;
   totalItems: number;
+  performedBy: string;
 }
 
 export interface AdjustmentItem {
-  serialNumber: string;
-  productId: string;
-  productName: string;
-  currentStatus: string;
-  newStatus?: string;
+  serialNumber: SerialNumber;
   adjustmentType: 'add' | 'remove' | 'status_change' | 'correction';
   reason: string;
-  unitCost?: number;
+  newStatus?: string;
+  quantityChange?: number;
+}
+
+export interface AdjustmentRecord {
+  id: string;
+  adjustmentNumber: string;
+  warehouseId: string;
+  warehouseName: string;
+  adjustmentType: AdjustmentType;
+  totalItems: number;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  createdBy: string;
+  approvedBy?: string;
+  approvedAt?: string;
 }
 
 export type AdjustmentType = 'count' | 'damage' | 'loss' | 'found' | 'correction';
 
 export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
-  warehouseId,
-  onAdjustmentComplete,
-  onCancel
+  warehouseId: initialWarehouseId,
+  warehouses
 }) => {
-  const [adjustmentType, setAdjustmentType] = useState<AdjustmentType>('correction');
-  const [reason, setReason] = useState('');
-  const [notes, setNotes] = useState('');
-  const [items, setItems] = useState<AdjustmentItem[]>([]);
-  const [showScanner, setShowScanner] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [currentItem, setCurrentItem] = useState<Partial<AdjustmentItem>>({});
+  // State management
+  const [activeTab, setActiveTab] = useState('create');
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedWarehouse, setSelectedWarehouse] = useState(initialWarehouseId);
+  const [stockLevels, setStockLevels] = useState<StockLevel[]>([]);
+  const [serialNumbers, setSerialNumbers] = useState<SerialNumber[]>([]);
+  const [adjustmentHistory, setAdjustmentHistory] = useState<AdjustmentRecord[]>([]);
+  
+  // Form state
+  const [adjustmentForm, setAdjustmentForm] = useState({
+    warehouseId: initialWarehouseId,
+    adjustmentType: 'correction' as AdjustmentType,
+    reason: '',
+    notes: '',
+    items: [] as AdjustmentItem[],
+    performedBy: 'current-user' // Should come from auth context
+  });
 
-  const adjustmentTypes = [
-    { value: 'count', label: 'Stock Count Adjustment' },
-    { value: 'damage', label: 'Damage Report' },
-    { value: 'loss', label: 'Loss/Theft Report' },
-    { value: 'found', label: 'Found Items' },
-    { value: 'correction', label: 'Data Correction' }
-  ];
+  // Modal states
+  const [showProductSearch, setShowProductSearch] = useState(false);
+  const [showSerialNumberModal, setShowSerialNumberModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<StockLevel | null>(null);
+  const [showAdjustmentPreview, setShowAdjustmentPreview] = useState(false);
 
-  const handleScanBarcode = async (barcode: string) => {
-    // Check if item already exists
-    if (items.some(item => item.serialNumber === barcode)) {
-      alert('Serial number already added to adjustment');
+  // Load data on component mount
+  useEffect(() => {
+    if (selectedWarehouse) {
+      loadStockLevels();
+    }
+    loadAdjustmentHistory();
+  }, [selectedWarehouse, searchTerm]);
+
+  // Load stock levels
+  const loadStockLevels = async () => {
+    try {
+      setLoading(true);
+      const response = await WarehouseService.getStockLevels({
+        warehouseId: selectedWarehouse,
+        search: searchTerm,
+        limit: 50
+      });
+      setStockLevels(response.data);
+    } catch (error) {
+      console.error('Error loading stock levels:', error);
+      toast.error('ไม่สามารถโหลดข้อมูลสต็อกได้');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load serial numbers for selected product
+  const loadSerialNumbers = async (productId: string) => {
+    try {
+      setLoading(true);
+      const response = await WarehouseService.getSerialNumbers({
+        warehouseId: selectedWarehouse,
+        productId: productId,
+        limit: 100
+      });
+      setSerialNumbers(response.data);
+    } catch (error) {
+      console.error('Error loading serial numbers:', error);
+      toast.error('ไม่สามารถโหลดหมายเลขซีเรียลได้');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load adjustment history
+  const loadAdjustmentHistory = async () => {
+    try {
+      const response = await WarehouseService.getStockMovements({
+        warehouseId: selectedWarehouse,
+        movementType: 'adjustment',
+        limit: 20
+      });
+      
+      // Transform movements to adjustment records (simplified)
+      const adjustments: AdjustmentRecord[] = response.data.map(movement => ({
+        id: movement.id,
+        adjustmentNumber: movement.referenceNumber || `ADJ-${movement.id.slice(-8)}`,
+        warehouseId: movement.warehouseId,
+        warehouseName: movement.warehouse?.name || 'Unknown',
+        adjustmentType: 'correction' as AdjustmentType,
+        totalItems: movement.quantity,
+        reason: movement.notes || 'Stock adjustment',
+        status: 'approved' as const,
+        createdAt: movement.createdAt.toISOString(),
+        createdBy: movement.performedBy
+      }));
+      
+      setAdjustmentHistory(adjustments);
+    } catch (error) {
+      console.error('Error loading adjustment history:', error);
+    }
+  };
+
+  // Handle product selection
+  const handleProductSelect = async (stockLevel: StockLevel) => {
+    setSelectedProduct(stockLevel);
+    await loadSerialNumbers(stockLevel.productId);
+    setShowSerialNumberModal(true);
+  };
+
+  // Handle serial number selection
+  const handleSerialNumberSelect = (serialNumber: SerialNumber, adjustmentType: 'add' | 'remove' | 'status_change' | 'correction') => {
+    const existingItem = adjustmentForm.items.find(
+      item => item.serialNumber.id === serialNumber.id
+    );
+
+    if (existingItem) {
+      toast.warning('สินค้าชิ้นนี้ถูกเลือกแล้ว');
       return;
     }
 
-    // Fetch serial number details
-    try {
-      // This would be replaced with actual API call
-      const mockSNData = {
-        serialNumber: barcode,
-        productId: 'prod-1',
-        productName: 'Sample Product',
-        currentStatus: 'available',
-        unitCost: 1000
-      };
+    setAdjustmentForm(prev => ({
+      ...prev,
+      items: [...prev.items, {
+        serialNumber,
+        adjustmentType,
+        reason: '',
+        quantityChange: adjustmentType === 'add' ? 1 : adjustmentType === 'remove' ? -1 : 0
+      }]
+    }));
 
-      setCurrentItem({
-        serialNumber: barcode,
-        productId: mockSNData.productId,
-        productName: mockSNData.productName,
-        currentStatus: mockSNData.currentStatus,
+    toast.success(`เพิ่ม ${serialNumber.product?.name} (${serialNumber.serialNumber}) แล้ว`);
+    setShowSerialNumberModal(false);
+  };
+
+  // Remove item from adjustment list
+  const handleRemoveItem = (serialNumberId: string) => {
+    setAdjustmentForm(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.serialNumber.id !== serialNumberId)
+    }));
+    toast.success('ลบรายการแล้ว');
+  };
+
+  // Handle form submission
+  const handleSubmitAdjustment = async () => {
+    try {
+      // Validation
+      if (!adjustmentForm.warehouseId) {
+        toast.error('กรุณาเลือกคลังสินค้า');
+        return;
+      }
+
+      if (adjustmentForm.items.length === 0) {
+        toast.error('กรุณาเลือกสินค้าที่ต้องการปรับปรุง');
+        return;
+      }
+
+      if (!adjustmentForm.reason.trim()) {
+        toast.error('กรุณาระบุเหตุผลการปรับปรุงสต็อก');
+        return;
+      }
+
+      setLoading(true);
+
+      // Process adjustment for each item
+      for (const item of adjustmentForm.items) {
+        // Update serial number status if needed
+        if (item.adjustmentType === 'status_change' && item.newStatus) {
+          await updateSerialNumberStatus(item.serialNumber.id, item.newStatus, {
+            referenceNumber: `ADJ-${Date.now()}`,
+            notes: `${adjustmentForm.reason} - ${item.reason}`
+          });
+        }
+
+        // Log stock movement
+        await WarehouseService.logStockMovement({
+          productId: item.serialNumber.productId,
+          serialNumberId: item.serialNumber.id,
+          warehouseId: adjustmentForm.warehouseId,
+          movementType: 'adjustment',
+          quantity: item.quantityChange || 1,
+          unitCost: item.serialNumber.unitCost,
+          referenceType: 'adjustment',
+          referenceNumber: `ADJ-${Date.now()}`,
+          notes: `${adjustmentForm.adjustmentType}: ${adjustmentForm.reason} - ${item.reason}`,
+          performedBy: adjustmentForm.performedBy
+        });
+      }
+
+      toast.success(`ปรับปรุงสต็อกสำเร็จ ${adjustmentForm.items.length} รายการ`);
+      
+      // Reset form
+      setAdjustmentForm({
+        warehouseId: selectedWarehouse,
         adjustmentType: 'correction',
         reason: '',
-        unitCost: mockSNData.unitCost
+        notes: '',
+        items: [],
+        performedBy: 'current-user'
       });
+
+      // Reload data
+      loadStockLevels();
+      loadAdjustmentHistory();
+
     } catch (error) {
-      alert('Failed to fetch serial number details');
-    }
-  };
-
-  const addCurrentItem = () => {
-    if (!currentItem.serialNumber || !currentItem.reason) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    const newItem: AdjustmentItem = {
-      serialNumber: currentItem.serialNumber!,
-      productId: currentItem.productId!,
-      productName: currentItem.productName!,
-      currentStatus: currentItem.currentStatus!,
-      newStatus: currentItem.newStatus,
-      adjustmentType: currentItem.adjustmentType!,
-      reason: currentItem.reason!,
-      unitCost: currentItem.unitCost
-    };
-
-    setItems([...items, newItem]);
-    setCurrentItem({});
-    setShowScanner(false);
-  };
-
-  const removeItem = (serialNumber: string) => {
-    setItems(items.filter(item => item.serialNumber !== serialNumber));
-  };
-
-  const handleSubmit = async () => {
-    if (!reason || items.length === 0) {
-      alert('Please provide a reason and add at least one item');
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      const adjustmentData: StockAdjustmentData = {
-        adjustmentNumber: `ADJ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        warehouseId,
-        adjustmentType,
-        items,
-        reason,
-        notes,
-        totalItems: items.length
-      };
-
-      await onAdjustmentComplete(adjustmentData);
-    } catch (error) {
-      alert('Failed to process adjustment');
+      console.error('Error processing adjustment:', error);
+      toast.error('เกิดข้อผิดพลาดในการปรับปรุงสต็อก');
     } finally {
-      setIsProcessing(false);
+      setLoading(false);
     }
   };
 
-  const getAdjustmentTypeColor = (type: string) => {
+  // Update serial number status
+  const updateSerialNumberStatus = async (
+    serialNumberId: string, 
+    status: string, 
+    updates: any
+  ) => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    const { error } = await supabase
+      .from('product_serial_numbers')
+      .update({
+        status,
+        reference_number: updates.referenceNumber,
+        notes: updates.notes,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', serialNumberId);
+
+    if (error) throw error;
+  };
+
+  // Calculate totals
+  const calculateTotals = () => {
+    const totalItems = adjustmentForm.items.length;
+    const totalValue = adjustmentForm.items.reduce(
+      (sum, item) => sum + item.serialNumber.unitCost, 
+      0
+    );
+    return { totalItems, totalValue };
+  };
+
+  const { totalItems, totalValue } = calculateTotals();
+
+  // Get adjustment type badge color
+  const getAdjustmentTypeBadge = (type: string) => {
     switch (type) {
-      case 'add': return 'bg-green-100 text-green-800';
-      case 'remove': return 'bg-red-100 text-red-800';
-      case 'status_change': return 'bg-blue-100 text-blue-800';
-      case 'correction': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'add':
+        return <Badge className="bg-green-100 text-green-800">เพิ่มสต็อก</Badge>;
+      case 'remove':
+        return <Badge className="bg-red-100 text-red-800">ลดสต็อก</Badge>;
+      case 'status_change':
+        return <Badge className="bg-blue-100 text-blue-800">เปลี่ยนสถานะ</Badge>;
+      case 'correction':
+        return <Badge className="bg-yellow-100 text-yellow-800">แก้ไขข้อมูล</Badge>;
+      default:
+        return <Badge variant="secondary">{type}</Badge>;
+    }
+  };
+
+  // Get status badge color
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800">รอดำเนินการ</Badge>;
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800">อนุมัติแล้ว</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">ปฏิเสธ</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Edit className="h-6 w-6" />
+            ปรับปรุงสต็อก
+          </h2>
+          <p className="text-muted-foreground">จัดการการปรับปรุงและแก้ไขสต็อกสินค้า</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowAdjustmentPreview(true)} disabled={adjustmentForm.items.length === 0}>
+            <Eye className="h-4 w-4 mr-2" />
+            ดูตัวอย่าง
+          </Button>
+          <Button onClick={handleSubmitAdjustment} disabled={loading || adjustmentForm.items.length === 0}>
+            <CheckCircle className="h-4 w-4 mr-2" />
+            {loading ? 'กำลังดำเนินการ...' : 'ยืนยันการปรับปรุง'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Warehouse Selection */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
-            <span>Stock Adjustment</span>
-          </CardTitle>
+          <CardTitle>เลือกคลังสินค้า</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Adjustment Type */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Adjustment Type</label>
-            <Select value={adjustmentType} onValueChange={(value: AdjustmentType) => setAdjustmentType(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {adjustmentTypes.map(type => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Reason */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Reason *</label>
-            <Textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Explain the reason for this adjustment"
-              rows={3}
-            />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Additional Notes</label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any additional information"
-              rows={2}
-            />
-          </div>
+        <CardContent>
+          <Select 
+            value={selectedWarehouse} 
+            onValueChange={(value) => {
+              setSelectedWarehouse(value);
+              setAdjustmentForm(prev => ({ ...prev, warehouseId: value }));
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="เลือกคลังสินค้า" />
+            </SelectTrigger>
+            <SelectContent>
+              {warehouses.map((warehouse) => (
+                <SelectItem key={warehouse.id} value={warehouse.id}>
+                  {warehouse.name} ({warehouse.code})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
-      {/* Add Items */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Adjustment Items</CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowScanner(!showScanner)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {showScanner && (
-            <div className="border rounded-lg p-4 space-y-4">
-              <BarcodeScanner
-                onScan={handleScanBarcode}
-                title="Scan Item for Adjustment"
-                placeholder="Scan or enter serial number"
-                isOpen={true}
-              />
+      {selectedWarehouse && (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="create">สร้างการปรับปรุง</TabsTrigger>
+            <TabsTrigger value="items">รายการที่เลือก ({adjustmentForm.items.length})</TabsTrigger>
+            <TabsTrigger value="history">ประวัติการปรับปรุง</TabsTrigger>
+          </TabsList>
 
-              {currentItem.serialNumber && (
-                <div className="space-y-4 border-t pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">Serial Number</label>
-                      <Input value={currentItem.serialNumber} disabled />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">Product</label>
-                      <Input value={currentItem.productName} disabled />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">Current Status</label>
-                      <Input value={currentItem.currentStatus} disabled />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">Adjustment Type</label>
-                      <Select 
-                        value={currentItem.adjustmentType} 
-                        onValueChange={(value: 'add' | 'remove' | 'status_change' | 'correction') => 
-                          setCurrentItem({...currentItem, adjustmentType: value})
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="add">Add to Stock</SelectItem>
-                          <SelectItem value="remove">Remove from Stock</SelectItem>
-                          <SelectItem value="status_change">Change Status</SelectItem>
-                          <SelectItem value="correction">Data Correction</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {currentItem.adjustmentType === 'status_change' && (
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">New Status</label>
-                      <Select 
-                        value={currentItem.newStatus} 
-                        onValueChange={(value) => setCurrentItem({...currentItem, newStatus: value})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select new status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="available">Available</SelectItem>
-                          <SelectItem value="damaged">Damaged</SelectItem>
-                          <SelectItem value="claimed">Claimed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">Item Reason *</label>
-                    <Textarea
-                      value={currentItem.reason || ''}
-                      onChange={(e) => setCurrentItem({...currentItem, reason: e.target.value})}
-                      placeholder="Specific reason for this item adjustment"
-                      rows={2}
+          {/* Create Adjustment Tab */}
+          <TabsContent value="create" className="space-y-6">
+            {/* Search Products */}
+            <Card>
+              <CardHeader>
+                <CardTitle>ค้นหาสินค้า</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="ค้นหาสินค้า..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full"
                     />
                   </div>
+                  <Button onClick={loadStockLevels} disabled={loading}>
+                    <Search className="h-4 w-4 mr-2" />
+                    ค้นหา
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-                  <div className="flex space-x-2">
-                    <Button onClick={addCurrentItem} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Item
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        setCurrentItem({});
-                        setShowScanner(false);
-                      }}
+            {/* Stock Levels */}
+            <Card>
+              <CardHeader>
+                <CardTitle>สินค้าในคลัง</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-8">กำลังโหลด...</div>
+                ) : stockLevels.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    ไม่พบสินค้าในคลัง
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>สินค้า</TableHead>
+                        <TableHead>รหัส</TableHead>
+                        <TableHead>จำนวนคงเหลือ</TableHead>
+                        <TableHead>มูลค่า</TableHead>
+                        <TableHead>การดำเนินการ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {stockLevels.map((stock) => (
+                        <TableRow key={`${stock.productId}-${stock.warehouseId}`}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{stock.productName}</p>
+                              {stock.brand && (
+                                <p className="text-sm text-muted-foreground">{stock.brand}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono">{stock.productCode}</TableCell>
+                          <TableCell>
+                            <Badge variant={stock.availableQuantity > 5 ? 'default' : 'destructive'}>
+                              {stock.totalQuantity} ชิ้น
+                            </Badge>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              พร้อมใช้: {stock.availableQuantity}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            ฿{stock.availableValue.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              onClick={() => handleProductSelect(stock)}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              เลือก
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Items Tab */}
+          <TabsContent value="items" className="space-y-6">
+            {/* Adjustment Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>ข้อมูลการปรับปรุง</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="adjustmentType">ประเภทการปรับปรุง</Label>
+                    <Select 
+                      value={adjustmentForm.adjustmentType} 
+                      onValueChange={(value: AdjustmentType) => setAdjustmentForm(prev => ({ ...prev, adjustmentType: value }))}
                     >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="count">นับสต็อก</SelectItem>
+                        <SelectItem value="damage">สินค้าเสียหาย</SelectItem>
+                        <SelectItem value="loss">สินค้าสูญหาย</SelectItem>
+                        <SelectItem value="found">พบสินค้าเพิ่ม</SelectItem>
+                        <SelectItem value="correction">แก้ไขข้อมูล</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Items List */}
-          {items.length > 0 && (
-            <div>
-              <h4 className="font-medium mb-2">Items to Adjust ({items.length})</h4>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Serial Number</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Current Status</TableHead>
-                    <TableHead>Adjustment</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-mono text-sm">{item.serialNumber}</TableCell>
-                      <TableCell>{item.productName}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{item.currentStatus}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getAdjustmentTypeColor(item.adjustmentType)}>
-                          {item.adjustmentType.replace('_', ' ')}
-                        </Badge>
-                        {item.newStatus && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            → {item.newStatus}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">{item.reason}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(item.serialNumber)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+                <div>
+                  <Label htmlFor="reason">เหตุผลการปรับปรุง *</Label>
+                  <Input
+                    id="reason"
+                    value={adjustmentForm.reason}
+                    onChange={(e) => setAdjustmentForm(prev => ({ ...prev, reason: e.target.value }))}
+                    placeholder="ระบุเหตุผล"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="notes">หมายเหตุ</Label>
+                  <Textarea
+                    id="notes"
+                    value={adjustmentForm.notes}
+                    onChange={(e) => setAdjustmentForm(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="หมายเหตุเพิ่มเติม"
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Selected Items */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>รายการสินค้าที่เลือก</span>
+                  <Badge variant="secondary">{totalItems} รายการ</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {adjustmentForm.items.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>ยังไม่มีสินค้าที่เลือก</p>
+                    <p className="text-sm">กลับไปที่แท็บ "สร้างการปรับปรุง" เพื่อเลือกสินค้า</p>
+                  </div>
+                ) : (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>สินค้า</TableHead>
+                          <TableHead>Serial Number</TableHead>
+                          <TableHead>สถานะปัจจุบัน</TableHead>
+                          <TableHead>การปรับปรุง</TableHead>
+                          <TableHead>การดำเนินการ</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {adjustmentForm.items.map((item) => (
+                          <TableRow key={item.serialNumber.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{item.serialNumber.product?.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.serialNumber.product?.code}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono">
+                              {item.serialNumber.serialNumber}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{item.serialNumber.status}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {getAdjustmentTypeBadge(item.adjustmentType)}
+                              {item.newStatus && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  → {item.newStatus}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveItem(item.serialNumber.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+
+                    {/* Summary */}
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">รวมทั้งหมด:</span>
+                        <div className="text-right">
+                          <p className="font-bold text-lg">
+                            {totalItems} รายการ
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            มูลค่า ฿{totalValue.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>ประวัติการปรับปรุงสต็อก</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {adjustmentHistory.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>ไม่มีประวัติการปรับปรุงสต็อก</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>เลขที่การปรับปรุง</TableHead>
+                        <TableHead>คลัง</TableHead>
+                        <TableHead>ประเภท</TableHead>
+                        <TableHead>สถานะ</TableHead>
+                        <TableHead>จำนวน</TableHead>
+                        <TableHead>วันที่</TableHead>
+                        <TableHead>ผู้ดำเนินการ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {adjustmentHistory.map((adjustment) => (
+                        <TableRow key={adjustment.id}>
+                          <TableCell className="font-mono">
+                            {adjustment.adjustmentNumber}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{adjustment.warehouseName}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{adjustment.adjustmentType}</Badge>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(adjustment.status)}</TableCell>
+                          <TableCell>
+                            {adjustment.totalItems} รายการ
+                          </TableCell>
+                          <TableCell>
+                            {new Date(adjustment.createdAt).toLocaleDateString('th-TH')}
+                          </TableCell>
+                          <TableCell>{adjustment.createdBy}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
+
+      {/* Serial Number Selection Modal */}
+      {showSerialNumberModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>เลือก Serial Number - {selectedProduct.productName}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSerialNumberModal(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">กำลังโหลด...</div>
+              ) : serialNumbers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  ไม่มี Serial Number ในคลังนี้
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Serial Number</TableHead>
+                      <TableHead>สถานะ</TableHead>
+                      <TableHead>ราคาทุน</TableHead>
+                      <TableHead>การดำเนินการ</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  </TableHeader>
+                  <TableBody>
+                    {serialNumbers.map((sn) => (
+                      <TableRow key={sn.id}>
+                        <TableCell className="font-mono">{sn.serialNumber}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{sn.status}</Badge>
+                        </TableCell>
+                        <TableCell>฿{sn.unitCost.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSerialNumberSelect(sn, 'status_change')}
+                            >
+                              เปลี่ยนสถานะ
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleSerialNumberSelect(sn, 'correction')}
+                            >
+                              แก้ไขข้อมูล
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-          {/* Submit Actions */}
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            {onCancel && (
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            )}
-            <Button
-              onClick={handleSubmit}
-              disabled={!reason || items.length === 0 || isProcessing}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {isProcessing ? 'Processing...' : `Submit Adjustment (${items.length} items)`}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Adjustment Preview Modal */}
+      {showAdjustmentPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>ตัวอย่างการปรับปรุงสต็อก</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAdjustmentPreview(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center border-b pb-4">
+                <h3 className="text-lg font-bold">ใบปรับปรุงสต็อก</h3>
+                <p className="text-sm text-muted-foreground">
+                  วันที่: {new Date().toLocaleDateString('th-TH')}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p><strong>คลังสินค้า:</strong> {warehouses.find(w => w.id === selectedWarehouse)?.name}</p>
+                  <p><strong>ประเภท:</strong> {adjustmentForm.adjustmentType}</p>
+                </div>
+                <div>
+                  <p><strong>เหตุผล:</strong> {adjustmentForm.reason}</p>
+                  <p><strong>จำนวนรายการ:</strong> {totalItems}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">รายการสินค้า:</h4>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>สินค้า</TableHead>
+                      <TableHead>Serial Number</TableHead>
+                      <TableHead>การปรับปรุง</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {adjustmentForm.items.map((item) => (
+                      <TableRow key={item.serialNumber.id}>
+                        <TableCell className="text-sm">
+                          {item.serialNumber.product?.name}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {item.serialNumber.serialNumber}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {getAdjustmentTypeBadge(item.adjustmentType)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex justify-between font-medium">
+                  <span>รวมทั้งหมด:</span>
+                  <span>{totalItems} รายการ (฿{totalValue.toLocaleString()})</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1">
+                  <Save className="h-4 w-4 mr-2" />
+                  พิมพ์
+                </Button>
+                <Button onClick={handleSubmitAdjustment} className="flex-1" disabled={loading}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  ยืนยันการปรับปรุง
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

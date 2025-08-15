@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,7 +48,32 @@ export default function Warehouses() {
   const { currentBranch } = useBranchData();
   const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Load warehouses on component mount
+  useEffect(() => {
+    loadWarehouses();
+  }, []);
+
+  const loadWarehouses = async () => {
+    try {
+      setLoading(true);
+      const { WarehouseService } = await import('@/services/warehouseService');
+      const warehousesData = await WarehouseService.getWarehouses();
+      setWarehouses(warehousesData);
+    } catch (error) {
+      console.error('Error loading warehouses:', error);
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "ไม่สามารถโหลดข้อมูลคลังสินค้าได้",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Quick action handlers
   const handleQuickAction = (action: string) => {
@@ -355,23 +380,23 @@ export default function Warehouses() {
         </TabsContent>
 
         <TabsContent value="withdraw" className="space-y-6">
-          <WithdrawDispatch warehouses={[]} />
+          <WithdrawDispatch warehouses={warehouses} />
         </TabsContent>
 
         <TabsContent value="transfer" className="space-y-6">
-          <Transfer warehouses={[]} currentWarehouseId="" />
+          <Transfer warehouses={warehouses} currentWarehouseId={warehouses[0]?.id || ''} />
         </TabsContent>
 
         <TabsContent value="barcode" className="space-y-6">
-          <BarcodeScanner onScan={() => {}} />
+          <BarcodeScanner onScan={() => {}} warehouses={warehouses} />
         </TabsContent>
 
         <TabsContent value="batch" className="space-y-6">
-          <BatchOperations onBatchProcess={() => {}} availableOperations={[]} />
+          <BatchOperations onBatchProcess={() => {}} availableOperations={[]} warehouses={warehouses} />
         </TabsContent>
 
         <TabsContent value="adjust" className="space-y-6">
-          <StockAdjustment warehouseId="" onAdjustmentComplete={() => {}} />
+          <StockAdjustment warehouseId={warehouses[0]?.id || ''} onAdjustmentComplete={() => {}} warehouses={warehouses} />
         </TabsContent>
 
         <TabsContent value="audit" className="space-y-6">
