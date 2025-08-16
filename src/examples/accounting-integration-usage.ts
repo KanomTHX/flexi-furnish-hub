@@ -351,12 +351,12 @@ export async function completeIntegrationWorkflow(systemType: AccountingSystemTy
     });
 
     const chartResult = await gateway.syncChartOfAccounts();
-    console.log('Chart of accounts synced:', chartResult.success);
+    console.log('Chart of accounts synced:', chartResult.recordsProcessed);
 
     // 5. Sync journal entries
     console.log('5. Syncing journal entries...');
     const entryResult = await gateway.syncJournalEntry(sampleJournalEntry);
-    console.log('Journal entry synced:', entryResult.success);
+    console.log('Journal entry synced:', entryResult.recordsProcessed);
 
     // 6. Complete sync monitoring
     console.log('6. Completing sync monitoring...');
@@ -364,16 +364,16 @@ export async function completeIntegrationWorkflow(systemType: AccountingSystemTy
       id: syncId,
       integrationId: `${systemType}-integration`,
       syncType: 'full' as const,
-      status: (chartResult.success && entryResult.success) ? 'success' as const : 'partial' as const,
+      status: (chartResult.recordsProcessed > 0 && entryResult.recordsProcessed > 0) ? 'success' as const : 'partial' as const,
       startedAt: new Date().toISOString(),
       completedAt: new Date().toISOString(),
       recordsProcessed: 2,
-      recordsSucceeded: (chartResult.success ? 1 : 0) + (entryResult.success ? 1 : 0),
-      recordsFailed: (!chartResult.success ? 1 : 0) + (!entryResult.success ? 1 : 0),
+      recordsSucceeded: (chartResult.recordsProcessed > 0 ? 1 : 0) + (entryResult.recordsProcessed > 0 ? 1 : 0),
+      recordsFailed: (chartResult.recordsProcessed === 0 ? 1 : 0) + (entryResult.recordsProcessed === 0 ? 1 : 0),
       errors: [],
       summary: {
         accountsSynced: chartResult.recordsProcessed || 0,
-        journalEntriesSynced: entryResult.success ? 1 : 0,
+        journalEntriesSynced: entryResult.recordsProcessed > 0 ? 1 : 0,
         customersSynced: 0,
         suppliersSynced: 0,
         conflictsDetected: 0,

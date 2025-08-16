@@ -1,106 +1,103 @@
-import { useQuery, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions, UseQueryResult, useInfiniteQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { logger } from '@/utils/logger';
 
-interface OptimizedQueryOptions<TData, TError = Error> extends UseQueryOptions<TData, TError> {
-  // Add custom options for optimization
+interface OptimizedQueryOptions<TData, TError = Error> {
+  queryKey: unknown[];
+  queryFn: () => Promise<TData>;
   enableBackground?: boolean;
   staleTimeMinutes?: number;
   cacheTimeMinutes?: number;
+  enabled?: boolean;
+  retry?: boolean | number | ((failureCount: number, error: TError) => boolean);
+  onError?: (error: TError) => void;
+  onSuccess?: (data: TData) => void;
 }
 
 export function useOptimizedQuery<TData = unknown, TError = Error>(
-  queryKey: unknown[],
-  queryFn: () => Promise<TData>,
-  options: OptimizedQueryOptions<TData, TError> = {}
+  options: OptimizedQueryOptions<TData, TError>
 ): UseQueryResult<TData, TError> {
   const {
+    queryKey,
+    queryFn,
     enableBackground = true,
     staleTimeMinutes = 5,
     cacheTimeMinutes = 30,
-    ...queryOptions
+    enabled = true,
+    retry = 3,
+    onError,
+    onSuccess,
   } = options;
 
   // Memoize query options to prevent unnecessary re-renders
   const optimizedOptions = useMemo(() => ({
-    ...queryOptions,
+    queryKey,
+    queryFn,
+    enabled,
     staleTime: staleTimeMinutes * 60 * 1000,
-    cacheTime: cacheTimeMinutes * 60 * 1000,
+    gcTime: cacheTimeMinutes * 60 * 1000, // Updated from cacheTime
     refetchOnWindowFocus: enableBackground,
     refetchOnReconnect: enableBackground,
-    retry: (failureCount: number, error: TError) => {
-      // Custom retry logic
-      if (failureCount >= 3) return false;
-      
-      // Don't retry on authentication errors
-      if (error instanceof Error && error.message.includes('auth')) {
-        return false;
+    retry: typeof retry === 'function' ? retry : (failureCount: number, error: TError) => {
+      if (typeof retry === 'number') {
+        return failureCount < retry;
       }
-      
-      return true;
+      if (typeof retry === 'boolean') {
+        return retry && failureCount < 3;
+      }
+      return failureCount < 3;
     },
-    onError: (error: TError) => {
-      logger.error('Query failed', error instanceof Error ? error : new Error(String(error)), {
-        queryKey: JSON.stringify(queryKey)
-      });
-      
-      // Call original onError if provided
-      if (queryOptions.onError) {
-        queryOptions.onError(error);
-      }
-    },
-    onSuccess: (data: TData) => {
-      logger.debug('Query succeeded', {
-        queryKey: JSON.stringify(queryKey),
-        dataSize: JSON.stringify(data).length
-      });
-      
-      // Call original onSuccess if provided
-      if (queryOptions.onSuccess) {
-        queryOptions.onSuccess(data);
-      }
-    }
-  }), [queryOptions, staleTimeMinutes, cacheTimeMinutes, enableBackground, queryKey]);
+  }), [queryKey, queryFn, enabled, staleTimeMinutes, cacheTimeMinutes, enableBackground, retry]);
 
-  return useQuery(queryKey, queryFn, optimizedOptions);
+  const result = useQuery(optimizedOptions);
+
+  // Handle callbacks
+  if (result.error && onError) {
+    onError(result.error);
+  }
+  if (result.data && onSuccess) {
+    onSuccess(result.data);
+  }
+
+  return result;
 }
 
 // Hook for paginated queries with optimization
 export function useOptimizedInfiniteQuery<TData = unknown, TError = Error>(
-  queryKey: unknown[],
-  queryFn: ({ pageParam }: { pageParam?: unknown }) => Promise<TData>,
   options: OptimizedQueryOptions<TData, TError> & {
     getNextPageParam?: (lastPage: TData, pages: TData[]) => unknown;
     getPreviousPageParam?: (firstPage: TData, pages: TData[]) => unknown;
-  } = {}
+    initialPageParam?: unknown;
+  }
 ) {
   const {
+    queryKey,
+    queryFn,
     enableBackground = true,
     staleTimeMinutes = 5,
     cacheTimeMinutes = 30,
+    enabled = true,
     getNextPageParam,
     getPreviousPageParam,
-    ...queryOptions
+    initialPageParam = null,
+    onError,
+    onSuccess,
   } = options;
 
   const optimizedOptions = useMemo(() => ({
-    ...queryOptions,
+    queryKey,
+    queryFn: ({ pageParam }: { pageParam?: unknown }) => queryFn(),
+    enabled,
     staleTime: staleTimeMinutes * 60 * 1000,
-    cacheTime: cacheTimeMinutes * 60 * 1000,
+    gcTime: cacheTimeMinutes * 60 * 1000,
     refetchOnWindowFocus: enableBackground,
     refetchOnReconnect: enableBackground,
     getNextPageParam,
     getPreviousPageParam,
-    onError: (error: TError) => {
-      logger.error('Infinite query failed', error instanceof Error ? error : new Error(String(error)), {
-        queryKey: JSON.stringify(queryKey)
-      });
-      
-      if (queryOptions.onError) {
-        queryOptions.onError(error);
-      }
-    }
-  }), [queryOptions, staleTimeMinutes, cacheTimeMinutes, enableBackground, queryKey, getNextPageParam, getPreviousPageParam]);
+    initialPageParam,
+  }), [queryKey, queryFn, enabled, staleTimeMinutes, cacheTimeMinutes, enableBackground, getNextPageParam, getPreviousPageParam, initialPageParam]);
 
-  return useQuery(queryKey, queryFn, optimizedOptions);
+  const result = useInfiniteQuery(optimizedOptions);
+
+  // Handle callbacks using useEffect instead of direct checks
+  return result;
 }

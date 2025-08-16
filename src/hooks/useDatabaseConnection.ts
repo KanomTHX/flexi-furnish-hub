@@ -132,7 +132,7 @@ export const useDatabaseConnection = () => {
     // Computed values
     isConnected: connectionStatus?.connected ?? false,
     isHealthy: health?.status === 'healthy',
-    hasData: stats && Object.values(stats).some(count => count > 0),
+    hasData: stats && Object.values(stats).some((count): count is number => typeof count === 'number' && count > 0),
     
     // Helper methods
     getConnectionLatency: () => connectionStatus?.latency,
@@ -157,7 +157,7 @@ export const useTableOperations = (tableName: string) => {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       const { data, error: tableError } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('count')
         .limit(1);
       

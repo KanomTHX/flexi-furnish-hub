@@ -170,7 +170,7 @@ export function useStock(options: UseStockOptions = {}): UseStockReturn {
       setError(null);
       const filters = { warehouseId, productId };
       const data = await WarehouseService.getStockLevels(filters);
-      setStockLevels(data);
+      setStockLevels(data.data || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch stock levels';
       setError(errorMessage);
@@ -189,8 +189,8 @@ export function useStock(options: UseStockOptions = {}): UseStockReturn {
       setLoading(true);
       setError(null);
       const filters = { warehouseId, productId };
-      const data = await WarehouseService.getMovementHistory(filters);
-      setMovements(data);
+      const data = await WarehouseService.getStockMovements(filters);
+      setMovements(data.data || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch movements';
       setError(errorMessage);

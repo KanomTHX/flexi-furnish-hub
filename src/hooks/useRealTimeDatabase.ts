@@ -285,7 +285,7 @@ export const useTableRealTime = <T = any>(
     
     try {
       const { data: tableData, error: fetchError } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -293,7 +293,7 @@ export const useTableRealTime = <T = any>(
         throw fetchError;
       }
       
-      setData(tableData || []);
+      setData(tableData as T[] || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
