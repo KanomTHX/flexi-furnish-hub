@@ -81,7 +81,7 @@ export default function Warehouses() {
   const loadWarehouses = async () => {
     try {
       setLoading(true);
-      const { WarehouseService } = await import('@/services/warehouseService');
+      const WarehouseService = await import('@/services/simpleWarehouseService');
       const warehousesData = await WarehouseService.getWarehouses();
       setWarehouses(warehousesData);
     } catch (error) {

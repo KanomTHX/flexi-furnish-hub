@@ -1,6 +1,6 @@
 // Real Warehouse Stock Hook - Connected to Database
 import { useState, useEffect, useCallback } from 'react';
-import { WarehouseService } from '@/services/warehouseService';
+import WarehouseService from '@/services/simpleWarehouseService';
 import type { StockLevel, StockMovement, SerialNumber } from '@/types/warehouse';
 import { useToast } from '@/hooks/use-toast';
 

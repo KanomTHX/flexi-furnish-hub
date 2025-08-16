@@ -1,6 +1,6 @@
 // Enhanced Warehouses Hook - Connected to Database with Advanced Features
 import { useState, useEffect, useCallback } from 'react';
-import { WarehouseService } from '@/services/warehouseService';
+import WarehouseService from '@/services/simpleWarehouseService';
 import type { Warehouse, StockLevel } from '@/types/warehouse';
 import { useToast } from '@/hooks/use-toast';
 

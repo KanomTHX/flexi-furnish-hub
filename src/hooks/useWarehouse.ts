@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { WarehouseService } from '@/services/warehouseService';
+import WarehouseService from '@/services/simpleWarehouseService';
 import type { Warehouse, StockLevel, StockMovement } from '@/types/warehouse';
 import { useToast } from '@/hooks/use-toast';
 

@@ -28,7 +28,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Employees = lazy(() => import("./pages/Employees"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const DatabaseSetup = lazy(() => import("./pages/DatabaseSetup"));
+// Database setup removed
 const DatabaseInstaller = lazy(() => import("./pages/DatabaseInstaller"));
 const DatabaseQuickStart = lazy(() => import("./pages/DatabaseQuickStart"));
 const ManualDatabaseSetup = lazy(() => import("./pages/ManualDatabaseSetup"));
@@ -162,15 +162,7 @@ const App = () => {
                 </AdminLayout>
               </ProtectedRoute>
             } />
-            <Route path="/database" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบฐานข้อมูล..." />}>
-                    <DatabaseSetup />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
+            {/* Database route removed */}
             <Route path="/database-installer" element={
               <ProtectedRoute>
                 <AdminLayout>

@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { useSystemIntegration } from '@/hooks/useSystemIntegration';
+import { useSimpleIntegration } from '@/hooks/useSimpleIntegration';
 import { useSupplierBilling } from '@/hooks/useSupplierBilling';
 import { useWarehouseStock } from '@/hooks/useWarehouseStock';
 
@@ -35,13 +35,7 @@ export function IntegrationDashboard() {
     generateSupplierAnalytics,
     generateSupplierPerformanceReport,
     isIntegrationEnabled
-  } = useSystemIntegration({
-    autoSync: true,
-    enableJournalEntries: true,
-    enablePOSIntegration: true,
-    enableWarehouseIntegration: true,
-    enableReporting: true
-  });
+  } = useSimpleIntegration();
 
   const { summary: supplierSummary } = useSupplierBilling();
   const { summary: warehouseSummary } = useWarehouseStock();

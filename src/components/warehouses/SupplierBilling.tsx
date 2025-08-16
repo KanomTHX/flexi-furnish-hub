@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSupplierBilling } from '@/hooks/useSupplierBilling';
-import { useSystemIntegration } from '@/hooks/useSystemIntegration';
+import { useSimpleIntegration } from '@/hooks/useSimpleIntegration';
 import type { Supplier, SupplierInvoice, SupplierPayment } from '@/types/supplier';
 
 export default function SupplierBilling() {
@@ -44,11 +44,7 @@ export default function SupplierBilling() {
     createPayment
   } = useSupplierBilling();
 
-  const {
-    createInvoiceWithJournalEntry,
-    createPaymentWithJournalEntry,
-    isIntegrationEnabled
-  } = useSystemIntegration();
+  const { isConnected } = useSimpleIntegration();
 
   // State for filters and search
   const [searchTerm, setSearchTerm] = useState('');
@@ -160,7 +156,7 @@ export default function SupplierBilling() {
           <Button>
             <FileText className="h-4 w-4 mr-2" />
             สร้างใบแจ้งหนี้
-            {isIntegrationEnabled.journalEntries && (
+            {isConnected && (
               <Badge variant="secondary" className="ml-2 text-xs">+JE</Badge>
             )}
           </Button>
@@ -583,7 +579,7 @@ export default function SupplierBilling() {
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   บันทึกการชำระเงิน
-                  {isIntegrationEnabled.journalEntries && (
+                  {isConnected && (
                     <Badge variant="secondary" className="ml-2 text-xs">+JE</Badge>
                   )}
                 </Button>

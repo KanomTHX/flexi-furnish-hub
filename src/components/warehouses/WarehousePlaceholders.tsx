@@ -38,15 +38,15 @@ export function BarcodeScanner({ onScan, warehouses }: { onScan: (data: string) 
 // Import the real SimpleBatchOperations component
 import SimpleBatchOperationsReal from './SimpleBatchOperations';
 
-// BatchOperations component (now using real implementation)
+// BatchOperations component (simple placeholder)
 export function BatchOperations({ onBatchProcess, availableOperations, warehouses }: { onBatchProcess: (operations: any[]) => void, availableOperations: any[], warehouses?: any[] }) {
-  // Simple placeholder that handles the callback correctly
-  const handleProcess = () => {
-    if (onBatchProcess) {
-      onBatchProcess([]);
-    }
-  };
-  return <SimpleBatchOperationsReal warehouses={warehouses || []} />;
+  // Simple placeholder implementation
+  return (
+    <div className="p-4">
+      <h3 className="text-lg font-semibold mb-2">Batch Operations</h3>
+      <p className="text-muted-foreground">Batch operations functionality</p>
+    </div>
+  );
 }
 
 // Import the real StockAdjustment component

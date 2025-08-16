@@ -24,7 +24,7 @@ import {
   User
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { WarehouseService } from '@/services/warehouseService';
+import WarehouseService from '@/services/simpleWarehouseService';
 import type { SerialNumber, StockLevel, Warehouse } from '@/types/warehouse';
 
 interface TransferProps {
