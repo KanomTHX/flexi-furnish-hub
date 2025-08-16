@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 
 // Import warehouse components - using placeholders
@@ -9,20 +13,20 @@ import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
 import { SimpleReceiveGoods } from '@/components/warehouses/SimpleReceiveGoods';
 import SupplierBillingFixed2 from '@/components/warehouses/SupplierBillingFixed2';
 import { IntegrationDashboard } from '@/components/integration/IntegrationDashboard';
-import { 
-  WithdrawDispatch, 
-  Transfer, 
-  BarcodeScanner, 
-  BatchOperations, 
-  StockAdjustment 
+import {
+  WithdrawDispatch,
+  Transfer,
+  BarcodeScanner,
+  BatchOperations,
+  StockAdjustment
 } from '@/components/warehouses/WarehousePlaceholders';
 import { RealTimeStockMonitor } from '@/components/warehouses/RealTimeStockMonitor';
 import AuditTrail from '@/components/warehouses/AuditTrail';
 import PrintButton from '@/components/warehouses/PrintButton';
 
-import { 
-  Warehouse as WarehouseIcon, 
-  Truck, 
+import {
+  Warehouse as WarehouseIcon,
+  Truck,
   AlertTriangle,
   BarChart3,
   Settings,
@@ -39,7 +43,14 @@ import {
   Edit,
   History,
   Printer,
-  Receipt
+  Receipt,
+  TrendingUp,
+  Clock,
+  Users,
+  Activity,
+  Zap,
+  Shield,
+  RefreshCw
 } from 'lucide-react';
 import { useBranchData } from '../hooks/useBranchData';
 import { BranchSelector } from '../components/branch/BranchSelector';
@@ -50,11 +61,19 @@ export default function Warehouses() {
   const [activeTab, setActiveTab] = useState('overview');
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [systemStats, setSystemStats] = useState({
+    totalProducts: 0,
+    totalValue: 0,
+    lowStockItems: 0,
+    recentTransactions: 0,
+    systemHealth: 98
+  });
   const { toast } = useToast();
 
-  // Load warehouses on component mount
+  // Load warehouses and stats on component mount
   useEffect(() => {
     loadWarehouses();
+    loadSystemStats();
   }, []);
 
   const loadWarehouses = async () => {
@@ -75,6 +94,21 @@ export default function Warehouses() {
     }
   };
 
+  const loadSystemStats = async () => {
+    try {
+      // Mock data for demonstration - in real app, fetch from API
+      setSystemStats({
+        totalProducts: 1247,
+        totalValue: 2850000,
+        lowStockItems: 23,
+        recentTransactions: 156,
+        systemHealth: 98
+      });
+    } catch (error) {
+      console.error('Error loading system stats:', error);
+    }
+  };
+
   // Quick action handlers
   const handleQuickAction = (action: string) => {
     toast({
@@ -85,23 +119,40 @@ export default function Warehouses() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Branch Info */}
+      {/* Enhanced Header with Branch Info and Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div>
-            <h1 className="text-3xl font-bold">คลัง & สต็อก</h1>
-            <p className="text-muted-foreground">
-              จัดการคลังสินค้าและระบบสต็อก
-            </p>
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <WarehouseIcon className="h-8 w-8 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">คลัง & สต็อก</h1>
+              <p className="text-muted-foreground">
+                จัดการคลังสินค้าและระบบสต็อกแบบครบวงจร
+              </p>
+            </div>
           </div>
           {currentBranch && (
-            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
               <Building2 className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+              <Badge variant="secondary" className="ml-2">
+                <Activity className="h-3 w-3 mr-1" />
+                ออนไลน์
+              </Badge>
             </div>
           )}
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={loadSystemStats}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            รีเฟรช
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            ตั้งค่า
+          </Button>
         </div>
       </div>
 
@@ -118,89 +169,108 @@ export default function Warehouses() {
         </Card>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('inquiry')}
-        >
-          <Search className="h-6 w-6" />
-          <span className="text-xs">ตรวจสอบสต็อก</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('receive')}
-        >
-          <Download className="h-6 w-6" />
-          <span className="text-xs">รับสินค้า</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('billing')}
-        >
-          <Receipt className="h-6 w-6" />
-          <span className="text-xs">ใบวางบิล</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('withdraw')}
-        >
-          <Upload className="h-6 w-6" />
-          <span className="text-xs">จ่ายสินค้า</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('transfer')}
-        >
-          <ArrowUpDown className="h-6 w-6" />
-          <span className="text-xs">โอนย้าย</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('barcode')}
-        >
-          <QrCode className="h-6 w-6" />
-          <span className="text-xs">สแกนบาร์โค้ด</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('batch')}
-        >
-          <Layers className="h-6 w-6" />
-          <span className="text-xs">จัดการกลุ่ม</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('adjust')}
-        >
-          <Edit className="h-6 w-6" />
-          <span className="text-xs">ปรับปรุงสต็อก</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex-col gap-2"
-          onClick={() => setActiveTab('audit')}
-        >
-          <History className="h-6 w-6" />
-          <span className="text-xs">ประวัติการใช้งาน</span>
-        </Button>
-      </div>
+      {/* Enhanced Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            การดำเนินการด่วน
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
+              onClick={() => setActiveTab('inquiry')}
+            >
+              <Search className="h-6 w-6 text-blue-600" />
+              <span className="text-xs font-medium">ตรวจสอบสต็อก</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-green-50 hover:border-green-300 transition-all"
+              onClick={() => setActiveTab('receive')}
+            >
+              <Download className="h-6 w-6 text-green-600" />
+              <span className="text-xs font-medium">รับสินค้า</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300 transition-all"
+              onClick={() => setActiveTab('billing')}
+            >
+              <Receipt className="h-6 w-6 text-purple-600" />
+              <span className="text-xs font-medium">ใบวางบิล</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-orange-50 hover:border-orange-300 transition-all"
+              onClick={() => setActiveTab('withdraw')}
+            >
+              <Upload className="h-6 w-6 text-orange-600" />
+              <span className="text-xs font-medium">จ่ายสินค้า</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-indigo-50 hover:border-indigo-300 transition-all"
+              onClick={() => setActiveTab('transfer')}
+            >
+              <ArrowUpDown className="h-6 w-6 text-indigo-600" />
+              <span className="text-xs font-medium">โอนย้าย</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-teal-50 hover:border-teal-300 transition-all"
+              onClick={() => setActiveTab('barcode')}
+            >
+              <QrCode className="h-6 w-6 text-teal-600" />
+              <span className="text-xs font-medium">สแกนบาร์โค้ด</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-cyan-50 hover:border-cyan-300 transition-all"
+              onClick={() => setActiveTab('batch')}
+            >
+              <Layers className="h-6 w-6 text-cyan-600" />
+              <span className="text-xs font-medium">จัดการกลุ่ม</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-yellow-50 hover:border-yellow-300 transition-all"
+              onClick={() => setActiveTab('adjust')}
+            >
+              <Edit className="h-6 w-6 text-yellow-600" />
+              <span className="text-xs font-medium">ปรับปรุงสต็อก</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              onClick={() => setActiveTab('audit')}
+            >
+              <History className="h-6 w-6 text-gray-600" />
+              <span className="text-xs font-medium">ประวัติการใช้งาน</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-red-50 hover:border-red-300 transition-all"
+              onClick={() => setActiveTab('integration')}
+            >
+              <Settings className="h-6 w-6 text-red-600" />
+              <span className="text-xs font-medium">Integration</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Real-time Stock Monitor */}
       <RealTimeStockMonitor />
@@ -255,56 +325,126 @@ export default function Warehouses() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
+          {/* Enhanced Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-l-4 border-l-blue-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">ระบบคลังสินค้า</CardTitle>
-                <WarehouseIcon className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">สินค้าทั้งหมด</CardTitle>
+                <Package className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">พร้อมใช้งาน</div>
-                <p className="text-xs text-muted-foreground">
-                  ระบบจัดการคลังสินค้าครบครัน
+                <div className="text-2xl font-bold text-blue-600">
+                  {systemStats.totalProducts.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                  +12% จากเดือนที่แล้ว
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-green-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">ฟีเจอร์หลัก</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">มูลค่าสต็อก</CardTitle>
+                <BarChart3 className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">8</div>
-                <p className="text-xs text-muted-foreground">
-                  ฟีเจอร์ครบครัน
+                <div className="text-2xl font-bold text-green-600">
+                  ฿{(systemStats.totalValue / 1000000).toFixed(1)}M
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                  +8.2% จากเดือนที่แล้ว
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-orange-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">การติดตาม</CardTitle>
-                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">สต็อกต่ำ</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">เรียลไทม์</div>
+                <div className="text-2xl font-bold text-orange-600">
+                  {systemStats.lowStockItems}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  ติดตามสต็อกแบบเรียลไทม์
+                  รายการที่ต้องเติมสต็อก
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-purple-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">การพิมพ์</CardTitle>
-                <Printer className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">ธุรกรรมวันนี้</CardTitle>
+                <Activity className="h-4 w-4 text-purple-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-600">รองรับ</div>
-                <p className="text-xs text-muted-foreground">
-                  พิมพ์ป้ายและรายงาน
+                <div className="text-2xl font-bold text-purple-600">
+                  {systemStats.recentTransactions}
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  อัปเดตล่าสุด 5 นาทีที่แล้ว
                 </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* System Health and Quick Stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-yellow-500" />
+                  สถานะระบบ
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">ประสิทธิภาพระบบ</span>
+                  <span className="text-sm text-muted-foreground">{systemStats.systemHealth}%</span>
+                </div>
+                <Progress value={systemStats.systemHealth} className="h-2" />
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">ระบบปลอดภัย</span>
+                    <Badge variant="secondary" className="ml-auto">ปกติ</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm">การเชื่อมต่อ</span>
+                    <Badge variant="secondary" className="ml-auto">เสถียร</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-indigo-500" />
+                  ผู้ใช้งานออนไลน์
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-indigo-600 mb-2">12</div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Admin</span>
+                    <span className="text-muted-foreground">3</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Manager</span>
+                    <span className="text-muted-foreground">4</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Staff</span>
+                    <span className="text-muted-foreground">5</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -388,15 +528,15 @@ export default function Warehouses() {
         </TabsContent>
 
         <TabsContent value="barcode" className="space-y-6">
-          <BarcodeScanner onScan={() => {}} warehouses={warehouses} />
+          <BarcodeScanner onScan={() => { }} warehouses={warehouses} />
         </TabsContent>
 
         <TabsContent value="batch" className="space-y-6">
-          <BatchOperations onBatchProcess={() => {}} availableOperations={[]} warehouses={warehouses} />
+          <BatchOperations onBatchProcess={() => { }} availableOperations={[]} warehouses={warehouses} />
         </TabsContent>
 
         <TabsContent value="adjust" className="space-y-6">
-          <StockAdjustment warehouseId={warehouses[0]?.id || ''} onAdjustmentComplete={() => {}} warehouses={warehouses} />
+          <StockAdjustment warehouseId={warehouses[0]?.id || ''} onAdjustmentComplete={() => { }} warehouses={warehouses} />
         </TabsContent>
 
         <TabsContent value="audit" className="space-y-6">

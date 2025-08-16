@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Stock Adjustment Fix</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+        }
+        .link {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .link:hover {
+            background: #1e7e34;
+        }
+        .instructions {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .code {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+        }
+        .problem {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .solution {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 แก้ไข Tab การปรับปรุงสต็อก</h1>
+        
+        <div class="problem">
+            <h3>❌ ปัญหาที่พบ:</h3>
+            <div class="code">
+                Error fetching stock movements: {
+                  "code": "PGRST200",
+                  "details": "Searched for a foreign key relationship between 'stock_movements' and 'product_serial_numbers' in the schema 'public', but no matches were found.",
+                  "hint": "Perhaps you meant 'products' instead of 'product_serial_numbers'.",
+                  "message": "Could not find a relationship between 'stock_movements' and 'product_serial_numbers' in the schema cache"
+                }
+            </div>
+        </div>
+
+        <div class="solution">
+            <h3>✅ การแก้ไขที่ทำ:</h3>
+            <p><strong>ปัญหา:</strong> ใน <code>getStockMovements()</code> มีการ join กับตาราง <code>product_serial_numbers</code> ผ่าน foreign key ที่ไม่มีอยู่จริง</p>
+            <p><strong>วิธีแก้:</strong> ลบการ join กับ <code>product_serial_numbers</code> ออกและใช้ข้อมูลที่มีอยู่แทน</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 การเปลี่ยนแปลงใน warehouseService.ts</h3>
+            
+            <h4>Before (มีปัญหา):</h4>
+            <div class="code">
+let query = supabase
+  .from('stock_movements')
+  .select(`
+    *,
+    product:products(id, name, code),
+    warehouse:warehouses(id, name, code),
+    serial_number:product_serial_numbers(serial_number)  ← ปัญหาตรงนี้
+  `, { count: 'exact' });
+            </div>
+
+            <h4>After (แก้ไขแล้ว):</h4>
+            <div class="code">
+let query = supabase
+  .from('stock_movements')
+  .select(`
+    *,
+    product:products(id, name, code),
+    warehouse:warehouses(id, name, code)  ← ลบ join กับ product_serial_numbers
+  `, { count: 'exact' });
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 ทดสอบการแก้ไข</h3>
+            <a href="http://localhost:8081/warehouses" class="link" target="_blank">
+                เปิดระบบคลังสินค้า
+            </a>
+            <p class="info">คลิกลิงก์ด้านบนเพื่อเปิดระบบ จากนั้นทดสอบ Tab "ปรับปรุง"</p>
+        </div>
+
+        <div class="instructions">
+            <h3>📝 วิธีทดสอบ Tab การปรับปรุงสต็อก</h3>
+            <ol>
+                <li><strong>เปิดเว็บไซต์:</strong> คลิกลิงก์ด้านบนหรือไป <code>http://localhost:8081/warehouses</code></li>
+                <li><strong>เข้า Tab ปรับปรุง:</strong> คลิก Tab "ปรับปรุง" หรือปุ่ม Quick Action "ปรับปรุงสต็อก"</li>
+                <li><strong>เลือกคลัง:</strong> เลือกคลังสินค้าที่ต้องการ</li>
+                <li><strong>ตรวจสอบการโหลด:</strong> ดูว่าไม่มี error แล้ว</li>
+                <li><strong>ทดสอบฟีเจอร์:</strong>
+                    <ul>
+                        <li>แท็บ "สร้างการปรับปรุง" - ค้นหาสินค้า</li>
+                        <li>แท็บ "รายการที่เลือก" - ดูรายการที่เลือก</li>
+                        <li>แท็บ "ประวัติการปรับปรุง" - ดูประวัติ (ไม่ควรมี error)</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 ฟีเจอร์ที่ควรทำงานได้</h3>
+            <ul>
+                <li>✅ <strong>การเลือกคลัง:</strong> Dropdown เลือกคลังสินค้า</li>
+                <li>✅ <strong>การค้นหาสินค้า:</strong> ค้นหาสินค้าในคลัง</li>
+                <li>✅ <strong>การแสดงสต็อก:</strong> ตารางแสดงสินค้าในคลัง</li>
+                <li>✅ <strong>การเลือกสินค้า:</strong> เลือกสินค้าเพื่อปรับปรุง</li>
+                <li>✅ <strong>การแสดงประวัติ:</strong> ประวัติการปรับปรุงสต็อก (ไม่มี error)</li>
+                <li>✅ <strong>การบันทึกการปรับปรุง:</strong> บันทึกการปรับปรุงสต็อก</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 การตรวจสอบเพิ่มเติม</h3>
+            <p><strong>หากยังมีปัญหา:</strong></p>
+            <ol>
+                <li>เปิด Developer Tools (F12)</li>
+                <li>ดู Console tab สำหรับ error messages</li>
+                <li>ดู Network tab สำหรับ API calls ที่ล้มเหลว</li>
+                <li>ตรวจสอบว่า error ยังเป็น "Could not find a relationship" หรือไม่</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 ข้อมูลที่แก้ไข</h3>
+            <p><strong>ไฟล์ที่แก้ไข:</strong> <code>src/services/warehouseService.ts</code></p>
+            <p><strong>ฟังก์ชันที่แก้ไข:</strong> <code>getStockMovements()</code></p>
+            <p><strong>การเปลี่ยนแปลง:</strong></p>
+            <ul>
+                <li>ลบ <code>serial_number:product_serial_numbers(serial_number)</code> จาก SELECT query</li>
+                <li>ปรับ data transformation ให้ใช้ <code>serial_number_id</code> แทน</li>
+                <li>สร้าง mock serial number object จาก <code>serial_number_id</code></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🎊 ผลลัพธ์ที่คาดหวัง</h3>
+            <p class="success">✅ Tab การปรับปรุงสต็อกควรโหลดได้โดยไม่มี error</p>
+            <p class="success">✅ แท็บ "ประวัติการปรับปรุง" ควรแสดงข้อมูลได้</p>
+            <p class="success">✅ การค้นหาและเลือกสินค้าควรทำงานได้ปกติ</p>
+            <p class="success">✅ การบันทึกการปรับปรุงสต็อกควรทำงานได้</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 หากยังมีปัญหา</h3>
+            <p class="warning">หากยังพบ error อื่นๆ ให้ตรวจสอบ:</p>
+            <ul>
+                <li>Foreign key relationships ในฐานข้อมูล</li>
+                <li>Table schema ของ <code>stock_movements</code></li>
+                <li>การเชื่อมต่อฐานข้อมูล Supabase</li>
+                <li>RLS (Row Level Security) policies</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Simple JavaScript to show fix status
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Stock Adjustment Fix Test Page Loaded');
+            console.log('✅ Fixed foreign key relationship issue');
+            console.log('🚀 Go to: http://localhost:8081/warehouses');
+            console.log('📋 Test the "ปรับปรุง" (Adjust) tab');
+        });
+    </script>
+</body>
+</html>
