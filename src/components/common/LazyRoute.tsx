@@ -1,4 +1,4 @@
-import { Suspense, lazy, ComponentType } from 'react';
+import React, { Suspense, lazy, ComponentType } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
@@ -16,7 +16,7 @@ export const LazyRoute: React.FC<LazyRouteProps> = ({
   const LazyComponent = lazy(factory);
   
   return (
-    <ErrorBoundary fallback={errorFallback}>
+    <ErrorBoundary fallback={errorFallback ? (props: any) => React.createElement(errorFallback, props) : undefined}>
       <Suspense fallback={fallback || <LoadingSpinner size="lg" />}>
         <LazyComponent />
       </Suspense>

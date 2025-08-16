@@ -14,11 +14,11 @@ import SupplierBillingFixed2 from '@/components/warehouses/SupplierBillingFixed2
 import { IntegrationDashboard } from '@/components/integration/IntegrationDashboard';
 import {
   WithdrawDispatch,
-  Transfer,
   BarcodeScanner,
-  BatchOperations,
   StockAdjustment
 } from '@/components/warehouses/WarehousePlaceholders';
+import SimpleBatchOperations from '@/components/warehouses/SimpleBatchOperations';
+import SimpleTransfer from '@/components/warehouses/SimpleTransfer';
 import { RealTimeStockMonitor } from '@/components/warehouses/RealTimeStockMonitor';
 import AuditTrail from '@/components/warehouses/AuditTrail';
 import PrintButton from '@/components/warehouses/PrintButton';
@@ -458,7 +458,7 @@ export default function Warehouses() {
             </TabsContent>
 
             <TabsContent value="transfer" className="p-6 bg-gradient-surface">
-              <Transfer warehouses={warehouses} currentWarehouseId={warehouses[0]?.id || ''} />
+              <SimpleTransfer warehouses={warehouses} currentWarehouseId={warehouses[0]?.id || ''} />
             </TabsContent>
 
             <TabsContent value="barcode" className="p-6 bg-gradient-surface">
@@ -466,7 +466,7 @@ export default function Warehouses() {
             </TabsContent>
 
             <TabsContent value="batch" className="p-6 bg-gradient-surface">
-              <BatchOperations onBatchProcess={() => { }} availableOperations={[]} warehouses={warehouses} />
+              <SimpleBatchOperations onBatchProcess={() => { }} availableOperations={[]} warehouses={warehouses} />
             </TabsContent>
 
             <TabsContent value="adjust" className="p-6 bg-gradient-surface">

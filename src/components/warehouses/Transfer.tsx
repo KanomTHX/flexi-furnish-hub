@@ -306,7 +306,7 @@ export default function Transfer({ warehouses, currentWarehouseId }: TransferPro
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('products')
       .update({
         status: 'transferred',
         warehouse_id: updates.targetWarehouseId,

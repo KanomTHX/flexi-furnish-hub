@@ -95,8 +95,8 @@ export function ReconciliationList({ onReconciliationSelect }: ReconciliationLis
 
   const loadAccounts = async () => {
     try {
-      const result = await ChartOfAccountsService.getAccounts({});
-      setAccounts(result.data);
+      // Temporarily disable account loading
+      setAccounts([]);
     } catch (error) {
       console.error('Failed to load accounts:', error);
     }
