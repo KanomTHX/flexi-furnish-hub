@@ -469,7 +469,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('products')
       .update({
         status: newStatus,
         updated_at: new Date().toISOString()
@@ -483,7 +483,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('products')
       .update({
         warehouse_id: targetWarehouseId,
         status: 'transferred',
@@ -498,7 +498,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('products')
       .update({
         notes: reason,
         updated_at: new Date().toISOString()

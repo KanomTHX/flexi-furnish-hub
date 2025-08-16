@@ -114,7 +114,7 @@ export const DatabaseStatus: React.FC = () => {
                 )}
               </div>
             </div>
-            <Badge variant={getStatusColor()}>
+            <Badge variant={isConnected ? "default" : "destructive"}>
               {isConnected ? 'เชื่อมต่อ' : 'ไม่เชื่อมต่อ'}
             </Badge>
           </div>

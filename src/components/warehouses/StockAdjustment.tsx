@@ -290,7 +290,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('products')
       .update({
         status,
         reference_number: updates.referenceNumber,

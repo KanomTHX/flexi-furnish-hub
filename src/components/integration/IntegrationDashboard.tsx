@@ -197,10 +197,10 @@ export function IntegrationDashboard() {
                 {system.enabled && (
                   <div className="text-xs text-muted-foreground">
                     <p>อัปเดตล่าสุด: {formatDate(system.lastSync)}</p>
-                    {key === 'accounting' && <p>Journal Entries: {system.entries}</p>}
-                    {key === 'pos' && <p>Purchase Orders: {system.orders}</p>}
-                    {key === 'warehouse' && <p>สินค้า: {system.products} รายการ</p>}
-                    {key === 'reporting' && <p>รายงาน: {system.reports} ประเภท</p>}
+                    {key === 'accounting' && 'entries' in system && <p>Journal Entries: {system.entries}</p>}
+                    {key === 'pos' && 'orders' in system && <p>Purchase Orders: {system.orders}</p>}
+                    {key === 'warehouse' && 'products' in system && <p>สินค้า: {system.products} รายการ</p>}
+                    {key === 'reporting' && 'reports' in system && <p>รายงาน: {system.reports} ประเภท</p>}
                   </div>
                 )}
               </div>

@@ -259,27 +259,27 @@ export default function Warehouses() {
         {/* Modern Quick Actions Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
-            { icon: Search, label: 'ตรวจสอบสต็อก', tab: 'inquiry', color: 'primary' },
-            { icon: Download, label: 'รับสินค้า', tab: 'receive', color: 'success' },
-            { icon: Receipt, label: 'ใบวางบิล', tab: 'billing', color: 'info' },
-            { icon: Upload, label: 'จ่ายสินค้า', tab: 'withdraw', color: 'warning' },
-            { icon: ArrowUpDown, label: 'โอนย้าย', tab: 'transfer', color: 'primary' },
-            { icon: QrCode, label: 'สแกนบาร์โค้ด', tab: 'barcode', color: 'success' },
-            { icon: Layers, label: 'จัดการกลุ่ม', tab: 'batch', color: 'info' },
-            { icon: Edit, label: 'ปรับปรุงสต็อก', tab: 'adjust', color: 'warning' },
-            { icon: History, label: 'ประวัติ', tab: 'audit', color: 'primary' },
-            { icon: Settings, label: 'Integration', tab: 'integration', color: 'success' }
-          ].map(({ icon: Icon, label, tab, color }) => (
+            { icon: Search, label: 'ตรวจสอบสต็อก', tab: 'inquiry' },
+            { icon: Download, label: 'รับสินค้า', tab: 'receive' },
+            { icon: Receipt, label: 'ใบวางบิล', tab: 'billing' },
+            { icon: Upload, label: 'จ่ายสินค้า', tab: 'withdraw' },
+            { icon: ArrowUpDown, label: 'โอนย้าย', tab: 'transfer' },
+            { icon: QrCode, label: 'สแกนบาร์โค้ด', tab: 'barcode' },
+            { icon: Layers, label: 'จัดการกลุ่ม', tab: 'batch' },
+            { icon: Edit, label: 'ปรับปรุงสต็อก', tab: 'adjust' },
+            { icon: History, label: 'ประวัติ', tab: 'audit' },
+            { icon: Settings, label: 'Integration', tab: 'integration' }
+          ].map(({ icon: Icon, label, tab }) => (
             <Card 
               key={tab}
               className={`group cursor-pointer border-0 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-card ${
-                activeTab === tab ? `ring-2 ring-${color} bg-${color}/5` : ''
+                activeTab === tab ? 'ring-2 ring-primary bg-primary/5' : ''
               }`}
               onClick={() => setActiveTab(tab)}
             >
               <CardContent className="p-6 text-center">
-                <div className={`mx-auto w-12 h-12 rounded-xl bg-${color}/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3`}>
-                  <Icon className={`h-6 w-6 text-${color}`} />
+                <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
+                  <Icon className="h-6 w-6 text-primary" />
                 </div>
                 <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                   {label}

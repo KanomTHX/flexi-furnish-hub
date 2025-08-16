@@ -72,7 +72,7 @@ export function ReconciliationList({ onReconciliationSelect }: ReconciliationLis
       setLoading(true);
       const filter: ReconciliationFilter = {
         search: searchTerm || undefined,
-        status: statusFilter || undefined,
+        status: (statusFilter as "completed" | "draft" | "in_progress" | "reviewed") || undefined,
         accountId: accountFilter || undefined,
         limit: pageSize,
         offset: (currentPage - 1) * pageSize
@@ -95,7 +95,7 @@ export function ReconciliationList({ onReconciliationSelect }: ReconciliationLis
 
   const loadAccounts = async () => {
     try {
-      const result = await ChartOfAccountsService.getAccounts();
+      const result = await ChartOfAccountsService.getAccounts({});
       setAccounts(result.data);
     } catch (error) {
       console.error('Failed to load accounts:', error);

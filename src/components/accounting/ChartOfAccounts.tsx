@@ -82,7 +82,7 @@ export function ChartOfAccounts({
       const data = await chartOfAccountsService.getAccounts(filter);
       setAccounts(data);
     } catch (err) {
-      const errorMessage = err instanceof AccountingIntegrationError 
+      const errorMessage = err instanceof Error 
         ? err.message 
         : 'Failed to load accounts';
       setError(errorMessage);
@@ -97,7 +97,7 @@ export function ChartOfAccounts({
       const data = await chartOfAccountsService.getAccountHierarchy();
       setHierarchy(data);
     } catch (err) {
-      const errorMessage = err instanceof AccountingIntegrationError 
+      const errorMessage = err instanceof Error 
         ? err.message 
         : 'Failed to load account hierarchy';
       toast.error(errorMessage);
@@ -125,7 +125,7 @@ export function ChartOfAccounts({
       }
       setShowCreateDialog(false);
     } catch (err) {
-      const errorMessage = err instanceof AccountingIntegrationError 
+      const errorMessage = err instanceof Error 
         ? err.message 
         : 'Failed to create account';
       toast.error(errorMessage);
@@ -144,7 +144,7 @@ export function ChartOfAccounts({
       setShowEditDialog(false);
       setSelectedAccount(null);
     } catch (err) {
-      const errorMessage = err instanceof AccountingIntegrationError 
+      const errorMessage = err instanceof Error 
         ? err.message 
         : 'Failed to update account';
       toast.error(errorMessage);
@@ -161,7 +161,7 @@ export function ChartOfAccounts({
         loadAccounts();
       }
     } catch (err) {
-      const errorMessage = err instanceof AccountingIntegrationError 
+      const errorMessage = err instanceof Error 
         ? err.message 
         : 'Failed to deactivate account';
       toast.error(errorMessage);

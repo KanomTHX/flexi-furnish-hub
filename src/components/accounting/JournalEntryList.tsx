@@ -287,7 +287,7 @@ export const JournalEntryList: React.FC<JournalEntryListProps> = ({
                     <TableCell>{formatCurrency(entry.totalDebit)}</TableCell>
                     <TableCell>{getStatusBadge(entry.status)}</TableCell>
                     <TableCell className="capitalize">
-                      {entry.sourceType?.replace('_', ' ') || 'Manual'}
+                      {'Manual'}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
