@@ -104,7 +104,9 @@ export default function Warehouses() {
         totalValue: 2850000,
         lowStockItems: 23,
         recentTransactions: 156,
-        systemHealth: 98
+        systemHealth: 98,
+        totalWarehouses: 12,
+        activeOperations: 8
       });
     } catch (error) {
       console.error('Error loading system stats:', error);
