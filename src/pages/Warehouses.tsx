@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 // Import warehouse components - using placeholders
-import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
+// Simple stock inquiry removed
 import { SimpleReceiveGoods } from '@/components/warehouses/SimpleReceiveGoods';
 import SupplierBillingFixed2 from '@/components/warehouses/SupplierBillingFixed2';
-import { IntegrationDashboard } from '@/components/integration/IntegrationDashboard';
+// Integration dashboard removed
 import {
   WithdrawDispatch,
   BarcodeScanner,
@@ -82,7 +82,7 @@ export default function Warehouses() {
     try {
       setLoading(true);
       const WarehouseService = await import('@/services/simpleWarehouseService');
-      const warehousesData = await WarehouseService.getWarehouses();
+      const warehousesData = await WarehouseService.WarehouseService.getWarehouses();
       setWarehouses(warehousesData);
     } catch (error) {
       console.error('Error loading warehouses:', error);
@@ -444,7 +444,7 @@ export default function Warehouses() {
             </TabsContent>
 
             <TabsContent value="inquiry" className="p-6 bg-gradient-surface">
-              <SimpleStockInquiry />
+              <div className="p-4 text-center text-muted-foreground">การตรวจสอบสต็อกไม่พร้อมใช้งาน</div>
             </TabsContent>
 
             <TabsContent value="receive" className="p-6 bg-gradient-surface">
@@ -480,7 +480,7 @@ export default function Warehouses() {
             </TabsContent>
 
             <TabsContent value="integration" className="p-6 bg-gradient-surface">
-              <IntegrationDashboard />
+              <div className="p-4 text-center text-muted-foreground">ระบบ Integration ไม่พร้อมใช้งาน</div>
             </TabsContent>
           </div>
         </Tabs>

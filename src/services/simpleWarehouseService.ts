@@ -7,19 +7,20 @@ export class WarehouseService {
     ];
   }
 
-  static async getStockLevel() { return []; }
-  static async getStockLevels() { return { data: [], total: 0 }; }
-  static async getStockMovements() { return { data: [], total: 0 }; }
-  static async getSerialNumbers() { return { data: [], total: 0 }; }
-  static async getMovementHistory() { return []; }
-  static async logStockMovement() { return {}; }
-  static async withdrawGoods() { return {}; }
-  static async getWarehouseSummary() { return { totalProducts: 0, totalQuantity: 0, availableQuantity: 0, totalValue: 0, lowStockItems: 0, outOfStockItems: 0 }; }
-  static async getLowStockAlerts() { return []; }
-  static async getOutOfStockItems() { return []; }
+  static async getStockLevel(warehouseId?: string) { return []; }
+  static async getStockLevels(warehouseId?: string) { return { data: [], total: 0 }; }
+  static async getStockMovements(warehouseId?: string) { return { data: [], total: 0 }; }
+  static async getSerialNumbers(productId?: string) { return { data: [], total: 0 }; }
+  static async getMovementHistory(warehouseId?: string) { return []; }
+  static async logStockMovement(movement: any) { return {}; }
+  static async withdrawGoods(items: any) { return {}; }
+  static async receiveGoods(items: any) { return {}; }
+  static async getWarehouseSummary(warehouseId?: string) { return { totalProducts: 0, totalQuantity: 0, availableQuantity: 0, totalValue: 0, lowStockItems: 0, outOfStockItems: 0 }; }
+  static async getLowStockAlerts(warehouseId?: string) { return []; }
+  static async getOutOfStockItems(warehouseId?: string) { return []; }
   static async createWarehouse(data: any) { return { id: '1', ...data }; }
   static async updateWarehouse(id: string, data: any) { return { id, ...data }; }
-  static async deleteWarehouse() { return true; }
+  static async deleteWarehouse(id: string) { return true; }
   static async getWarehouseById(id: string) { return { id, name: 'คลัง', status: 'active' }; }
 }
 

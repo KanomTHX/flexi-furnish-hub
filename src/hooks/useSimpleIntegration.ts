@@ -15,11 +15,22 @@ export const useSimpleIntegration = () => {
     sync,
     loading: false,
     error: null,
-    journalEntries: { synced: 0, pending: 0 },
-    purchaseOrders: { synced: 0, pending: 0 },
-    analytics: { processed: 0, errors: 0 },
+    journalEntries: [],
+    purchaseOrders: [],
+    analytics: { 
+      processed: 0, 
+      errors: 0,
+      supplierPerformance: [],
+      paymentTrends: []
+    },
     generateSupplierAnalytics: () => Promise.resolve({}),
     generateSupplierPerformanceReport: () => Promise.resolve({}),
-    isIntegrationEnabled: { journalEntries: true, purchaseOrders: true }
+    isIntegrationEnabled: { 
+      journalEntries: true, 
+      purchaseOrders: true,
+      posIntegration: true,
+      warehouseIntegration: true,
+      reporting: true
+    }
   };
 };

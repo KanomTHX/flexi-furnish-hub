@@ -9,9 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AuthProvider } from "@/hooks/useAuth";
-import { ErrorConsole } from "@/components/debug/ErrorConsole";
-import "@/utils/browserErrorHandler"; // Initialize error handling
-import "@/utils/consoleCommands"; // Initialize console commands
+// Debug components removed
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -20,12 +18,10 @@ const Installments = lazy(() => import("./pages/Installments"));
 
 const Warehouses = lazy(() => import("./pages/Warehouses"));
 const BranchManagement = lazy(() => import("./pages/BranchManagement"));
-const Accounting = lazy(() => import("./pages/Accounting"));
+// Accounting removed
 const Claims = lazy(() => import("./pages/Claims"));
 const Audit = lazy(() => import("./pages/Audit"));
-const Reports = lazy(() => import("./pages/Reports"));
-const Settings = lazy(() => import("./pages/Settings"));
-const Employees = lazy(() => import("./pages/Employees"));
+// Reports and Employees removed
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 // Database setup removed
@@ -90,15 +86,7 @@ const App = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/employees" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบพนักงาน..." />}>
-                    <Employees />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
+            {/* Employees route removed */}
             <Route path="/warehouses" element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -117,15 +105,7 @@ const App = () => {
                 </AdminLayout>
               </ProtectedRoute>
             } />
-            <Route path="/accounting" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบบัญชี..." />}>
-                    <Accounting />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
+            {/* Accounting route removed */}
             <Route path="/claims" element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -144,24 +124,8 @@ const App = () => {
                 </AdminLayout>
               </ProtectedRoute>
             } />
-            <Route path="/reports" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบรายงาน..." />}>
-                    <Reports />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการตั้งค่า..." />}>
-                    <Settings />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
+            {/* Reports route removed */}
+            {/* Settings route removed for now */}
             {/* Database route removed */}
             <Route path="/database-installer" element={
               <ProtectedRoute>
@@ -213,13 +177,7 @@ const App = () => {
         </AuthProvider>
       </TooltipProvider>
       
-      {/* Error Console for Development */}
-      {import.meta.env.DEV && (
-        <ErrorConsole 
-          isVisible={showErrorConsole}
-          onToggle={() => setShowErrorConsole(!showErrorConsole)}
-        />
-      )}
+      {/* Error console removed for production */}
     </QueryClientProvider>
   </ErrorBoundary>
   );
