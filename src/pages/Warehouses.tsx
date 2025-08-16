@@ -4,21 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 
 // Import warehouse components - using placeholders
-// Simple stock inquiry removed
+import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
 import { SimpleReceiveGoods } from '@/components/warehouses/SimpleReceiveGoods';
 import SupplierBillingFixed2 from '@/components/warehouses/SupplierBillingFixed2';
-// Integration dashboard removed
+import { IntegrationDashboard } from '@/components/integration/IntegrationDashboard';
 import {
   WithdrawDispatch,
+  Transfer,
   BarcodeScanner,
+  BatchOperations,
   StockAdjustment
 } from '@/components/warehouses/WarehousePlaceholders';
-import SimpleBatchOperations from '@/components/warehouses/SimpleBatchOperations';
-import SimpleTransfer from '@/components/warehouses/SimpleTransfer';
 import { RealTimeStockMonitor } from '@/components/warehouses/RealTimeStockMonitor';
 import AuditTrail from '@/components/warehouses/AuditTrail';
 import PrintButton from '@/components/warehouses/PrintButton';
@@ -58,17 +59,14 @@ export default function Warehouses() {
   const { currentBranch } = useBranchData();
   const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [searchQuery, setSearchQuery] = useState('');
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [systemStats, setSystemStats] = useState({
-    totalProducts: 1247,
-    totalValue: 2850000,
-    lowStockItems: 23,
-    recentTransactions: 156,
-    systemHealth: 98,
-    totalWarehouses: 12,
-    activeOperations: 8
+    totalProducts: 0,
+    totalValue: 0,
+    lowStockItems: 0,
+    recentTransactions: 0,
+    systemHealth: 98
   });
   const { toast } = useToast();
 
@@ -81,8 +79,8 @@ export default function Warehouses() {
   const loadWarehouses = async () => {
     try {
       setLoading(true);
-      const WarehouseService = await import('@/services/simpleWarehouseService');
-      const warehousesData = await WarehouseService.WarehouseService.getWarehouses();
+      const { WarehouseService } = await import('@/services/warehouseService');
+      const warehousesData = await WarehouseService.getWarehouses();
       setWarehouses(warehousesData);
     } catch (error) {
       console.error('Error loading warehouses:', error);
@@ -104,9 +102,7 @@ export default function Warehouses() {
         totalValue: 2850000,
         lowStockItems: 23,
         recentTransactions: 156,
-        systemHealth: 98,
-        totalWarehouses: 12,
-        activeOperations: 8
+        systemHealth: 98
       });
     } catch (error) {
       console.error('Error loading system stats:', error);
@@ -122,369 +118,437 @@ export default function Warehouses() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-surface">
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Modern Header */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-primary p-8 text-white">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                    <WarehouseIcon className="h-8 w-8" />
-                  </div>
-                  <div>
-                    <h1 className="text-4xl font-bold tracking-tight">ระบบคลังสินค้า</h1>
-                    <p className="text-lg text-white/80 mt-1">
-                      จัดการสต็อกและคลังสินค้าแบบอัจฉริยะ
-                    </p>
-                  </div>
-                </div>
-                {currentBranch && (
-                  <div className="flex items-center gap-2 mt-4">
-                    <Building2 className="h-4 w-4" />
-                    <span className="font-medium">{currentBranch.name}</span>
-                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                      <Activity className="h-3 w-3 mr-1" />
-                      เชื่อมต่อแล้ว
-                    </Badge>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
-                  <Input
-                    placeholder="ค้นหาสินค้า คลัง..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 w-80"
-                  />
-                </div>
-                <Button variant="secondary" size="sm" onClick={loadSystemStats}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  รีเฟรช
-                </Button>
-              </div>
+    <div className="space-y-6">
+      {/* Enhanced Header with Branch Info and Actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <WarehouseIcon className="h-8 w-8 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">คลัง & สต็อก</h1>
+              <p className="text-muted-foreground">
+                จัดการคลังสินค้าและระบบสต็อกแบบครบวงจร
+              </p>
             </div>
           </div>
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-white"></div>
-            <div className="absolute -left-20 -bottom-20 h-60 w-60 rounded-full bg-white"></div>
-          </div>
+          {currentBranch && (
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+              <Badge variant="secondary" className="ml-2">
+                <Activity className="h-3 w-3 mr-1" />
+                ออนไลน์
+              </Badge>
+            </div>
+          )}
         </div>
-
-        {/* Modern Statistics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-gradient-card border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">สินค้าทั้งหมด</p>
-                  <p className="text-3xl font-bold text-primary">
-                    {systemStats.totalProducts.toLocaleString()}
-                  </p>
-                  <div className="flex items-center text-sm text-success">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    +12.5% จากเดือนที่แล้ว
-                  </div>
-                </div>
-                <div className="p-3 bg-primary/10 rounded-xl">
-                  <Package className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-card border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">มูลค่าสต็อก</p>
-                  <p className="text-3xl font-bold text-success">
-                    ฿{(systemStats.totalValue / 1000000).toFixed(1)}M
-                  </p>
-                  <div className="flex items-center text-sm text-success">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    +8.3% จากเดือนที่แล้ว
-                  </div>
-                </div>
-                <div className="p-3 bg-success/10 rounded-xl">
-                  <BarChart3 className="h-8 w-8 text-success" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-card border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">คลังสินค้า</p>
-                  <p className="text-3xl font-bold text-info">
-                    {systemStats.totalWarehouses}
-                  </p>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Activity className="h-4 w-4 mr-1" />
-                    {systemStats.activeOperations} กำลังดำเนินการ
-                  </div>
-                </div>
-                <div className="p-3 bg-info/10 rounded-xl">
-                  <WarehouseIcon className="h-8 w-8 text-info" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-card border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">แจ้งเตือน</p>
-                  <p className="text-3xl font-bold text-warning">
-                    {systemStats.lowStockItems}
-                  </p>
-                  <div className="flex items-center text-sm text-warning">
-                    <AlertTriangle className="h-4 w-4 mr-1" />
-                    ต้องเติมสต็อก
-                  </div>
-                </div>
-                <div className="p-3 bg-warning/10 rounded-xl">
-                  <AlertTriangle className="h-8 w-8 text-warning" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={loadSystemStats}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            รีเฟรช
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            ตั้งค่า
+          </Button>
         </div>
+      </div>
 
-        {/* Modern Quick Actions Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {[
-            { icon: Search, label: 'ตรวจสอบสต็อก', tab: 'inquiry' },
-            { icon: Download, label: 'รับสินค้า', tab: 'receive' },
-            { icon: Receipt, label: 'ใบวางบิล', tab: 'billing' },
-            { icon: Upload, label: 'จ่ายสินค้า', tab: 'withdraw' },
-            { icon: ArrowUpDown, label: 'โอนย้าย', tab: 'transfer' },
-            { icon: QrCode, label: 'สแกนบาร์โค้ด', tab: 'barcode' },
-            { icon: Layers, label: 'จัดการกลุ่ม', tab: 'batch' },
-            { icon: Edit, label: 'ปรับปรุงสต็อก', tab: 'adjust' },
-            { icon: History, label: 'ประวัติ', tab: 'audit' },
-            { icon: Settings, label: 'Integration', tab: 'integration' }
-          ].map(({ icon: Icon, label, tab }) => (
-            <Card 
-              key={tab}
-              className={`group cursor-pointer border-0 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-card ${
-                activeTab === tab ? 'ring-2 ring-primary bg-primary/5' : ''
-              }`}
-              onClick={() => setActiveTab(tab)}
+      {/* Branch Selector */}
+      {showBranchSelector && (
+        <Card>
+          <CardContent className="p-4">
+            <BranchSelector
+              onBranchChange={() => setShowBranchSelector(false)}
+              showStats={false}
+              className="border-0 shadow-none"
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enhanced Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            การดำเนินการด่วน
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
+              onClick={() => setActiveTab('inquiry')}
             >
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
-                  <Icon className="h-6 w-6 text-primary" />
+              <Search className="h-6 w-6 text-blue-600" />
+              <span className="text-xs font-medium">ตรวจสอบสต็อก</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-green-50 hover:border-green-300 transition-all"
+              onClick={() => setActiveTab('receive')}
+            >
+              <Download className="h-6 w-6 text-green-600" />
+              <span className="text-xs font-medium">รับสินค้า</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300 transition-all"
+              onClick={() => setActiveTab('billing')}
+            >
+              <Receipt className="h-6 w-6 text-purple-600" />
+              <span className="text-xs font-medium">ใบวางบิล</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-orange-50 hover:border-orange-300 transition-all"
+              onClick={() => setActiveTab('withdraw')}
+            >
+              <Upload className="h-6 w-6 text-orange-600" />
+              <span className="text-xs font-medium">จ่ายสินค้า</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-indigo-50 hover:border-indigo-300 transition-all"
+              onClick={() => setActiveTab('transfer')}
+            >
+              <ArrowUpDown className="h-6 w-6 text-indigo-600" />
+              <span className="text-xs font-medium">โอนย้าย</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-teal-50 hover:border-teal-300 transition-all"
+              onClick={() => setActiveTab('barcode')}
+            >
+              <QrCode className="h-6 w-6 text-teal-600" />
+              <span className="text-xs font-medium">สแกนบาร์โค้ด</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-cyan-50 hover:border-cyan-300 transition-all"
+              onClick={() => setActiveTab('batch')}
+            >
+              <Layers className="h-6 w-6 text-cyan-600" />
+              <span className="text-xs font-medium">จัดการกลุ่ม</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-yellow-50 hover:border-yellow-300 transition-all"
+              onClick={() => setActiveTab('adjust')}
+            >
+              <Edit className="h-6 w-6 text-yellow-600" />
+              <span className="text-xs font-medium">ปรับปรุงสต็อก</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              onClick={() => setActiveTab('audit')}
+            >
+              <History className="h-6 w-6 text-gray-600" />
+              <span className="text-xs font-medium">ประวัติการใช้งาน</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-24 flex-col gap-2 hover:bg-red-50 hover:border-red-300 transition-all"
+              onClick={() => setActiveTab('integration')}
+            >
+              <Settings className="h-6 w-6 text-red-600" />
+              <span className="text-xs font-medium">Integration</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Real-time Stock Monitor */}
+      <RealTimeStockMonitor />
+
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
+          <TabsTrigger value="overview" className="flex items-center gap-1">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">ภาพรวม</span>
+          </TabsTrigger>
+          <TabsTrigger value="inquiry" className="flex items-center gap-1">
+            <Search className="w-4 h-4" />
+            <span className="hidden sm:inline">ตรวจสอบ</span>
+          </TabsTrigger>
+          <TabsTrigger value="receive" className="flex items-center gap-1">
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">รับสินค้า</span>
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-1">
+            <Receipt className="w-4 h-4" />
+            <span className="hidden sm:inline">ใบวางบิล</span>
+          </TabsTrigger>
+          <TabsTrigger value="withdraw" className="flex items-center gap-1">
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">จ่ายสินค้า</span>
+          </TabsTrigger>
+          <TabsTrigger value="transfer" className="flex items-center gap-1">
+            <ArrowUpDown className="w-4 h-4" />
+            <span className="hidden sm:inline">โอนย้าย</span>
+          </TabsTrigger>
+          <TabsTrigger value="barcode" className="flex items-center gap-1">
+            <QrCode className="w-4 h-4" />
+            <span className="hidden sm:inline">บาร์โค้ด</span>
+          </TabsTrigger>
+          <TabsTrigger value="batch" className="flex items-center gap-1">
+            <Layers className="w-4 h-4" />
+            <span className="hidden sm:inline">กลุ่ม</span>
+          </TabsTrigger>
+          <TabsTrigger value="adjust" className="flex items-center gap-1">
+            <Edit className="w-4 h-4" />
+            <span className="hidden sm:inline">ปรับปรุง</span>
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-1">
+            <History className="w-4 h-4" />
+            <span className="hidden sm:inline">ประวัติ</span>
+          </TabsTrigger>
+          <TabsTrigger value="integration" className="flex items-center gap-1">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Integration</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Enhanced Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">สินค้าทั้งหมด</CardTitle>
+                <Package className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {systemStats.totalProducts.toLocaleString()}
                 </div>
-                <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                  {label}
+                <p className="text-xs text-muted-foreground flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                  +12% จากเดือนที่แล้ว
                 </p>
               </CardContent>
             </Card>
-          ))}
-        </div>
 
-        {/* Real-time Stock Monitor */}
-        <RealTimeStockMonitor />
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">มูลค่าสต็อก</CardTitle>
+                <BarChart3 className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  ฿{(systemStats.totalValue / 1000000).toFixed(1)}M
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                  +8.2% จากเดือนที่แล้ว
+                </p>
+              </CardContent>
+            </Card>
 
-        {/* Modern Content Area */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="bg-white rounded-xl shadow-sm border-0 overflow-hidden">
-            <TabsList className="w-full justify-start border-b bg-transparent h-auto p-0">
-              {[
-                { value: 'overview', icon: BarChart3, label: 'ภาพรวม' },
-                { value: 'inquiry', icon: Search, label: 'ตรวจสอบ' },
-                { value: 'receive', icon: Download, label: 'รับสินค้า' },
-                { value: 'billing', icon: Receipt, label: 'ใบวางบิล' },
-                { value: 'withdraw', icon: Upload, label: 'จ่ายสินค้า' },
-                { value: 'transfer', icon: ArrowUpDown, label: 'โอนย้าย' },
-                { value: 'barcode', icon: QrCode, label: 'บาร์โค้ด' },
-                { value: 'batch', icon: Layers, label: 'กลุ่ม' },
-                { value: 'adjust', icon: Edit, label: 'ปรับปรุง' },
-                { value: 'audit', icon: History, label: 'ประวัติ' },
-                { value: 'integration', icon: Settings, label: 'Integration' }
-              ].map(({ value, icon: Icon, label }) => (
-                <TabsTrigger
-                  key={value}
-                  value={value}
-                  className="flex-shrink-0 px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 hover:bg-muted/50 transition-all duration-200"
-                >
-                  <Icon className="w-4 h-4 mr-2" />
-                  <span className="font-medium">{label}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <Card className="border-l-4 border-l-orange-500">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">สต็อกต่ำ</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">
+                  {systemStats.lowStockItems}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  รายการที่ต้องเติมสต็อก
+                </p>
+              </CardContent>
+            </Card>
 
-            <TabsContent value="overview" className="p-8 space-y-8">
-              {/* Enhanced Performance Dashboard */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-2 bg-gradient-card border-0 shadow-lg">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                      <Activity className="h-6 w-6 text-primary" />
-                      ประสิทธิภาพระบบ
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">สถานะระบบโดยรวม</p>
-                        <p className="text-3xl font-bold text-primary">{systemStats.systemHealth}%</p>
-                      </div>
-                      <div className="p-4 bg-primary/10 rounded-xl">
-                        <Shield className="h-8 w-8 text-primary" />
-                      </div>
-                    </div>
-                    <Progress value={systemStats.systemHealth} className="h-3 bg-muted" />
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2 p-4 bg-success/5 rounded-xl border border-success/20">
-                        <div className="flex items-center gap-2">
-                          <Shield className="h-4 w-4 text-success" />
-                          <span className="text-sm font-medium">ความปลอดภัย</span>
-                        </div>
-                        <Badge variant="secondary" className="bg-success/10 text-success border-success/20">เป็นปกติ</Badge>
-                      </div>
-                      <div className="space-y-2 p-4 bg-info/5 rounded-xl border border-info/20">
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-4 w-4 text-info" />
-                          <span className="text-sm font-medium">การเชื่อมต่อ</span>
-                        </div>
-                        <Badge variant="secondary" className="bg-info/10 text-info border-info/20">เสถียร</Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-card border-0 shadow-lg">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-info" />
-                      ผู้ใช้งานออนไลน์
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center mb-4">
-                      <p className="text-4xl font-bold text-info mb-2">12</p>
-                      <p className="text-sm text-muted-foreground">ผู้ใช้งานในระบบ</p>
-                    </div>
-                    <div className="space-y-3">
-                      {[
-                        { role: 'Admin', count: 3, color: 'primary' },
-                        { role: 'Manager', count: 4, color: 'success' },
-                        { role: 'Staff', count: 5, color: 'info' }
-                      ].map(({ role, count, color }) => (
-                        <div key={role} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                          <span className="text-sm font-medium">{role}</span>
-                          <Badge variant="secondary" className={`bg-${color}/10 text-${color} border-${color}/20`}>
-                            {count}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Modern Feature Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  {
-                    title: 'ระบบสต็อกอัจฉริยะ',
-                    description: 'ตรวจสอบและจัดการสต็อกแบบเรียลไทม์',
-                    icon: Package,
-                    color: 'primary',
-                    features: ['ตรวจสอบสต็อกแบบเรียลไทม์', 'แจ้งเตือนสต็อกต่ำ', 'วิเคราะห์แนวโน้ม']
-                  },
-                  {
-                    title: 'การรับ-จ่ายสินค้า',
-                    description: 'จัดการการรับและจ่ายสินค้าอย่างมีประสิทธิภาพ',
-                    icon: ArrowUpDown,
-                    color: 'success',
-                    features: ['รับสินค้าเข้าคลัง', 'จ่ายสินค้าออกจากคลัง', 'โอนย้ายระหว่างคลัง']
-                  },
-                  {
-                    title: 'เทคโนโลยีขั้นสูง',
-                    description: 'ใช้เทคโนโลยีล้ำสมัยในการจัดการ',
-                    icon: QrCode,
-                    color: 'info',
-                    features: ['สแกนบาร์โค้ด/QR Code', 'จัดการเป็นกลุ่ม', 'ประวัติการใช้งาน']
-                  }
-                ].map((section) => (
-                  <Card key={section.title} className="group bg-gradient-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                    <CardHeader className="pb-4">
-                      <div className={`p-3 bg-${section.color}/10 rounded-xl w-fit mb-3 group-hover:scale-110 transition-transform duration-300`}>
-                        <section.icon className={`h-6 w-6 text-${section.color}`} />
-                      </div>
-                      <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                        {section.title}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground">{section.description}</p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {section.features.map((feature, index) => (
-                          <div key={index} className="flex items-center gap-2 text-sm">
-                            <div className={`w-1.5 h-1.5 rounded-full bg-${section.color}`}></div>
-                            <span>{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="inquiry" className="p-6 bg-gradient-surface">
-              <div className="p-4 text-center text-muted-foreground">การตรวจสอบสต็อกไม่พร้อมใช้งาน</div>
-            </TabsContent>
-
-            <TabsContent value="receive" className="p-6 bg-gradient-surface">
-              <SimpleReceiveGoods />
-            </TabsContent>
-
-            <TabsContent value="billing" className="p-6 bg-gradient-surface">
-              <SupplierBillingFixed2 />
-            </TabsContent>
-
-            <TabsContent value="withdraw" className="p-6 bg-gradient-surface">
-              <WithdrawDispatch warehouses={warehouses} />
-            </TabsContent>
-
-            <TabsContent value="transfer" className="p-6 bg-gradient-surface">
-              <SimpleTransfer warehouses={warehouses} currentWarehouseId={warehouses[0]?.id || ''} />
-            </TabsContent>
-
-            <TabsContent value="barcode" className="p-6 bg-gradient-surface">
-              <BarcodeScanner onScan={() => { }} warehouses={warehouses} />
-            </TabsContent>
-
-            <TabsContent value="batch" className="p-6 bg-gradient-surface">
-              <SimpleBatchOperations onBatchProcess={() => { }} availableOperations={[]} warehouses={warehouses} />
-            </TabsContent>
-
-            <TabsContent value="adjust" className="p-6 bg-gradient-surface">
-              <StockAdjustment warehouseId={warehouses[0]?.id || ''} onAdjustmentComplete={() => { }} warehouses={warehouses} />
-            </TabsContent>
-
-            <TabsContent value="audit" className="p-6 bg-gradient-surface">
-              <AuditTrail />
-            </TabsContent>
-
-            <TabsContent value="integration" className="p-6 bg-gradient-surface">
-              <div className="p-4 text-center text-muted-foreground">ระบบ Integration ไม่พร้อมใช้งาน</div>
-            </TabsContent>
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">ธุรกรรมวันนี้</CardTitle>
+                <Activity className="h-4 w-4 text-purple-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {systemStats.recentTransactions}
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  อัปเดตล่าสุด 5 นาทีที่แล้ว
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        </Tabs>
-      </div>
+
+          {/* System Health and Quick Stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-yellow-500" />
+                  สถานะระบบ
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">ประสิทธิภาพระบบ</span>
+                  <span className="text-sm text-muted-foreground">{systemStats.systemHealth}%</span>
+                </div>
+                <Progress value={systemStats.systemHealth} className="h-2" />
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">ระบบปลอดภัย</span>
+                    <Badge variant="secondary" className="ml-auto">ปกติ</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm">การเชื่อมต่อ</span>
+                    <Badge variant="secondary" className="ml-auto">เสถียร</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-indigo-500" />
+                  ผู้ใช้งานออนไลน์
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-indigo-600 mb-2">12</div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Admin</span>
+                    <span className="text-muted-foreground">3</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Manager</span>
+                    <span className="text-muted-foreground">4</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Staff</span>
+                    <span className="text-muted-foreground">5</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Feature Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  ฟีเจอร์หลัก
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Search className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm">ตรวจสอบสต็อกแบบเรียลไทม์</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Download className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">รับสินค้าเข้าคลัง</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Upload className="h-4 w-4 text-orange-600" />
+                  <span className="text-sm">จ่ายสินค้าออกจากคลัง</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <ArrowUpDown className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm">โอนย้ายระหว่างคลัง</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  ฟีเจอร์ขั้นสูง
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <QrCode className="h-4 w-4 text-indigo-600" />
+                  <span className="text-sm">สแกนบาร์โค้ดและ QR Code</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Layers className="h-4 w-4 text-teal-600" />
+                  <span className="text-sm">จัดการสินค้าเป็นกลุ่ม</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Edit className="h-4 w-4 text-yellow-600" />
+                  <span className="text-sm">ปรับปรุงสต็อกและแก้ไข</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <History className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm">ติดตามประวัติการใช้งาน</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="inquiry" className="space-y-6">
+          <SimpleStockInquiry />
+        </TabsContent>
+
+        <TabsContent value="receive" className="space-y-6">
+          <SimpleReceiveGoods />
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-6">
+          <SupplierBillingFixed2 />
+        </TabsContent>
+
+        <TabsContent value="withdraw" className="space-y-6">
+          <WithdrawDispatch warehouses={warehouses} />
+        </TabsContent>
+
+        <TabsContent value="transfer" className="space-y-6">
+          <Transfer warehouses={warehouses} currentWarehouseId={warehouses[0]?.id || ''} />
+        </TabsContent>
+
+        <TabsContent value="barcode" className="space-y-6">
+          <BarcodeScanner onScan={() => { }} warehouses={warehouses} />
+        </TabsContent>
+
+        <TabsContent value="batch" className="space-y-6">
+          <BatchOperations onBatchProcess={() => { }} availableOperations={[]} warehouses={warehouses} />
+        </TabsContent>
+
+        <TabsContent value="adjust" className="space-y-6">
+          <StockAdjustment warehouseId={warehouses[0]?.id || ''} onAdjustmentComplete={() => { }} warehouses={warehouses} />
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-6">
+          <AuditTrail />
+        </TabsContent>
+
+        <TabsContent value="integration" className="space-y-6">
+          <IntegrationDashboard />
+        </TabsContent>
+
+
+      </Tabs>
     </div>
   );
 }

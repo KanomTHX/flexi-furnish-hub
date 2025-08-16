@@ -11,39 +11,42 @@ export default function AuditTrail() {
   );
 }
 
-// Placeholder components since originals were removed
+// Import the real WithdrawDispatch component
+import WithdrawDispatchReal from './WithdrawDispatch';
+
+// WithdrawDispatch component (now using real implementation)
 export function WithdrawDispatch({ warehouses }: { warehouses: any[] }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">จ่ายสินค้า</h3>
-      <p className="text-muted-foreground">ระบบจ่ายสินค้าไม่พร้อมใช้งาน</p>
-    </div>
-  );
+  return <WithdrawDispatchReal warehouses={warehouses} />;
 }
 
+// Import the real Transfer component
+import TransferReal from './Transfer';
+
+// Transfer component (now using real implementation)
 export function Transfer({ warehouses, currentWarehouseId }: { warehouses: any[], currentWarehouseId: string }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">โอนย้ายสินค้า</h3>
-      <p className="text-muted-foreground">ระบบโอนย้ายสินค้าไม่พร้อมใช้งาน</p>
-    </div>
-  );
+  return <TransferReal warehouses={warehouses} currentWarehouseId={currentWarehouseId} />;
 }
 
+// Import the real BarcodeScanner component
+import BarcodeScannerReal from './BarcodeScanner';
+
+// BarcodeScanner component (now using real implementation)
 export function BarcodeScanner({ onScan, warehouses }: { onScan: (data: string) => void, warehouses?: any[] }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">สแกนบาร์โค้ด</h3>
-      <p className="text-muted-foreground">ระบบสแกนบาร์โค้ดไม่พร้อมใช้งาน</p>
-    </div>
-  );
+  return <BarcodeScannerReal warehouses={warehouses || []} />;
 }
 
+// Import the real BatchOperations component
+import BatchOperationsReal from './BatchOperations';
+
+// BatchOperations component (now using real implementation)
+export function BatchOperations({ onBatchProcess, availableOperations, warehouses }: { onBatchProcess: (operations: any[]) => void, availableOperations: any[], warehouses?: any[] }) {
+  return <BatchOperationsReal warehouses={warehouses || []} />;
+}
+
+// Import the real StockAdjustment component
+import StockAdjustmentReal from './StockAdjustment';
+
+// StockAdjustment component (now using real implementation)
 export function StockAdjustment({ warehouseId, onAdjustmentComplete, warehouses }: { warehouseId: string, onAdjustmentComplete: () => void, warehouses?: any[] }) {
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">ปรับปรุงสต็อก</h3>
-      <p className="text-muted-foreground">ระบบปรับปรุงสต็อกไม่พร้อมใช้งาน</p>
-    </div>
-  );
+  return <StockAdjustmentReal warehouseId={warehouseId} warehouses={warehouses || []} />;
 }
