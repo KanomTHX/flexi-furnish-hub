@@ -169,162 +169,61 @@ export default function Warehouses() {
         </Card>
       )}
 
-      {/* Enhanced Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            การดำเนินการด่วน
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
-              onClick={() => setActiveTab('inquiry')}
-            >
-              <Search className="h-6 w-6 text-blue-600" />
-              <span className="text-xs font-medium">ตรวจสอบสต็อก</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-green-50 hover:border-green-300 transition-all"
-              onClick={() => setActiveTab('receive')}
-            >
-              <Download className="h-6 w-6 text-green-600" />
-              <span className="text-xs font-medium">รับสินค้า</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300 transition-all"
-              onClick={() => setActiveTab('billing')}
-            >
-              <Receipt className="h-6 w-6 text-purple-600" />
-              <span className="text-xs font-medium">ใบวางบิล</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-orange-50 hover:border-orange-300 transition-all"
-              onClick={() => setActiveTab('withdraw')}
-            >
-              <Upload className="h-6 w-6 text-orange-600" />
-              <span className="text-xs font-medium">จ่ายสินค้า</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-indigo-50 hover:border-indigo-300 transition-all"
-              onClick={() => setActiveTab('transfer')}
-            >
-              <ArrowUpDown className="h-6 w-6 text-indigo-600" />
-              <span className="text-xs font-medium">โอนย้าย</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-teal-50 hover:border-teal-300 transition-all"
-              onClick={() => setActiveTab('barcode')}
-            >
-              <QrCode className="h-6 w-6 text-teal-600" />
-              <span className="text-xs font-medium">สแกนบาร์โค้ด</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-cyan-50 hover:border-cyan-300 transition-all"
-              onClick={() => setActiveTab('batch')}
-            >
-              <Layers className="h-6 w-6 text-cyan-600" />
-              <span className="text-xs font-medium">จัดการกลุ่ม</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-yellow-50 hover:border-yellow-300 transition-all"
-              onClick={() => setActiveTab('adjust')}
-            >
-              <Edit className="h-6 w-6 text-yellow-600" />
-              <span className="text-xs font-medium">ปรับปรุงสต็อก</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-gray-50 hover:border-gray-300 transition-all"
-              onClick={() => setActiveTab('audit')}
-            >
-              <History className="h-6 w-6 text-gray-600" />
-              <span className="text-xs font-medium">ประวัติการใช้งาน</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex-col gap-2 hover:bg-red-50 hover:border-red-300 transition-all"
-              onClick={() => setActiveTab('integration')}
-            >
-              <Settings className="h-6 w-6 text-red-600" />
-              <span className="text-xs font-medium">Integration</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      
 
       {/* Real-time Stock Monitor */}
       <RealTimeStockMonitor />
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
-          <TabsTrigger value="overview" className="flex items-center gap-1">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">ภาพรวม</span>
+        <TabsList className="flex flex-wrap justify-start gap-2">
+          <TabsTrigger value="overview" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <BarChart3 className="w-5 h-5" />
+            <span className="font-semibold">ภาพรวม</span>
           </TabsTrigger>
-          <TabsTrigger value="inquiry" className="flex items-center gap-1">
-            <Search className="w-4 h-4" />
-            <span className="hidden sm:inline">ตรวจสอบ</span>
+          <TabsTrigger value="inquiry" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <Search className="w-5 h-5" />
+            <span className="font-semibold">ตรวจสอบ</span>
           </TabsTrigger>
-          <TabsTrigger value="receive" className="flex items-center gap-1">
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">รับสินค้า</span>
+          <TabsTrigger value="receive" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <Download className="w-5 h-5" />
+            <span className="font-semibold">รับสินค้า</span>
           </TabsTrigger>
-          <TabsTrigger value="billing" className="flex items-center gap-1">
-            <Receipt className="w-4 h-4" />
-            <span className="hidden sm:inline">ใบวางบิล</span>
+          <TabsTrigger value="billing" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <Receipt className="w-5 h-5" />
+            <span className="font-semibold">ใบวางบิล</span>
           </TabsTrigger>
-          <TabsTrigger value="withdraw" className="flex items-center gap-1">
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">จ่ายสินค้า</span>
+          <TabsTrigger value="withdraw" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <Upload className="w-5 h-5" />
+            <span className="font-semibold">จ่ายสินค้า</span>
           </TabsTrigger>
-          <TabsTrigger value="transfer" className="flex items-center gap-1">
-            <ArrowUpDown className="w-4 h-4" />
-            <span className="hidden sm:inline">โอนย้าย</span>
+          <TabsTrigger value="transfer" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <ArrowUpDown className="w-5 h-5" />
+            <span className="font-semibold">โอนย้าย</span>
           </TabsTrigger>
-          <TabsTrigger value="barcode" className="flex items-center gap-1">
-            <QrCode className="w-4 h-4" />
-            <span className="hidden sm:inline">บาร์โค้ด</span>
+          <TabsTrigger value="barcode" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <QrCode className="w-5 h-5" />
+            <span className="font-semibold">บาร์โค้ด</span>
           </TabsTrigger>
-          <TabsTrigger value="batch" className="flex items-center gap-1">
-            <Layers className="w-4 h-4" />
-            <span className="hidden sm:inline">กลุ่ม</span>
+          <TabsTrigger value="batch" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <Layers className="w-5 h-5" />
+            <span className="font-semibold">กลุ่ม</span>
           </TabsTrigger>
-          <TabsTrigger value="adjust" className="flex items-center gap-1">
-            <Edit className="w-4 h-4" />
-            <span className="hidden sm:inline">ปรับปรุง</span>
+          <TabsTrigger value="adjust" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <Edit className="w-5 h-5" />
+            <span className="font-semibold">ปรับปรุง</span>
           </TabsTrigger>
-          <TabsTrigger value="audit" className="flex items-center gap-1">
-            <History className="w-4 h-4" />
-            <span className="hidden sm:inline">ประวัติ</span>
+          <TabsTrigger value="audit" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <History className="w-5 h-5" />
+            <span className="font-semibold">ประวัติ</span>
           </TabsTrigger>
-          <TabsTrigger value="integration" className="flex items-center gap-1">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Integration</span>
+          <TabsTrigger value="integration" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+            <BarChart3 className="w-5 h-5" />
+            <span className="font-semibold">Integration</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-6 mt-4">
           {/* Enhanced Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-l-4 border-l-blue-500">
@@ -507,43 +406,43 @@ export default function Warehouses() {
           </div>
         </TabsContent>
 
-        <TabsContent value="inquiry" className="space-y-6">
+        <TabsContent value="inquiry" className="space-y-6 mt-4">
           <SimpleStockInquiry />
         </TabsContent>
 
-        <TabsContent value="receive" className="space-y-6">
+        <TabsContent value="receive" className="space-y-6 mt-4">
           <SimpleReceiveGoods />
         </TabsContent>
 
-        <TabsContent value="billing" className="space-y-6">
+        <TabsContent value="billing" className="space-y-6 mt-4">
           <SupplierBillingFixed2 />
         </TabsContent>
 
-        <TabsContent value="withdraw" className="space-y-6">
+        <TabsContent value="withdraw" className="space-y-6 mt-4">
           <WithdrawDispatch warehouses={warehouses} />
         </TabsContent>
 
-        <TabsContent value="transfer" className="space-y-6">
+        <TabsContent value="transfer" className="space-y-6 mt-4">
           <Transfer warehouses={warehouses} currentWarehouseId={warehouses[0]?.id || ''} />
         </TabsContent>
 
-        <TabsContent value="barcode" className="space-y-6">
+        <TabsContent value="barcode" className="space-y-6 mt-4">
           <BarcodeScanner onScan={() => { }} warehouses={warehouses} />
         </TabsContent>
 
-        <TabsContent value="batch" className="space-y-6">
+        <TabsContent value="batch" className="space-y-6 mt-4">
           <BatchOperations onBatchProcess={() => { }} availableOperations={[]} warehouses={warehouses} />
         </TabsContent>
 
-        <TabsContent value="adjust" className="space-y-6">
+        <TabsContent value="adjust" className="space-y-6 mt-4">
           <StockAdjustment warehouseId={warehouses[0]?.id || ''} onAdjustmentComplete={() => { }} warehouses={warehouses} />
         </TabsContent>
 
-        <TabsContent value="audit" className="space-y-6">
+        <TabsContent value="audit" className="space-y-6 mt-4">
           <AuditTrail />
         </TabsContent>
 
-        <TabsContent value="integration" className="space-y-6">
+        <TabsContent value="integration" className="space-y-6 mt-4">
           <IntegrationDashboard />
         </TabsContent>
 

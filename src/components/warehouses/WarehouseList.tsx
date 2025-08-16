@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Warehouse, WarehouseFilter } from '@/types/warehouse';
 import { 
   getWarehouseTypeText, 
   getWarehouseStatusText,
-  exportWarehousesToCSV
 } from '@/utils/warehouseHelpers';
 import { 
   Search, 
-  Filter, 
   Download, 
   Eye, 
   Edit,
@@ -24,7 +24,14 @@ import {
   Phone,
   Mail,
   Clock,
-  Warehouse as WarehouseIcon
+  Warehouse as WarehouseIcon,
+  Building,
+  List,
+  LayoutGrid,
+  SlidersHorizontal,
+  X,
+  ChevronRight,
+  Info
 } from 'lucide-react';
 
 interface WarehouseListProps {
@@ -44,448 +51,341 @@ export function WarehouseList({
 }: WarehouseListProps) {
   const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(true);
+
+  const provinces = useMemo(() => [...new Set(warehouses.map(w => w.address.province))], [warehouses]);
+  const types = ['main', 'branch', 'distribution', 'retail', 'temporary'];
+  const statuses = ['active', 'inactive', 'maintenance', 'closed'];
 
   const getStatusBadge = (status: Warehouse['status']) => {
     const variants = {
-      active: 'default',
+      active: 'success',
       inactive: 'secondary',
-      maintenance: 'destructive',
+      maintenance: 'warning',
       closed: 'outline'
     } as const;
+    
+    type BadgeVariant = typeof variants[keyof typeof variants];
 
     return (
-      <Badge variant={variants[status]} className="text-xs">
+      <Badge variant={variants[status] as BadgeVariant} className="text-xs font-medium">
         {getWarehouseStatusText(status)}
       </Badge>
     );
-  };
-
-  const getUtilizationColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 75) return 'bg-orange-500';
-    if (percentage >= 50) return 'bg-green-500';
-    return 'bg-blue-500';
   };
 
   const handleViewDetails = (warehouse: Warehouse) => {
     setSelectedWarehouse(warehouse);
     setDetailDialogOpen(true);
   };
+  
+  const FilterPanel = () => (
+    <Card className="bg-muted/40 border-dashed">
+      <CardHeader className="flex-row items-center justify-between pb-4">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4" />
+          ตัวกรอง
+        </CardTitle>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onFilterChange({})}>
+          <X className="h-4 w-4" />
+        </Button>
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="ค้นหาคลังสินค้า..."
+            value={filter.search || ''}
+            onChange={(e) => onFilterChange({ search: e.target.value })}
+            className="pl-10"
+          />
+        </div>
+        <Select 
+          value={filter.type || 'all'} 
+          onValueChange={(value) => onFilterChange({ type: value === 'all' ? undefined : value as any })}
+        >
+          <SelectTrigger><SelectValue placeholder="ประเภท" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">ทุกประเภท</SelectItem>
+            {types.map(type => (
+              <SelectItem key={type} value={type}>{getWarehouseTypeText(type as any)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select 
+          value={filter.status || 'all'} 
+          onValueChange={(value) => onFilterChange({ status: value === 'all' ? undefined : value as any })}
+        >
+          <SelectTrigger><SelectValue placeholder="สถานะ" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">ทุกสถานะ</SelectItem>
+            {statuses.map(status => (
+              <SelectItem key={status} value={status}>{getWarehouseStatusText(status as any)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select 
+          value={filter.province || 'all'} 
+          onValueChange={(value) => onFilterChange({ province: value === 'all' ? undefined : value })}
+        >
+          <SelectTrigger><SelectValue placeholder="จังหวัด" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">ทุกจังหวัด</SelectItem>
+            {provinces.map(province => (
+              <SelectItem key={province} value={province}>{province}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </CardContent>
+    </Card>
+  );
 
-  const provinces = [...new Set(warehouses.map(w => w.address.province))];
-  const types = ['main', 'branch', 'distribution', 'retail', 'temporary'];
-  const statuses = ['active', 'inactive', 'maintenance', 'closed'];
+  const WarehouseCard = ({ warehouse }: { warehouse: Warehouse }) => (
+    <Card className="flex flex-col h-full hover:border-primary/60 transition-all duration-200 ease-in-out">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <CardTitle className="text-base font-bold mb-1">{warehouse.name}</CardTitle>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="outline" className="font-mono">{warehouse.code}</Badge>
+              <span>•</span>
+              <span>{getWarehouseTypeText(warehouse.type)}</span>
+            </div>
+          </div>
+          {getStatusBadge(warehouse.status)}
+        </div>
+      </CardHeader>
+      <CardContent className="flex-grow space-y-4">
+        <div className="flex items-start gap-3 text-sm">
+          <MapPin className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
+          <span className="text-muted-foreground">{warehouse.address.district}, {warehouse.address.province}</span>
+        </div>
+        <div className="flex items-start gap-3 text-sm">
+          <Users className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
+          <span className="text-muted-foreground">{warehouse.contact.manager}</span>
+        </div>
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-sm font-medium">การใช้งาน</span>
+            <span className="text-sm font-bold">{warehouse.capacity.utilizationPercentage}%</span>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger className="w-full">
+                <Progress value={warehouse.capacity.utilizationPercentage} className="h-2" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{warehouse.capacity.currentUtilization.toLocaleString()} / {warehouse.capacity.storageCapacity.toLocaleString()}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </CardContent>
+      <CardFooter className="flex gap-2">
+        <Button variant="outline" size="sm" className="flex-1" onClick={() => handleViewDetails(warehouse)}>
+          <Eye className="h-4 w-4 mr-2" />
+          รายละเอียด
+        </Button>
+        {onEditWarehouse && (
+          <Button variant="secondary" size="sm" className="flex-1" onClick={() => onEditWarehouse(warehouse)}>
+            <Edit className="h-4 w-4 mr-2" />
+            แก้ไข
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
+  );
+
+  const WarehouseListItem = ({ warehouse }: { warehouse: Warehouse }) => (
+    <Card className="hover:bg-muted/40 transition-colors" onClick={() => handleViewDetails(warehouse)}>
+      <CardContent className="p-4 grid grid-cols-12 items-center gap-4">
+        <div className="col-span-3 flex items-center gap-4">
+          <Building className="h-6 w-6 text-primary" />
+          <div>
+            <p className="font-semibold">{warehouse.name}</p>
+            <p className="text-sm text-muted-foreground font-mono">{warehouse.code}</p>
+          </div>
+        </div>
+        <div className="col-span-2">{getStatusBadge(warehouse.status)}</div>
+        <div className="col-span-2 text-sm">{getWarehouseTypeText(warehouse.type)}</div>
+        <div className="col-span-2 text-sm">{warehouse.address.province}</div>
+        <div className="col-span-2">
+          <Progress value={warehouse.capacity.utilizationPercentage} className="h-2" />
+        </div>
+        <div className="col-span-1 text-right">
+          <Button variant="ghost" size="icon">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-4">
-      {/* ตัวกรองและการค้นหา */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <WarehouseIcon className="h-4 w-4" />
-              รายการคลังสินค้า
-            </CardTitle>
-            <div className="flex gap-2">
-              <Button onClick={onExport} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                ส่งออก CSV
-              </Button>
-            </div>
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex items-center gap-2">
+          <WarehouseIcon className="h-6 w-6" />
+          <h2 className="text-2xl font-bold">รายการคลังสินค้า ({warehouses.length})</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            ตัวกรอง
+          </Button>
+          <div className="flex items-center rounded-md bg-muted p-0.5">
+            <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}>
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('list')}>
+              <List className="h-4 w-4" />
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            {/* ค้นหา */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="ค้นหาชื่อคลัง, รหัส, ผู้จัดการ..."
-                value={filter.search || ''}
-                onChange={(e) => onFilterChange({ search: e.target.value })}
-                className="pl-10"
-              />
-            </div>
+          <Button onClick={onExport} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            ส่งออก
+          </Button>
+        </div>
+      </div>
 
-            {/* ประเภท */}
-            <Select 
-              value={filter.type || 'all'} 
-              onValueChange={(value) => onFilterChange({ type: value === 'all' ? undefined : value as any })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="ประเภท" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทุกประเภท</SelectItem>
-                {types.map(type => (
-                  <SelectItem key={type} value={type}>
-                    {getWarehouseTypeText(type as any)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {showFilters && <FilterPanel />}
 
-            {/* สถานะ */}
-            <Select 
-              value={filter.status || 'all'} 
-              onValueChange={(value) => onFilterChange({ status: value === 'all' ? undefined : value as any })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="สถานะ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทุกสถานะ</SelectItem>
-                {statuses.map(status => (
-                  <SelectItem key={status} value={status}>
-                    {getWarehouseStatusText(status as any)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {warehouses.map((warehouse) => (
+            <WarehouseCard key={warehouse.id} warehouse={warehouse} />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <Card className="bg-muted/60 font-semibold text-sm text-muted-foreground">
+            <CardContent className="p-3 grid grid-cols-12 gap-4">
+              <div className="col-span-3">ชื่อคลัง</div>
+              <div className="col-span-2">สถานะ</div>
+              <div className="col-span-2">ประเภท</div>
+              <div className="col-span-2">จังหวัด</div>
+              <div className="col-span-2">การใช้งาน</div>
+            </CardContent>
+          </Card>
+          {warehouses.map((warehouse) => (
+            <WarehouseListItem key={warehouse.id} warehouse={warehouse} />
+          ))}
+        </div>
+      )}
 
-            {/* จังหวัด */}
-            <Select 
-              value={filter.province || 'all'} 
-              onValueChange={(value) => onFilterChange({ province: value === 'all' ? undefined : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="จังหวัด" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทุกจังหวัด</SelectItem>
-                {provinces.map(province => (
-                  <SelectItem key={province} value={province}>
-                    {province}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {warehouses.length === 0 && (
+        <div className="text-center py-16 text-muted-foreground">
+          <WarehouseIcon className="h-16 w-16 mx-auto mb-4 opacity-30" />
+          <h3 className="text-lg font-semibold">ไม่พบคลังสินค้า</h3>
+          <p>ไม่พบข้อมูลคลังสินค้าที่ตรงกับเงื่อนไข</p>
+        </div>
+      )}
 
-            {/* การใช้งาน */}
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="การใช้งานขั้นต่ำ %"
-                value={filter.utilizationMin || ''}
-                onChange={(e) => onFilterChange({ utilizationMin: e.target.value ? parseInt(e.target.value) : undefined })}
-                className="text-sm"
-              />
-              <Input
-                type="number"
-                placeholder="การใช้งานสูงสุด %"
-                value={filter.utilizationMax || ''}
-                onChange={(e) => onFilterChange({ utilizationMax: e.target.value ? parseInt(e.target.value) : undefined })}
-                className="text-sm"
-              />
-            </div>
-          </div>
-
-          {/* รายการคลังสินค้า */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {warehouses.map((warehouse) => (
-              <Card key={warehouse.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-sm">{warehouse.name}</h3>
-                        {getStatusBadge(warehouse.status)}
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Badge variant="outline" className="text-xs">
-                          {warehouse.code}
-                        </Badge>
-                        <span>•</span>
-                        <span>{getWarehouseTypeText(warehouse.type)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* ที่อยู่ */}
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <div className="text-xs text-muted-foreground">
-                      <div>{warehouse.address.district}, {warehouse.address.province}</div>
-                      <div>{warehouse.address.postalCode}</div>
-                    </div>
-                  </div>
-
-                  {/* ผู้จัดการ */}
-                  <div className="flex items-center gap-2">
-                    <Users className="h-3 w-3 text-muted-foreground" />
-                    <div className="text-xs">
-                      <div className="font-medium">{warehouse.contact.manager}</div>
-                      <div className="text-muted-foreground">{warehouse.contact.phone}</div>
-                    </div>
-                  </div>
-
-                  {/* การใช้งาน */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">การใช้งาน</span>
-                      <span className="text-xs font-medium">
-                        {warehouse.capacity.utilizationPercentage}%
-                      </span>
-                    </div>
-                    <Progress 
-                      value={warehouse.capacity.utilizationPercentage} 
-                      className="h-1"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{warehouse.capacity.currentUtilization.toLocaleString()}</span>
-                      <span>{warehouse.capacity.storageCapacity.toLocaleString()}</span>
-                    </div>
-                  </div>
-
-                  {/* ข้อมูลเพิ่มเติม */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-1">
-                      <Package className="h-3 w-3 text-muted-foreground" />
-                      <span>{warehouse.zones.length} โซน</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3 text-muted-foreground" />
-                      <span>{warehouse.staff.length} คน</span>
-                    </div>
-                  </div>
-
-                  {/* ปุ่มดำเนินการ */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewDetails(warehouse)}
-                      className="flex-1"
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      ดู
-                    </Button>
-                    {onEditWarehouse && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onEditWarehouse(warehouse)}
-                        className="flex-1"
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        แก้ไข
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {warehouses.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <WarehouseIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>ไม่พบคลังสินค้าที่ตรงกับเงื่อนไขการค้นหา</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Dialog รายละเอียดคลังสินค้า */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              รายละเอียดคลังสินค้า {selectedWarehouse?.name}
-            </DialogTitle>
-          </DialogHeader>
-
+        <DialogContent className="max-w-3xl">
           {selectedWarehouse && (
-            <div className="space-y-6">
-              {/* ข้อมูลพื้นฐาน */}
-              <div className="grid grid-cols-2 gap-6">
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  <WarehouseIcon className="h-6 w-6 text-primary" />
+                  <span className="text-2xl">{selectedWarehouse.name}</span>
+                </DialogTitle>
+                <div className="flex items-center gap-4 pt-2">
+                  <Badge variant="outline" className="font-mono">{selectedWarehouse.code}</Badge>
+                  {getStatusBadge(selectedWarehouse.status)}
+                  <Badge variant="secondary">{getWarehouseTypeText(selectedWarehouse.type)}</Badge>
+                </div>
+              </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[60vh] overflow-y-auto px-2">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">ข้อมูลทั่วไป</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-base flex items-center gap-2"><Info className="h-4 w-4" />ข้อมูลทั่วไป</CardTitle></CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div className="flex justify-between"><span>พื้นที่รวม:</span> <span className="font-medium">{selectedWarehouse.capacity.totalArea.toLocaleString()} ตร.ม.</span></div>
+                    <div className="flex justify-between"><span>พื้นที่ใช้ได้:</span> <span className="font-medium">{selectedWarehouse.capacity.usableArea.toLocaleString()} ตร.ม.</span></div>
+                    <div className="flex justify-between"><span>จำนวนโซน:</span> <span className="font-medium">{selectedWarehouse.zones.length}</span></div>
+                    <div className="flex justify-between"><span>พนักงาน:</span> <span className="font-medium">{selectedWarehouse.staff.length} คน</span></div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle className="text-base flex items-center gap-2"><Package className="h-4 w-4" />ความจุ</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">รหัสคลัง</label>
-                        <p className="font-mono">{selectedWarehouse.code}</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>การใช้งานปัจจุบัน</span>
+                        <span className="font-bold">{selectedWarehouse.capacity.utilizationPercentage}%</span>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">ประเภท</label>
-                        <p>{getWarehouseTypeText(selectedWarehouse.type)}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">สถานะ</label>
-                        <div className="mt-1">
-                          {getStatusBadge(selectedWarehouse.status)}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">พื้นที่รวม</label>
-                        <p>{selectedWarehouse.capacity.totalArea.toLocaleString()} ตร.ม.</p>
+                      <Progress value={selectedWarehouse.capacity.utilizationPercentage} className="h-2" />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{selectedWarehouse.capacity.currentUtilization.toLocaleString()}</span>
+                        <span>{selectedWarehouse.capacity.storageCapacity.toLocaleString()}</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">ข้อมูลติดต่อ</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
+                <Card className="md:col-span-2">
+                  <CardHeader><CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4" />ที่อยู่และข้อมูลติดต่อ</CardTitle></CardHeader>
+                  <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">ผู้จัดการ</label>
-                      <p className="font-medium">{selectedWarehouse.contact.manager}</p>
+                      <p className="font-semibold">{selectedWarehouse.address.street}</p>
+                      <p>{selectedWarehouse.address.district}, {selectedWarehouse.address.province}</p>
+                      <p>{selectedWarehouse.address.postalCode}</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedWarehouse.contact.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedWarehouse.contact.email}</span>
-                    </div>
-                    {selectedWarehouse.contact.emergencyContact && (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">ติดต่อฉุกเฉิน</label>
-                        <p>{selectedWarehouse.contact.emergencyContact}</p>
+                    <div>
+                      <p className="font-semibold">{selectedWarehouse.contact.manager}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedWarehouse.contact.phone}</span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedWarehouse.contact.email}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle className="text-base flex items-center gap-2"><Clock className="h-4 w-4" />เวลาทำการ</CardTitle></CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {Object.entries(selectedWarehouse.operatingHours).map(([day, hours]) => (
+                      <div key={day} className="flex justify-between">
+                        <span className="capitalize">{day.slice(0,3)}</span>
+                        <span>{hours.isOpen ? `${hours.open} - ${hours.close}` : 'ปิด'}</span>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle className="text-base">สิ่งอำนวยความสะดวก</CardTitle></CardHeader>
+                  <CardContent className="grid grid-cols-2 gap-2 text-sm">
+                    {[
+                      { label: 'ท่าขนถ่าย', value: selectedWarehouse.facilities.hasLoading },
+                      { label: 'ห้องเย็น', value: selectedWarehouse.facilities.hasColdStorage },
+                      { label: 'ระบบรักษาความปลอดภัย', value: selectedWarehouse.facilities.hasSecuritySystem },
+                      { label: 'ระบบดับเพลิง', value: selectedWarehouse.facilities.hasFireSafety },
+                      { label: 'ควบคุมอุณหภูมิ', value: selectedWarehouse.facilities.hasClimateControl },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${item.value ? 'bg-green-500' : 'bg-gray-300'}`} />
+                        <span>{item.label}</span>
+                      </div>
+                    ))}
                   </CardContent>
                 </Card>
               </div>
-
-              {/* ที่อยู่ */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    ที่อยู่
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p>{selectedWarehouse.address.street}</p>
-                    <p>
-                      {selectedWarehouse.address.district} {selectedWarehouse.address.province} {selectedWarehouse.address.postalCode}
-                    </p>
-                    <p>{selectedWarehouse.address.country}</p>
-                    {selectedWarehouse.address.coordinates && (
-                      <p className="text-sm text-muted-foreground">
-                        พิกัด: {selectedWarehouse.address.coordinates.lat}, {selectedWarehouse.address.coordinates.lng}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* ความจุและการใช้งาน */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Package className="h-4 w-4" />
-                    ความจุและการใช้งาน
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">ความจุรวม</label>
-                        <p className="text-lg font-bold">{selectedWarehouse.capacity.storageCapacity.toLocaleString()} ชิ้น</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">การใช้งานปัจจุบัน</label>
-                        <p className="text-lg font-bold">{selectedWarehouse.capacity.currentUtilization.toLocaleString()} ชิ้น</p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">เปอร์เซ็นต์การใช้งาน</label>
-                        <div className="flex items-center gap-2">
-                          <Progress 
-                            value={selectedWarehouse.capacity.utilizationPercentage} 
-                            className="flex-1 h-2"
-                          />
-                          <span className="font-bold">{selectedWarehouse.capacity.utilizationPercentage}%</span>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">พื้นที่ใช้งานได้</label>
-                        <p>{selectedWarehouse.capacity.usableArea.toLocaleString()} ตร.ม.</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* สิ่งอำนวยความสะดวก */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">สิ่งอำนวยความสะดวก</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${selectedWarehouse.facilities.hasLoading ? 'bg-green-500' : 'bg-gray-300'}`} />
-                        <span className="text-sm">ท่าขนถ่าย</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${selectedWarehouse.facilities.hasColdStorage ? 'bg-green-500' : 'bg-gray-300'}`} />
-                        <span className="text-sm">ห้องเย็น</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${selectedWarehouse.facilities.hasSecuritySystem ? 'bg-green-500' : 'bg-gray-300'}`} />
-                        <span className="text-sm">ระบบรักษาความปลอดภัย</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${selectedWarehouse.facilities.hasFireSafety ? 'bg-green-500' : 'bg-gray-300'}`} />
-                        <span className="text-sm">ระบบดับเพลิง</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${selectedWarehouse.facilities.hasClimateControl ? 'bg-green-500' : 'bg-gray-300'}`} />
-                        <span className="text-sm">ควบคุมอุณหภูมิ</span>
-                      </div>
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">ที่จอดรถ:</span> {selectedWarehouse.facilities.parkingSpaces} คัน
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* เวลาทำการ */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    เวลาทำการ
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(selectedWarehouse.operatingHours).map(([day, hours]) => (
-                      <div key={day} className="flex justify-between items-center">
-                        <span className="text-sm capitalize">
-                          {day === 'monday' ? 'จันทร์' :
-                           day === 'tuesday' ? 'อังคาร' :
-                           day === 'wednesday' ? 'พุธ' :
-                           day === 'thursday' ? 'พฤหัสบดี' :
-                           day === 'friday' ? 'ศุกร์' :
-                           day === 'saturday' ? 'เสาร์' : 'อาทิตย์'}
-                        </span>
-                        <span className="text-sm">
-                          {hours.isOpen ? `${hours.open} - ${hours.close}` : 'ปิด'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>ปิด</Button>
+                {onEditWarehouse && (
+                  <Button onClick={() => {
+                    setDetailDialogOpen(false);
+                    onEditWarehouse(selectedWarehouse);
+                  }}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    แก้ไข
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
           )}
         </DialogContent>
       </Dialog>
