@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -194,9 +194,7 @@ export function BranchPerformanceMonitor() {
     ];
   };
 
-  const [performanceData, setPerformanceData] = useState<BranchPerformanceData | null>(null);
-
-  useEffect(() => {
+  const performanceData = useMemo(() => {
     const metrics = calculateMetrics();
     const overallScore = Math.round(
       metrics.reduce((sum, metric) => {
@@ -215,15 +213,15 @@ export function BranchPerformanceMonitor() {
         timestamp: new Date()
       }));
 
-    setPerformanceData({
-      branchId: salesData.metadata.allowedBranches[0] || 'current',
+    return {
+      branchId: salesData.metadata?.allowedBranches?.[0] || 'current',
       branchName: 'สาขาปัจจุบัน',
       overallScore,
       metrics,
       lastUpdated: new Date(),
       alerts
-    });
-  }, [salesData.filteredData, inventoryData.filteredData, employeeData.filteredData, accessStats]);
+    };
+  }, [salesData.filteredData?.length, inventoryData.filteredData?.length, employeeData.filteredData?.length, accessStats]);
 
   // Auto refresh
   useEffect(() => {
@@ -234,7 +232,7 @@ export function BranchPerformanceMonitor() {
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [refreshInterval, salesData, inventoryData, employeeData]);
+  }, [refreshInterval, salesData.refetch, inventoryData.refetch, employeeData.refetch]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -338,8 +336,8 @@ export function BranchPerformanceMonitor() {
       </Card>
 
       {/* Performance Metrics Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {performanceData.metrics.map((metric) => (
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {performanceData.metrics?.map((metric) => (
           <Card key={metric.id}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -400,7 +398,7 @@ export function BranchPerformanceMonitor() {
       </div>
 
       {/* Alerts */}
-      {performanceData.alerts.length > 0 && (
+      {performanceData.alerts && performanceData.alerts.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center space-x-2">
@@ -412,7 +410,7 @@ export function BranchPerformanceMonitor() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {performanceData.alerts.map((alert, index) => (
+            {performanceData.alerts?.map((alert, index) => (
               <div 
                 key={index}
                 className={cn(

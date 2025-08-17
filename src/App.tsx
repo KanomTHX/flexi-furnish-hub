@@ -19,6 +19,7 @@ const POS = lazy(() => import("./pages/POS"));
 const Installments = lazy(() => import("./pages/Installments"));
 
 const Warehouses = lazy(() => import("./pages/Warehouses"));
+const Transfer = lazy(() => import("./pages/Transfer"));
 const BranchManagement = lazy(() => import("./pages/BranchManagement"));
 const Accounting = lazy(() => import("./pages/Accounting"));
 const Claims = lazy(() => import("./pages/Claims"));
@@ -104,6 +105,15 @@ const App = () => {
                 <AdminLayout>
                   <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบคลัง & สต็อก..." />}>
                     <Warehouses />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/transfer" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบโอนย้ายสินค้า..." />}>
+                    <Transfer />
                   </SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>

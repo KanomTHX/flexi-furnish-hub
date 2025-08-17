@@ -24,36 +24,35 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { WarehouseService } from '@/services/warehouseService';
+import { useScanSessions, type ScanResult, type ScanSession } from '@/hooks/useScanSessions';
+import { useWarehouse } from '@/hooks/useWarehouse';
 import type { SerialNumber, StockLevel, Warehouse } from '@/types/warehouse';
 
 interface BarcodeScannerProps {
-  warehouses: Warehouse[];
+  warehouses?: Warehouse[];
 }
 
-interface ScanResult {
-  id: string;
-  barcode: string;
-  serialNumber?: SerialNumber;
-  productName?: string;
-  warehouseName?: string;
-  status: 'found' | 'not_found' | 'error';
-  scannedAt: Date;
-  action?: string;
-}
-
-interface ScanSession {
-  id: string;
-  warehouseId: string;
-  startTime: Date;
-  endTime?: Date;
-  totalScans: number;
-  successfulScans: number;
-  results: ScanResult[];
-}
+// ScanResult and ScanSession interfaces are now imported from useScanSessions hook
 
 export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
-  warehouses
+  warehouses: propWarehouses
 }) => {
+  // Use warehouse hook to fetch warehouses if not provided
+  const { warehouses: fetchedWarehouses, loading: warehousesLoading } = useWarehouse();
+  const warehouses = propWarehouses || fetchedWarehouses;
+  // Use scan sessions hook
+  const {
+    sessions: scanHistory,
+    currentSession,
+    loading: sessionLoading,
+    error: sessionError,
+    startSession,
+    endSession,
+    loadSessions,
+    loadSessionResults,
+    setCurrentSession
+  } = useScanSessions();
+
   // State management
   const [activeTab, setActiveTab] = useState('scanner');
   const [loading, setLoading] = useState(false);
@@ -64,18 +63,11 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   // Scanner state
   const [inputValue, setInputValue] = useState('');
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
-  const [currentSession, setCurrentSession] = useState<ScanSession | null>(null);
-  const [scanHistory, setScanHistory] = useState<ScanSession[]>([]);
   
   // Refs
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Load scan history on component mount
-  useEffect(() => {
-    loadScanHistory();
-  }, []);
 
   // Focus input when scanner is active
   useEffect(() => {
@@ -84,64 +76,29 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     }
   }, [activeTab]);
 
-  // Load scan history
-  const loadScanHistory = async () => {
-    try {
-      // For now, we'll use mock data - in real implementation, this would come from database
-      const mockHistory: ScanSession[] = [
-        {
-          id: 'session-1',
-          warehouseId: 'warehouse-1',
-          startTime: new Date(Date.now() - 86400000), // 1 day ago
-          endTime: new Date(Date.now() - 86400000 + 3600000), // 1 hour later
-          totalScans: 25,
-          successfulScans: 23,
-          results: []
-        }
-      ];
-      setScanHistory(mockHistory);
-    } catch (error) {
-      console.error('Error loading scan history:', error);
-    }
-  };
+  // Update isScanning based on currentSession
+  useEffect(() => {
+    setIsScanning(!!currentSession);
+  }, [currentSession]);
 
   // Start new scan session
-  const startScanSession = () => {
+  const startScanSession = async () => {
     if (!selectedWarehouse) {
       toast.error('กรุณาเลือกคลังสินค้าก่อน');
       return;
     }
 
-    const newSession: ScanSession = {
-      id: `session-${Date.now()}`,
-      warehouseId: selectedWarehouse,
-      startTime: new Date(),
-      totalScans: 0,
-      successfulScans: 0,
-      results: []
-    };
-
-    setCurrentSession(newSession);
-    setScanResults([]);
-    setIsScanning(true);
-    toast.success('เริ่มเซสชันการสแกนใหม่');
+    const session = await startSession(selectedWarehouse);
+    if (session) {
+      setScanResults([]);
+    }
   };
 
   // End scan session
-  const endScanSession = () => {
+  const endScanSession = async () => {
     if (currentSession) {
-      const updatedSession = {
-        ...currentSession,
-        endTime: new Date(),
-        totalScans: scanResults.length,
-        successfulScans: scanResults.filter(r => r.status === 'found').length,
-        results: scanResults
-      };
-
-      setScanHistory(prev => [updatedSession, ...prev]);
-      setCurrentSession(null);
-      setIsScanning(false);
-      toast.success(`เซสชันสิ้นสุด: สแกนสำเร็จ ${updatedSession.successfulScans}/${updatedSession.totalScans} รายการ`);
+      await endSession(currentSession.id, scanResults);
+      setScanResults([]);
     }
   };
 
@@ -172,7 +129,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
       if (response.data.length > 0) {
         const serialNumber = response.data[0];
-        scanResult.serialNumber = serialNumber;
+        scanResult.serialNumberId = serialNumber.id;
         scanResult.productName = serialNumber.product?.name;
         scanResult.warehouseName = serialNumber.warehouse?.name;
         scanResult.status = 'found';
@@ -184,15 +141,6 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
       setScanResults(prev => [scanResult, ...prev]);
       setInputValue('');
-
-      // Update current session
-      if (currentSession) {
-        setCurrentSession(prev => prev ? {
-          ...prev,
-          totalScans: prev.totalScans + 1,
-          successfulScans: prev.successfulScans + (scanResult.status === 'found' ? 1 : 0)
-        } : null);
-      }
 
     } catch (error) {
       console.error('Error scanning barcode:', error);
@@ -298,21 +246,31 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           <CardTitle>เลือกคลังสินค้า</CardTitle>
         </CardHeader>
         <CardContent>
-          <Select 
-            value={selectedWarehouse} 
-            onValueChange={setSelectedWarehouse}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="เลือกคลังสินค้า" />
-            </SelectTrigger>
-            <SelectContent>
-              {warehouses.map((warehouse) => (
-                <SelectItem key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name} ({warehouse.code})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {warehousesLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="text-sm text-muted-foreground">กำลังโหลดข้อมูลคลังสินค้า...</div>
+            </div>
+          ) : warehouses.length === 0 ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="text-sm text-muted-foreground">ไม่พบข้อมูลคลังสินค้า</div>
+            </div>
+          ) : (
+            <Select 
+              value={selectedWarehouse} 
+              onValueChange={setSelectedWarehouse}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="เลือกคลังสินค้า" />
+              </SelectTrigger>
+              <SelectContent>
+                {warehouses.map((warehouse) => (
+                  <SelectItem key={warehouse.id} value={warehouse.id}>
+                    {warehouse.name} ({warehouse.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </CardContent>
       </Card>
 
@@ -406,14 +364,14 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                     onKeyDown={handleKeyDown}
                     placeholder="สแกนหรือพิมพ์บาร์โค้ด / Serial Number"
                     className="flex-1"
-                    disabled={loading || !selectedWarehouse}
+                    disabled={loading || sessionLoading || !selectedWarehouse}
                     autoFocus
                   />
                   <Button
                     onClick={() => handleScan(inputValue)}
-                    disabled={!inputValue.trim() || loading || !selectedWarehouse}
+                    disabled={!inputValue.trim() || loading || sessionLoading || !selectedWarehouse}
                   >
-                    {loading ? (
+                    {(loading || sessionLoading) ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     ) : (
                       <Search className="h-4 w-4" />
@@ -534,7 +492,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                             <div>
                               <p className="font-medium">{result.productName}</p>
                               <p className="text-sm text-muted-foreground">
-                                {result.serialNumber?.serialNumber}
+                                {result.barcode}
                               </p>
                             </div>
                           ) : (
@@ -543,7 +501,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                         </TableCell>
                         <TableCell>{getStatusBadge(result.status)}</TableCell>
                         <TableCell>
-                          {result.serialNumber && (
+                          {result.serialNumberId && (
                             <Button variant="ghost" size="sm">
                               <Eye className="h-4 w-4" />
                             </Button>

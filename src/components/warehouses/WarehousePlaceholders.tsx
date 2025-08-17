@@ -19,13 +19,7 @@ export function WithdrawDispatch({ warehouses }: { warehouses: any[] }) {
   return <WithdrawDispatchReal warehouses={warehouses} />;
 }
 
-// Import the real Transfer component
-import TransferReal from './Transfer';
 
-// Transfer component (now using real implementation)
-export function Transfer({ warehouses, currentWarehouseId }: { warehouses: any[], currentWarehouseId: string }) {
-  return <TransferReal warehouses={warehouses} currentWarehouseId={currentWarehouseId} />;
-}
 
 // Import the real BarcodeScanner component
 import BarcodeScannerReal from './BarcodeScanner';

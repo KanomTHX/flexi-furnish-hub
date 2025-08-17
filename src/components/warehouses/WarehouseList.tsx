@@ -1,13 +1,17 @@
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { Avatar } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Warehouse, WarehouseFilter } from '@/types/warehouse';
 import { 
   getWarehouseTypeText, 
@@ -31,7 +35,21 @@ import {
   SlidersHorizontal,
   X,
   ChevronRight,
-  Info
+  Info,
+  RefreshCw,
+  Filter,
+  Calendar,
+  Truck,
+  Boxes,
+  ShieldCheck,
+  Thermometer,
+  Flame,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  BarChart4,
+  ArrowUpDown,
+  Forklift
 } from 'lucide-react';
 
 interface WarehouseListProps {
@@ -81,158 +99,342 @@ export function WarehouseList({
   };
   
   const FilterPanel = () => (
-    <Card className="bg-muted/40 border-dashed">
-      <CardHeader className="flex-row items-center justify-between pb-4">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4" />
+    <Card className="bg-gradient-to-r from-gray-50 to-slate-50 border-none shadow-md overflow-hidden">
+      <CardHeader className="flex-row items-center justify-between pb-4 border-b">
+        <CardTitle className="text-base font-semibold flex items-center gap-2 text-primary">
+          <Filter className="h-5 w-5" />
           ตัวกรอง
         </CardTitle>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onFilterChange({})}>
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs h-8 border-dashed" 
+            onClick={() => onFilterChange({})}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            รีเซ็ต
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowFilters(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-primary" />
           <Input
             placeholder="ค้นหาคลังสินค้า..."
             value={filter.search || ''}
             onChange={(e) => onFilterChange({ search: e.target.value })}
-            className="pl-10"
+            className="pl-10 border-primary/20 focus-visible:ring-primary/30"
           />
         </div>
-        <Select 
-          value={filter.type || 'all'} 
-          onValueChange={(value) => onFilterChange({ type: value === 'all' ? undefined : value as any })}
-        >
-          <SelectTrigger><SelectValue placeholder="ประเภท" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">ทุกประเภท</SelectItem>
-            {types.map(type => (
-              <SelectItem key={type} value={type}>{getWarehouseTypeText(type as any)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select 
-          value={filter.status || 'all'} 
-          onValueChange={(value) => onFilterChange({ status: value === 'all' ? undefined : value as any })}
-        >
-          <SelectTrigger><SelectValue placeholder="สถานะ" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">ทุกสถานะ</SelectItem>
-            {statuses.map(status => (
-              <SelectItem key={status} value={status}>{getWarehouseStatusText(status as any)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select 
-          value={filter.province || 'all'} 
-          onValueChange={(value) => onFilterChange({ province: value === 'all' ? undefined : value })}
-        >
-          <SelectTrigger><SelectValue placeholder="จังหวัด" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">ทุกจังหวัด</SelectItem>
-            {provinces.map(province => (
-              <SelectItem key={province} value={province}>{province}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-muted-foreground ml-1">ประเภทคลังสินค้า</div>
+          <Select 
+            value={filter.type || 'all'} 
+            onValueChange={(value) => onFilterChange({ type: value === 'all' ? undefined : value as any })}
+          >
+            <SelectTrigger className="border-primary/20 focus-visible:ring-primary/30">
+              <SelectValue placeholder="ทุกประเภท" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ทุกประเภท</SelectItem>
+              {types.map(type => (
+                <SelectItem key={type} value={type}>{getWarehouseTypeText(type as any)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-muted-foreground ml-1">สถานะ</div>
+          <Select 
+            value={filter.status || 'all'} 
+            onValueChange={(value) => onFilterChange({ status: value === 'all' ? undefined : value as any })}
+          >
+            <SelectTrigger className="border-primary/20 focus-visible:ring-primary/30">
+              <SelectValue placeholder="ทุกสถานะ" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ทุกสถานะ</SelectItem>
+              {statuses.map(status => (
+                <SelectItem key={status} value={status}>{getWarehouseStatusText(status as any)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-muted-foreground ml-1">จังหวัด</div>
+          <Select 
+            value={filter.province || 'all'} 
+            onValueChange={(value) => onFilterChange({ province: value === 'all' ? undefined : value })}
+          >
+            <SelectTrigger className="border-primary/20 focus-visible:ring-primary/30">
+              <SelectValue placeholder="ทุกจังหวัด" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ทุกจังหวัด</SelectItem>
+              {provinces.map(province => (
+                <SelectItem key={province} value={province}>{province}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardContent>
     </Card>
   );
 
-  const WarehouseCard = ({ warehouse }: { warehouse: Warehouse }) => (
-    <Card className="flex flex-col h-full hover:border-primary/60 transition-all duration-200 ease-in-out">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <CardTitle className="text-base font-bold mb-1">{warehouse.name}</CardTitle>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="outline" className="font-mono">{warehouse.code}</Badge>
-              <span>•</span>
-              <span>{getWarehouseTypeText(warehouse.type)}</span>
+  const WarehouseCard = ({ warehouse }: { warehouse: Warehouse }) => {
+    // กำหนดสีพื้นหลังตามประเภทคลังสินค้า
+    const getTypeGradient = (type: Warehouse['type']) => {
+      const gradients = {
+        main: 'from-blue-50 to-indigo-50',
+        branch: 'from-emerald-50 to-green-50',
+        distribution: 'from-purple-50 to-violet-50',
+        retail: 'from-amber-50 to-yellow-50',
+        temporary: 'from-gray-50 to-slate-50'
+      };
+      return gradients[type] || 'from-gray-50 to-slate-50';
+    };
+
+    // กำหนดไอคอนตามประเภทคลังสินค้า
+    const getTypeIcon = (type: Warehouse['type']) => {
+      const icons = {
+        main: <Building className="h-5 w-5 text-blue-600" />,
+        branch: <Building className="h-5 w-5 text-emerald-600" />,
+        distribution: <Truck className="h-5 w-5 text-purple-600" />,
+        retail: <Boxes className="h-5 w-5 text-amber-600" />,
+        temporary: <WarehouseIcon className="h-5 w-5 text-gray-600" />
+      };
+      return icons[type] || <WarehouseIcon className="h-5 w-5 text-gray-600" />;
+    };
+
+    // กำหนดสีของ Progress bar ตามอัตราการใช้งาน
+    const getUtilizationColor = (percentage: number) => {
+      if (percentage > 90) return 'bg-red-500';
+      if (percentage > 70) return 'bg-yellow-500';
+      return 'bg-green-500';
+    };
+
+    return (
+      <Card className="flex flex-col h-full overflow-hidden border-none shadow-md hover:shadow-lg transition-all duration-200 ease-in-out">
+        <div className={`bg-gradient-to-r ${getTypeGradient(warehouse.type)} p-1`}>
+          <div className="flex justify-between items-center px-3 py-1">
+            <Badge variant="outline" className="font-mono bg-white/80 border-none">{warehouse.code}</Badge>
+            {getStatusBadge(warehouse.status)}
+          </div>
+        </div>
+        <CardHeader className="pb-2">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+              {getTypeIcon(warehouse.type)}
+            </div>
+            <div>
+              <CardTitle className="text-base font-bold">{warehouse.name}</CardTitle>
+              <CardDescription className="text-xs">
+                {getWarehouseTypeText(warehouse.type)}
+              </CardDescription>
             </div>
           </div>
-          {getStatusBadge(warehouse.status)}
-        </div>
-      </CardHeader>
-      <CardContent className="flex-grow space-y-4">
-        <div className="flex items-start gap-3 text-sm">
-          <MapPin className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
-          <span className="text-muted-foreground">{warehouse.address.district}, {warehouse.address.province}</span>
-        </div>
-        <div className="flex items-start gap-3 text-sm">
-          <Users className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
-          <span className="text-muted-foreground">{warehouse.contact.manager}</span>
-        </div>
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-sm font-medium">การใช้งาน</span>
-            <span className="text-sm font-bold">{warehouse.capacity.utilizationPercentage}%</span>
+        </CardHeader>
+        <CardContent className="flex-grow space-y-4 pt-0">
+          <Separator />
+          <div className="flex items-start gap-3 text-sm">
+            <MapPin className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+            <span className="text-muted-foreground">{warehouse.address.district}, {warehouse.address.province}</span>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger className="w-full">
-                <Progress value={warehouse.capacity.utilizationPercentage} className="h-2" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{warehouse.capacity.currentUtilization.toLocaleString()} / {warehouse.capacity.storageCapacity.toLocaleString()}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1" onClick={() => handleViewDetails(warehouse)}>
-          <Eye className="h-4 w-4 mr-2" />
-          รายละเอียด
-        </Button>
-        {onEditWarehouse && (
-          <Button variant="secondary" size="sm" className="flex-1" onClick={() => onEditWarehouse(warehouse)}>
-            <Edit className="h-4 w-4 mr-2" />
-            แก้ไข
+          <div className="flex items-start gap-3 text-sm">
+            <Users className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+            <span className="text-muted-foreground">{warehouse.contact.manager}</span>
+          </div>
+          <div className="bg-muted/30 p-3 rounded-lg">
+            <div className="flex justify-between items-center mb-1">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">การใช้งาน</span>
+              </div>
+              <Badge 
+                variant="outline" 
+                className={`font-medium ${warehouse.capacity.utilizationPercentage > 90 ? 'bg-red-100 text-red-800 border-red-200' : warehouse.capacity.utilizationPercentage > 70 ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-green-100 text-green-800 border-green-200'}`}
+              >
+                {warehouse.capacity.utilizationPercentage}%
+              </Badge>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="w-full">
+                  <Progress 
+                    value={warehouse.capacity.utilizationPercentage} 
+                    className="h-2" 
+                    indicatorClassName={getUtilizationColor(warehouse.capacity.utilizationPercentage)}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-center">
+                    <p className="font-semibold">{warehouse.capacity.utilizationPercentage}% ใช้งานแล้ว</p>
+                    <p className="text-xs">{warehouse.capacity.currentUtilization.toLocaleString()} / {warehouse.capacity.storageCapacity.toLocaleString()}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>0%</span>
+              <span>100%</span>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex gap-2 bg-muted/20 pt-3 pb-3">
+          <Button variant="outline" size="sm" className="flex-1 bg-white" onClick={() => handleViewDetails(warehouse)}>
+            <Eye className="h-4 w-4 mr-2" />
+            รายละเอียด
           </Button>
-        )}
-      </CardFooter>
-    </Card>
-  );
+          {onEditWarehouse && (
+            <Button variant="secondary" size="sm" className="flex-1" onClick={() => onEditWarehouse(warehouse)}>
+              <Edit className="h-4 w-4 mr-2" />
+              แก้ไข
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+    );
+  };
 
-  const WarehouseListItem = ({ warehouse }: { warehouse: Warehouse }) => (
-    <Card className="hover:bg-muted/40 transition-colors" onClick={() => handleViewDetails(warehouse)}>
-      <CardContent className="p-4 grid grid-cols-12 items-center gap-4">
-        <div className="col-span-3 flex items-center gap-4">
-          <Building className="h-6 w-6 text-primary" />
-          <div>
-            <p className="font-semibold">{warehouse.name}</p>
-            <p className="text-sm text-muted-foreground font-mono">{warehouse.code}</p>
+  const WarehouseListItem = ({ warehouse }: { warehouse: Warehouse }) => {
+    // กำหนดไอคอนตามประเภทคลังสินค้า
+    const getTypeIcon = (type: Warehouse['type']) => {
+      const icons = {
+        main: <Building className="h-5 w-5 text-blue-600" />,
+        branch: <Building className="h-5 w-5 text-emerald-600" />,
+        distribution: <Truck className="h-5 w-5 text-purple-600" />,
+        retail: <Boxes className="h-5 w-5 text-amber-600" />,
+        temporary: <WarehouseIcon className="h-5 w-5 text-gray-600" />
+      };
+      return icons[type] || <WarehouseIcon className="h-5 w-5 text-gray-600" />;
+    };
+
+    // กำหนดสีของ Progress bar ตามอัตราการใช้งาน
+    const getUtilizationColor = (percentage: number) => {
+      if (percentage > 90) return 'bg-red-500';
+      if (percentage > 70) return 'bg-yellow-500';
+      return 'bg-green-500';
+    };
+
+    return (
+      <Card 
+        className="border-none shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden" 
+        onClick={() => handleViewDetails(warehouse)}
+      >
+        <CardContent className="p-0">
+          <div className="grid grid-cols-12 items-center">
+            {/* ส่วนข้อมูลคลังสินค้า */}
+            <div className="col-span-3 flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-gray-100">
+              <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                {getTypeIcon(warehouse.type)}
+              </div>
+              <div>
+                <p className="font-semibold">{warehouse.name}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs font-mono bg-white/80">{warehouse.code}</Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* สถานะ */}
+            <div className="col-span-2 p-4 text-center">
+              {getStatusBadge(warehouse.status)}
+            </div>
+
+            {/* ประเภท */}
+            <div className="col-span-2 p-4 text-sm text-center">
+              <Badge variant="outline" className="font-normal">
+                {getWarehouseTypeText(warehouse.type)}
+              </Badge>
+            </div>
+
+            {/* จังหวัด */}
+            <div className="col-span-2 p-4 text-sm flex items-center justify-center gap-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span>{warehouse.address.province}</span>
+            </div>
+
+            {/* การใช้งาน */}
+            <div className="col-span-2 p-4">
+              <div className="flex justify-between items-center mb-1 text-xs">
+                <span>การใช้งาน</span>
+                <span className="font-medium">{warehouse.capacity.utilizationPercentage}%</span>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="w-full">
+                    <Progress 
+                      value={warehouse.capacity.utilizationPercentage} 
+                      className="h-2" 
+                      indicatorClassName={getUtilizationColor(warehouse.capacity.utilizationPercentage)}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="text-center">
+                      <p className="font-semibold">{warehouse.capacity.utilizationPercentage}% ใช้งานแล้ว</p>
+                      <p className="text-xs">{warehouse.capacity.currentUtilization.toLocaleString()} / {warehouse.capacity.storageCapacity.toLocaleString()}</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* ปุ่มดูรายละเอียด */}
+            <div className="col-span-1 p-4 text-right bg-muted/20 h-full flex items-center justify-center">
+              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 text-primary hover:text-primary hover:bg-primary/10">
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="col-span-2">{getStatusBadge(warehouse.status)}</div>
-        <div className="col-span-2 text-sm">{getWarehouseTypeText(warehouse.type)}</div>
-        <div className="col-span-2 text-sm">{warehouse.address.province}</div>
-        <div className="col-span-2">
-          <Progress value={warehouse.capacity.utilizationPercentage} className="h-2" />
-        </div>
-        <div className="col-span-1 text-right">
-          <Button variant="ghost" size="icon">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex items-center gap-2">
-          <WarehouseIcon className="h-6 w-6" />
-          <h2 className="text-2xl font-bold">รายการคลังสินค้า ({warehouses.length})</h2>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/90 text-white p-3 rounded-lg shadow-md">
+            <WarehouseIcon className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              รายการคลังสินค้า
+              <Badge variant="outline" className="ml-2 font-normal text-xs">
+                {warehouses.length} คลัง
+              </Badge>
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              จัดการและติดตามคลังสินค้าทั้งหมดในระบบ
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            ตัวกรอง
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1 border-primary/20 hover:bg-primary/5 hover:text-primary"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            {showFilters ? (
+              <>
+                <X className="h-3.5 w-3.5 mr-2" />
+                ซ่อนตัวกรอง
+              </>
+            ) : (
+              <>
+                <SlidersHorizontal className="h-3.5 w-3.5 mr-2" />
+                แสดงตัวกรอง
+              </>
+            )}
           </Button>
           <div className="flex items-center rounded-md bg-muted p-0.5">
             <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}>
@@ -242,8 +444,8 @@ export function WarehouseList({
               <List className="h-4 w-4" />
             </Button>
           </div>
-          <Button onClick={onExport} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
+          <Button onClick={onExport} variant="outline" size="sm" className="h-9 gap-1 border-primary/20 hover:bg-primary/5 hover:text-primary">
+            <Download className="h-3.5 w-3.5 mr-2" />
             ส่งออก
           </Button>
         </div>
@@ -283,97 +485,246 @@ export function WarehouseList({
       )}
 
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl overflow-hidden p-0">
           {selectedWarehouse && (
             <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3">
-                  <WarehouseIcon className="h-6 w-6 text-primary" />
-                  <span className="text-2xl">{selectedWarehouse.name}</span>
-                </DialogTitle>
-                <div className="flex items-center gap-4 pt-2">
-                  <Badge variant="outline" className="font-mono">{selectedWarehouse.code}</Badge>
-                  {getStatusBadge(selectedWarehouse.status)}
-                  <Badge variant="secondary">{getWarehouseTypeText(selectedWarehouse.type)}</Badge>
+              <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex gap-4 items-center">
+                    <Avatar className="h-16 w-16 rounded-md bg-primary text-primary-foreground shadow-md">
+                      <WarehouseIcon className="h-8 w-8" />
+                    </Avatar>
+                    <div>
+                      <DialogTitle className="text-2xl font-bold">
+                        {selectedWarehouse.name}
+                      </DialogTitle>
+                      <DialogDescription className="text-base opacity-90 mt-1">
+                        {getWarehouseTypeText(selectedWarehouse.type)} · {selectedWarehouse.code}
+                      </DialogDescription>
+                      <div className="flex items-center gap-2 mt-2">
+                        {getStatusBadge(selectedWarehouse.status)}
+                        <Badge variant="outline" className="bg-background/50">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {selectedWarehouse.address.province}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setDetailDialogOpen(false)} className="rounded-full">
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-              </DialogHeader>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[60vh] overflow-y-auto px-2">
-                <Card>
-                  <CardHeader><CardTitle className="text-base flex items-center gap-2"><Info className="h-4 w-4" />ข้อมูลทั่วไป</CardTitle></CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <div className="flex justify-between"><span>พื้นที่รวม:</span> <span className="font-medium">{selectedWarehouse.capacity.totalArea.toLocaleString()} ตร.ม.</span></div>
-                    <div className="flex justify-between"><span>พื้นที่ใช้ได้:</span> <span className="font-medium">{selectedWarehouse.capacity.usableArea.toLocaleString()} ตร.ม.</span></div>
-                    <div className="flex justify-between"><span>จำนวนโซน:</span> <span className="font-medium">{selectedWarehouse.zones.length}</span></div>
-                    <div className="flex justify-between"><span>พนักงาน:</span> <span className="font-medium">{selectedWarehouse.staff.length} คน</span></div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle className="text-base flex items-center gap-2"><Package className="h-4 w-4" />ความจุ</CardTitle></CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>การใช้งานปัจจุบัน</span>
-                        <span className="font-bold">{selectedWarehouse.capacity.utilizationPercentage}%</span>
-                      </div>
-                      <Progress value={selectedWarehouse.capacity.utilizationPercentage} className="h-2" />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>{selectedWarehouse.capacity.currentUtilization.toLocaleString()}</span>
-                        <span>{selectedWarehouse.capacity.storageCapacity.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="md:col-span-2">
-                  <CardHeader><CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4" />ที่อยู่และข้อมูลติดต่อ</CardTitle></CardHeader>
-                  <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="font-semibold">{selectedWarehouse.address.street}</p>
-                      <p>{selectedWarehouse.address.district}, {selectedWarehouse.address.province}</p>
-                      <p>{selectedWarehouse.address.postalCode}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold">{selectedWarehouse.contact.manager}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedWarehouse.contact.phone}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedWarehouse.contact.email}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle className="text-base flex items-center gap-2"><Clock className="h-4 w-4" />เวลาทำการ</CardTitle></CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    {Object.entries(selectedWarehouse.operatingHours).map(([day, hours]) => (
-                      <div key={day} className="flex justify-between">
-                        <span className="capitalize">{day.slice(0,3)}</span>
-                        <span>{hours.isOpen ? `${hours.open} - ${hours.close}` : 'ปิด'}</span>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle className="text-base">สิ่งอำนวยความสะดวก</CardTitle></CardHeader>
-                  <CardContent className="grid grid-cols-2 gap-2 text-sm">
-                    {[
-                      { label: 'ท่าขนถ่าย', value: selectedWarehouse.facilities.hasLoading },
-                      { label: 'ห้องเย็น', value: selectedWarehouse.facilities.hasColdStorage },
-                      { label: 'ระบบรักษาความปลอดภัย', value: selectedWarehouse.facilities.hasSecuritySystem },
-                      { label: 'ระบบดับเพลิง', value: selectedWarehouse.facilities.hasFireSafety },
-                      { label: 'ควบคุมอุณหภูมิ', value: selectedWarehouse.facilities.hasClimateControl },
-                    ].map(item => (
-                      <div key={item.label} className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${item.value ? 'bg-green-500' : 'bg-gray-300'}`} />
-                        <span>{item.label}</span>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
               </div>
-              <DialogFooter>
+              
+              <Tabs defaultValue="details" className="p-6">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="details">รายละเอียด</TabsTrigger>
+                  <TabsTrigger value="capacity">ความจุ</TabsTrigger>
+                  <TabsTrigger value="contact">ข้อมูลติดต่อ</TabsTrigger>
+                  <TabsTrigger value="facilities">สิ่งอำนวยความสะดวก</TabsTrigger>
+                </TabsList>
+                
+                <ScrollArea className="h-[400px] pr-4">
+                  <TabsContent value="details" className="mt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card className="border-none shadow-sm">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base font-medium flex items-center gap-2">
+                            <Info className="h-4 w-4 text-primary" />
+                            ข้อมูลทั่วไป
+                          </CardTitle>
+                          <CardDescription>ข้อมูลพื้นฐานของคลังสินค้า</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-muted/40 p-3 rounded-lg">
+                              <div className="text-sm text-muted-foreground">พื้นที่รวม</div>
+                              <div className="text-2xl font-bold">{selectedWarehouse.capacity.totalArea.toLocaleString()} ตร.ม.</div>
+                            </div>
+                            <div className="bg-muted/40 p-3 rounded-lg">
+                              <div className="text-sm text-muted-foreground">พื้นที่ใช้ได้</div>
+                              <div className="text-2xl font-bold">{selectedWarehouse.capacity.usableArea.toLocaleString()} ตร.ม.</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-muted/40 p-3 rounded-lg">
+                              <div className="text-sm text-muted-foreground">จำนวนโซน</div>
+                              <div className="text-2xl font-bold">{selectedWarehouse.zones.length}</div>
+                            </div>
+                            <div className="bg-muted/40 p-3 rounded-lg">
+                              <div className="text-sm text-muted-foreground">พนักงาน</div>
+                              <div className="text-2xl font-bold">{selectedWarehouse.staff.length} คน</div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card className="border-none shadow-sm">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base font-medium flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-primary" />
+                            เวลาทำการ
+                          </CardTitle>
+                          <CardDescription>วันและเวลาทำการของคลังสินค้า</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="bg-muted/40 p-3 rounded-lg space-y-2">
+                            {Object.entries(selectedWarehouse.operatingHours).map(([day, hours]) => (
+                              <div key={day} className="flex justify-between">
+                                <span className="capitalize font-medium">{day.slice(0,3)}</span>
+                                <span className={hours.isOpen ? "text-green-600 font-medium" : "text-gray-400"}>
+                                  {hours.isOpen ? `${hours.open} - ${hours.close}` : 'ปิดทำการ'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="capacity" className="mt-0">
+                    <Card className="border-none shadow-sm">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                          <BarChart4 className="h-4 w-4 text-primary" />
+                          ความจุคลังสินค้า
+                        </CardTitle>
+                        <CardDescription>ข้อมูลความจุและการใช้งานปัจจุบัน</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <div className="text-sm font-medium">การใช้งานปัจจุบัน</div>
+                            <div className="text-sm font-medium">{selectedWarehouse.capacity.utilizationPercentage}%</div>
+                          </div>
+                          <Progress 
+                            value={selectedWarehouse.capacity.utilizationPercentage} 
+                            className="h-3 rounded-full" 
+                            indicatorClassName={`rounded-full ${selectedWarehouse.capacity.utilizationPercentage > 90 ? 'bg-red-500' : selectedWarehouse.capacity.utilizationPercentage > 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                            <div>0%</div>
+                            <div>50%</div>
+                            <div>100%</div>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-6 mt-4">
+                          <div className="bg-muted/40 p-4 rounded-lg">
+                            <div className="text-sm text-muted-foreground">ความจุสูงสุด</div>
+                            <div className="text-2xl font-bold">{selectedWarehouse.capacity.storageCapacity.toLocaleString()}</div>
+                          </div>
+                          <div className="bg-muted/40 p-4 rounded-lg">
+                            <div className="text-sm text-muted-foreground">ใช้งานปัจจุบัน</div>
+                            <div className="text-2xl font-bold">{selectedWarehouse.capacity.currentUtilization.toLocaleString()}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-muted/40 p-4 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-2">ประวัติการใช้งาน (3 เดือนล่าสุด)</div>
+                          <div className="h-32 flex items-end gap-1">
+                            {[65, 58, 71, 75, 68, 72, 70, 73, 77, 82, 78, selectedWarehouse.capacity.utilizationPercentage].map((value, index) => (
+                              <div 
+                                key={index} 
+                                className={`w-full rounded-t-sm ${value > 90 ? 'bg-red-500/70' : value > 70 ? 'bg-yellow-500/70' : 'bg-green-500/70'}`}
+                                style={{ height: `${value}%` }}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                            <div>ม.ค.</div>
+                            <div>ก.พ.</div>
+                            <div>มี.ค.</div>
+                            <div>เม.ย.</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="contact" className="mt-0">
+                    <Card className="border-none shadow-sm">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          ที่อยู่และการติดต่อ
+                        </CardTitle>
+                        <CardDescription>ข้อมูลสำหรับติดต่อคลังสินค้า</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="bg-muted/40 p-4 rounded-lg">
+                          <div className="text-sm text-muted-foreground">ที่อยู่</div>
+                          <div className="text-base mt-1">{selectedWarehouse.address.street}</div>
+                          <div className="text-base">{selectedWarehouse.address.district}, {selectedWarehouse.address.province} {selectedWarehouse.address.postalCode}</div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-muted/40 p-4 rounded-lg flex items-start gap-3">
+                            <Users className="h-4 w-4 text-primary mt-1" />
+                            <div>
+                              <div className="text-sm text-muted-foreground">ผู้จัดการ</div>
+                              <div className="text-base mt-1 font-medium">{selectedWarehouse.contact.manager}</div>
+                            </div>
+                          </div>
+                          <div className="bg-muted/40 p-4 rounded-lg flex items-start gap-3">
+                            <Phone className="h-4 w-4 text-primary mt-1" />
+                            <div>
+                              <div className="text-sm text-muted-foreground">โทรศัพท์</div>
+                              <div className="text-base mt-1">{selectedWarehouse.contact.phone}</div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-muted/40 p-4 rounded-lg flex items-start gap-3">
+                          <Mail className="h-4 w-4 text-primary mt-1" />
+                          <div>
+                            <div className="text-sm text-muted-foreground">อีเมล</div>
+                            <div className="text-base mt-1">{selectedWarehouse.contact.email}</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="facilities" className="mt-0">
+                    <Card className="border-none shadow-sm">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                          <Forklift className="h-4 w-4 text-primary" />
+                          สิ่งอำนวยความสะดวก
+                        </CardTitle>
+                        <CardDescription>สิ่งอำนวยความสะดวกที่มีในคลังสินค้า</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {[
+                            { label: 'ท่าขนถ่าย', value: selectedWarehouse.facilities.hasLoading, icon: <Truck className="h-4 w-4 text-blue-500" /> },
+                            { label: 'ห้องเย็น', value: selectedWarehouse.facilities.hasColdStorage, icon: <Thermometer className="h-4 w-4 text-blue-500" /> },
+                            { label: 'ระบบรักษาความปลอดภัย', value: selectedWarehouse.facilities.hasSecuritySystem, icon: <ShieldCheck className="h-4 w-4 text-blue-500" /> },
+                            { label: 'ระบบดับเพลิง', value: selectedWarehouse.facilities.hasFireSafety, icon: <Flame className="h-4 w-4 text-blue-500" /> },
+                            { label: 'ควบคุมอุณหภูมิ', value: selectedWarehouse.facilities.hasClimateControl, icon: <Thermometer className="h-4 w-4 text-blue-500" /> },
+                          ].map(item => (
+                            <div key={item.label} className="flex items-center gap-3 bg-muted/40 p-3 rounded-lg">
+                              <div className="bg-primary/10 p-1.5 rounded-full">
+                                {item.icon}
+                              </div>
+                              <span className="text-sm">{item.label}</span>
+                              {item.value ? 
+                                <CheckCircle2 className="h-4 w-4 text-green-500 ml-auto" /> : 
+                                <XCircle className="h-4 w-4 text-gray-400 ml-auto" />}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </ScrollArea>
+              </Tabs>
+              
+              <Separator />
+              
+              <DialogFooter className="p-4">
                 <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>ปิด</Button>
                 {onEditWarehouse && (
                   <Button onClick={() => {

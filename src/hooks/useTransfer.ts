@@ -1,258 +1,539 @@
-import { useState, useEffect } from 'react';
-import { transferService, TransferRequest, TransferConfirmation } from '@/lib/transferService';
-import { StockTransfer, SerialNumber, TransferStatus } from '@/types/warehouse';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { transferService } from '@/services/transferService';
+import {
+  TransferRequest,
+  TransferShipment,
+  CreateTransferRequestData,
+  CreateTransferShipmentData,
+  UpdateTransferRequestData,
+  ApproveTransferRequestData,
+  ReceiveShipmentData,
+  TransferRequestFilters,
+  TransferShipmentFilters,
+  TransferStatistics,
+} from '@/types/transfer';
 
-export interface UseTransferOptions {
-  warehouseId?: string;
-  autoRefresh?: boolean;
-  refreshInterval?: number;
-}
-
-export interface UseTransferReturn {
-  // State
-  transfers: StockTransfer[];
-  availableSerialNumbers: SerialNumber[];
-  isLoading: boolean;
-  isCreating: boolean;
-  isConfirming: boolean;
-  error: string | null;
-  
-  // Actions
-  loadTransfers: (filters?: {
-    sourceWarehouseId?: string;
-    targetWarehouseId?: string;
-    status?: TransferStatus;
-    dateFrom?: Date;
-    dateTo?: Date;
-  }) => Promise<void>;
-  loadAvailableSerialNumbers: (warehouseId: string, searchTerm?: string) => Promise<void>;
-  createTransfer: (request: TransferRequest, initiatedBy: string) => Promise<StockTransfer | null>;
-  confirmTransfer: (confirmation: TransferConfirmation) => Promise<StockTransfer | null>;
-  cancelTransfer: (transferId: string, reason: string, cancelledBy: string) => Promise<void>;
-  getTransferById: (transferId: string) => Promise<StockTransfer | null>;
-  
-  // Utilities
-  refresh: () => Promise<void>;
-  clearError: () => void;
-}
-
-export function useTransfer(options: UseTransferOptions = {}): UseTransferReturn {
-  const { warehouseId, autoRefresh = false, refreshInterval = 30000 } = options;
+// Hook for managing transfer requests
+export const useTransferRequests = (initialFilters: TransferRequestFilters = {}) => {
+  const [requests, setRequests] = useState<TransferRequest[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<TransferRequestFilters>(initialFilters);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    hasMore: false,
+  });
   const { toast } = useToast();
 
-  // State
-  const [transfers, setTransfers] = useState<StockTransfer[]>([]);
-  const [availableSerialNumbers, setAvailableSerialNumbers] = useState<SerialNumber[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Load transfers
-  const loadTransfers = async (filters?: {
-    sourceWarehouseId?: string;
-    targetWarehouseId?: string;
-    status?: TransferStatus;
-    dateFrom?: Date;
-    dateTo?: Date;
-  }) => {
-    setIsLoading(true);
-    setError(null);
-    
+  const fetchRequests = useCallback(async (page: number = 1, newFilters?: TransferRequestFilters) => {
     try {
-      const data = await transferService.getTransfers(filters);
-      setTransfers(data);
+      setLoading(true);
+      setError(null);
+      
+      const currentFilters = newFilters || filters;
+      const response = await transferService.getTransferRequests(currentFilters, page, pagination.limit);
+      
+      if (page === 1) {
+        setRequests(response.data);
+      } else {
+        setRequests(prev => [...prev, ...response.data]);
+      }
+      
+      setPagination({
+        page: response.page,
+        limit: response.limit,
+        total: response.total,
+        hasMore: response.has_more,
+      });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถโหลดรายการโอนได้';
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
       setError(errorMessage);
       toast({
-        title: "เกิดข้อผิดพลาด",
+        title: 'เกิดข้อผิดพลาด',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }, [filters, pagination.limit, toast]);
 
-  // Load available serial numbers
-  const loadAvailableSerialNumbers = async (warehouseId: string, searchTerm?: string) => {
-    setIsLoading(true);
-    setError(null);
-    
+  const createRequest = useCallback(async (data: CreateTransferRequestData) => {
     try {
-      const data = await transferService.getAvailableSerialNumbers(warehouseId, searchTerm);
-      setAvailableSerialNumbers(data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถโหลดรายการ Serial Number ได้';
-      setError(errorMessage);
+      setLoading(true);
+      const newRequest = await transferService.createTransferRequest(data);
+      setRequests(prev => [newRequest, ...prev]);
       toast({
-        title: "เกิดข้อผิดพลาด",
-        description: errorMessage,
-        variant: "destructive",
+        title: 'สำเร็จ',
+        description: 'สร้างคำขอโอนย้ายสินค้าเรียบร้อยแล้ว',
       });
+      return newRequest;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการสร้างคำขอ';
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Create transfer
-  const createTransfer = async (request: TransferRequest, initiatedBy: string): Promise<StockTransfer | null> => {
-    setIsCreating(true);
-    setError(null);
-    
+  const updateRequest = useCallback(async (id: string, data: UpdateTransferRequestData) => {
     try {
-      const transfer = await transferService.initiateTransfer(request, initiatedBy);
-      
+      setLoading(true);
+      const updatedRequest = await transferService.updateTransferRequest(id, data);
+      setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
       toast({
-        title: "สร้างการโอนสำเร็จ",
-        description: `สร้างการโอน ${transfer.transferNumber} เรียบร้อยแล้ว`,
+        title: 'สำเร็จ',
+        description: 'อัปเดตคำขอโอนย้ายสินค้าเรียบร้อยแล้ว',
       });
-
-      // Refresh transfers list
-      await loadTransfers();
-      
-      return transfer as unknown as StockTransfer;
+      return updatedRequest;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถสร้างการโอนได้';
-      setError(errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการอัปเดตคำขอ';
       toast({
-        title: "เกิดข้อผิดพลาด",
+        title: 'เกิดข้อผิดพลาด',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
       });
-      return null;
+      throw err;
     } finally {
-      setIsCreating(false);
+      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Confirm transfer
-  const confirmTransfer = async (confirmation: TransferConfirmation): Promise<StockTransfer | null> => {
-    setIsConfirming(true);
-    setError(null);
-    
+  const approveRequest = useCallback(async (id: string, data: ApproveTransferRequestData) => {
     try {
-      const transfer = await transferService.confirmTransfer(confirmation);
-      
+      setLoading(true);
+      const approvedRequest = await transferService.approveTransferRequest(id, data);
+      setRequests(prev => prev.map(req => req.id === id ? approvedRequest : req));
       toast({
-        title: "ยืนยันการรับสินค้าสำเร็จ",
-        description: `ยืนยันการรับสินค้า ${transfer.transferNumber} เรียบร้อยแล้ว`,
+        title: 'สำเร็จ',
+        description: 'อนุมัติคำขอโอนย้ายสินค้าเรียบร้อยแล้ว',
       });
-
-      // Refresh transfers list
-      await loadTransfers();
-      
-      return transfer as unknown as StockTransfer;
+      return approvedRequest;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถยืนยันการรับสินค้าได้';
-      setError(errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการอนุมัติคำขอ';
       toast({
-        title: "เกิดข้อผิดพลาด",
+        title: 'เกิดข้อผิดพลาด',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
       });
-      return null;
+      throw err;
     } finally {
-      setIsConfirming(false);
+      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Cancel transfer
-  const cancelTransfer = async (transferId: string, reason: string, cancelledBy: string): Promise<void> => {
-    setIsConfirming(true);
-    setError(null);
-    
+  const rejectRequest = useCallback(async (id: string, reason: string) => {
     try {
-      await transferService.cancelTransfer(transferId, reason, cancelledBy);
-      
+      setLoading(true);
+      const rejectedRequest = await transferService.rejectTransferRequest(id, reason);
+      setRequests(prev => prev.map(req => req.id === id ? rejectedRequest : req));
       toast({
-        title: "ยกเลิกการโอนสำเร็จ",
-        description: "ยกเลิกการโอนเรียบร้อยแล้ว",
+        title: 'สำเร็จ',
+        description: 'ปฏิเสธคำขอโอนย้ายสินค้าเรียบร้อยแล้ว',
       });
-
-      // Refresh transfers list
-      await loadTransfers();
+      return rejectedRequest;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถยกเลิกการโอนได้';
-      setError(errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการปฏิเสธคำขอ';
       toast({
-        title: "เกิดข้อผิดพลาด",
+        title: 'เกิดข้อผิดพลาด',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
       });
+      throw err;
     } finally {
-      setIsConfirming(false);
+      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Get transfer by ID
-  const getTransferById = async (transferId: string): Promise<StockTransfer | null> => {
-    setError(null);
-    
+  const deleteRequest = useCallback(async (id: string) => {
     try {
-      return await transferService.getTransferById(transferId);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถโหลดรายละเอียดการโอนได้';
-      setError(errorMessage);
+      setLoading(true);
+      await transferService.deleteTransferRequest(id);
+      setRequests(prev => prev.filter(req => req.id !== id));
       toast({
-        title: "เกิดข้อผิดพลาด",
-        description: errorMessage,
-        variant: "destructive",
+        title: 'สำเร็จ',
+        description: 'ลบคำขอโอนย้ายสินค้าเรียบร้อยแล้ว',
       });
-      return null;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการลบคำขอ';
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Refresh data
-  const refresh = async () => {
-    if (warehouseId) {
-      await loadTransfers({ targetWarehouseId: warehouseId });
-    } else {
-      await loadTransfers();
+  const applyFilters = useCallback((newFilters: TransferRequestFilters) => {
+    setFilters(newFilters);
+    fetchRequests(1, newFilters);
+  }, [fetchRequests]);
+
+  const loadMore = useCallback(() => {
+    if (pagination.hasMore && !loading) {
+      fetchRequests(pagination.page + 1);
     }
-  };
+  }, [fetchRequests, pagination.hasMore, pagination.page, loading]);
 
-  // Clear error
-  const clearError = () => {
-    setError(null);
-  };
+  const refresh = useCallback(() => {
+    fetchRequests(1);
+  }, [fetchRequests]);
 
-  // Auto refresh effect
   useEffect(() => {
-    if (autoRefresh && refreshInterval > 0) {
-      const interval = setInterval(refresh, refreshInterval);
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh, refreshInterval, warehouseId]);
-
-  // Initial load effect
-  useEffect(() => {
-    if (warehouseId) {
-      loadTransfers({ targetWarehouseId: warehouseId });
-    }
-  }, [warehouseId]);
+    fetchRequests(1);
+  }, []);
 
   return {
-    // State
-    transfers,
-    availableSerialNumbers,
-    isLoading,
-    isCreating,
-    isConfirming,
+    requests,
+    loading,
     error,
-    
-    // Actions
-    loadTransfers,
-    loadAvailableSerialNumbers,
-    createTransfer,
-    confirmTransfer,
-    cancelTransfer,
-    getTransferById,
-    
-    // Utilities
+    filters,
+    pagination,
+    createRequest,
+    updateRequest,
+    approveRequest,
+    rejectRequest,
+    deleteRequest,
+    applyFilters,
+    loadMore,
     refresh,
-    clearError,
   };
-}
+};
+
+// Hook for managing transfer shipments
+export const useTransferShipments = (initialFilters: TransferShipmentFilters = {}) => {
+  const [shipments, setShipments] = useState<TransferShipment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<TransferShipmentFilters>(initialFilters);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    hasMore: false,
+  });
+  const { toast } = useToast();
+
+  const fetchShipments = useCallback(async (page: number = 1, newFilters?: TransferShipmentFilters) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const currentFilters = newFilters || filters;
+      const response = await transferService.getTransferShipments(currentFilters, page, pagination.limit);
+      
+      if (page === 1) {
+        setShipments(response.data);
+      } else {
+        setShipments(prev => [...prev, ...response.data]);
+      }
+      
+      setPagination({
+        page: response.page,
+        limit: response.limit,
+        total: response.total,
+        hasMore: response.has_more,
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+      setError(errorMessage);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, pagination.limit, toast]);
+
+  const createShipment = useCallback(async (data: CreateTransferShipmentData) => {
+    try {
+      setLoading(true);
+      const newShipment = await transferService.createTransferShipment(data);
+      setShipments(prev => [newShipment, ...prev]);
+      toast({
+        title: 'สำเร็จ',
+        description: 'สร้างการจัดส่งเรียบร้อยแล้ว',
+      });
+      return newShipment;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง';
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  const receiveShipment = useCallback(async (shipmentId: string, data: ReceiveShipmentData) => {
+    try {
+      setLoading(true);
+      const receivedShipment = await transferService.receiveShipment(shipmentId, data);
+      setShipments(prev => prev.map(shipment => shipment.id === shipmentId ? receivedShipment : shipment));
+      toast({
+        title: 'สำเร็จ',
+        description: 'รับสินค้าเรียบร้อยแล้ว',
+      });
+      return receivedShipment;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการรับสินค้า';
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  const applyFilters = useCallback((newFilters: TransferShipmentFilters) => {
+    setFilters(newFilters);
+    fetchShipments(1, newFilters);
+  }, [fetchShipments]);
+
+  const loadMore = useCallback(() => {
+    if (pagination.hasMore && !loading) {
+      fetchShipments(pagination.page + 1);
+    }
+  }, [fetchShipments, pagination.hasMore, pagination.page, loading]);
+
+  const refresh = useCallback(() => {
+    fetchShipments(1);
+  }, [fetchShipments]);
+
+  useEffect(() => {
+    fetchShipments(1);
+  }, []);
+
+  return {
+    shipments,
+    loading,
+    error,
+    filters,
+    pagination,
+    createShipment,
+    receiveShipment,
+    applyFilters,
+    loadMore,
+    refresh,
+  };
+};
+
+// Hook for managing a single transfer request
+export const useTransferRequest = (id: string | null) => {
+  const [request, setRequest] = useState<TransferRequest | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const fetchRequest = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await transferService.getTransferRequest(id);
+      setRequest(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+      setError(errorMessage);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [id, toast]);
+
+  const updateRequest = useCallback(async (data: UpdateTransferRequestData) => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      const updatedRequest = await transferService.updateTransferRequest(id, data);
+      setRequest(updatedRequest);
+      toast({
+        title: 'สำเร็จ',
+        description: 'อัปเดตคำขอโอนย้ายสินค้าเรียบร้อยแล้ว',
+      });
+      return updatedRequest;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการอัปเดตคำขอ';
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [id, toast]);
+
+  const approveRequest = useCallback(async (data: ApproveTransferRequestData) => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      const approvedRequest = await transferService.approveTransferRequest(id, data);
+      setRequest(approvedRequest);
+      toast({
+        title: 'สำเร็จ',
+        description: 'อนุมัติคำขอโอนย้ายสินค้าเรียบร้อยแล้ว',
+      });
+      return approvedRequest;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการอนุมัติคำขอ';
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [id, toast]);
+
+  const rejectRequest = useCallback(async (reason: string) => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      const rejectedRequest = await transferService.rejectTransferRequest(id, reason);
+      setRequest(rejectedRequest);
+      toast({
+        title: 'สำเร็จ',
+        description: 'ปฏิเสธคำขอโอนย้ายสินค้าเรียบร้อยแล้ว',
+      });
+      return rejectedRequest;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการปฏิเสธคำขอ';
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [id, toast]);
+
+  const refresh = useCallback(() => {
+    fetchRequest();
+  }, [fetchRequest]);
+
+  useEffect(() => {
+    fetchRequest();
+  }, [fetchRequest]);
+
+  return {
+    request,
+    loading,
+    error,
+    updateRequest,
+    approveRequest,
+    rejectRequest,
+    refresh,
+  };
+};
+
+// Hook for transfer statistics
+export const useTransferStatistics = (dateFrom?: string, dateTo?: string) => {
+  const [statistics, setStatistics] = useState<TransferStatistics | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const fetchStatistics = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await transferService.getTransferStatistics(dateFrom, dateTo);
+      setStatistics(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดสstatistics';
+      setError(errorMessage);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [dateFrom, dateTo, toast]);
+
+  const refresh = useCallback(() => {
+    fetchStatistics();
+  }, [fetchStatistics]);
+
+  useEffect(() => {
+    fetchStatistics();
+  }, [fetchStatistics]);
+
+  return {
+    statistics,
+    loading,
+    error,
+    refresh,
+  };
+};
+
+// Hook for document upload
+export const useTransferDocuments = () => {
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  const uploadDocument = useCallback(async (
+    file: File,
+    transferRequestId?: string,
+    transferShipmentId?: string,
+    documentType: string = 'other'
+  ) => {
+    try {
+      setUploading(true);
+      await transferService.uploadDocument(file, transferRequestId, transferShipmentId, documentType);
+      toast({
+        title: 'สำเร็จ',
+        description: 'อัปโหลดเอกสารเรียบร้อยแล้ว',
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการอัปโหลดเอกสาร';
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setUploading(false);
+    }
+  }, [toast]);
+
+  return {
+    uploading,
+    uploadDocument,
+  };
+};

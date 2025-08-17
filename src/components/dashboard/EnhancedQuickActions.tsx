@@ -367,7 +367,7 @@ export function EnhancedQuickActions() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {highPriorityActions.map((action) => (
               <div
                 key={action.id}
@@ -420,7 +420,7 @@ export function EnhancedQuickActions() {
           <CardDescription>เครื่องมือและฟีเจอร์จัดการเพิ่มเติม</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {otherActions.map((action) => (
               <div
                 key={action.id}
@@ -484,7 +484,7 @@ export function EnhancedQuickActions() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100 hover:shadow-md transition-shadow">
               <div className="text-2xl font-bold text-green-600 mb-1">{stats.todaySales}</div>
               <div className="text-xs text-green-700 font-medium">ยอดขายวันนี้</div>

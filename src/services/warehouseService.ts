@@ -1419,7 +1419,10 @@ export class WarehouseService {
         limit: 1000 // Get all for summary
       });
 
-      const summary = stockLevels.data.reduce((acc, stock) => ({
+      // Ensure stockLevels.data exists and is an array
+      const stockData = stockLevels?.data || [];
+      
+      const summary = stockData.reduce((acc, stock) => ({
         totalProducts: acc.totalProducts + 1,
         totalQuantity: acc.totalQuantity + stock.totalQuantity,
         availableQuantity: acc.availableQuantity + stock.availableQuantity,

@@ -245,67 +245,71 @@ export default function Dashboard() {
       {/* Real-time Stats */}
       <RealTimeStats />
 
-      {/* Branch Performance Monitor */}
-      <BranchPerformanceMonitor />
+      {/* Main Content Grid - Improved Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Left Column - Recent Sales (takes more space) */}
+        <div className="xl:col-span-3">
+          <div className="space-y-6">
+            {/* Connection Status Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">สถานะการเชื่อมต่อ</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ConnectionDetails />
+              </CardContent>
+            </Card>
 
-      {/* Connection Status Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">สถานะการเชื่อมต่อ</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ConnectionDetails />
-        </CardContent>
-      </Card>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Sales */}
-        <div className="lg:col-span-2">
-          <Card className="border-0 shadow-md">
-            <CardHeader className="bg-card-header rounded-t-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">ยอดขายล่าสุด</CardTitle>
-                  <CardDescription>ธุรกรรมล่าสุดจากทุกสาขา</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm" onClick={handleViewAllSales}>
-                  ดูทั้งหมด
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {recentSales.map((sale, index) => (
-                  <div key={index} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <ShoppingCart className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">{sale.id}</p>
-                        <p className="text-sm text-muted-foreground">{sale.customer}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-foreground">{sale.amount}</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className={getStatusColor(sale.status)}>
-                          {getStatusText(sale.status)}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{sale.time}</span>
-                      </div>
-                    </div>
+            {/* Branch Performance Monitor */}
+            <BranchPerformanceMonitor />
+            {/* Recent Sales */}
+            <Card className="border-0 shadow-md">
+              <CardHeader className="bg-card-header rounded-t-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">ยอดขายล่าสุด</CardTitle>
+                    <CardDescription>ธุรกรรมล่าสุดจากทุกสาขา</CardDescription>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <Button variant="ghost" size="sm" onClick={handleViewAllSales}>
+                    ดูทั้งหมด
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {recentSales.map((sale, index) => (
+                    <div key={index} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                          <ShoppingCart className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{sale.id}</p>
+                          <p className="text-sm text-muted-foreground">{sale.customer}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-foreground">{sale.amount}</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className={getStatusColor(sale.status)}>
+                            {getStatusText(sale.status)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{sale.time}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Low Stock Alert */}
-        <div>
+        {/* Right Column - Sidebar */}
+        <div className="xl:col-span-1">
+          <div className="space-y-6">
+            {/* Low Stock Alert */}
           <Card className="border-0 shadow-md">
             <CardHeader className="bg-card-header rounded-t-lg">
               <div className="flex items-center gap-2">
@@ -350,6 +354,7 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
 
@@ -363,7 +368,7 @@ export default function Dashboard() {
           <CardDescription>เครื่องมือจัดการเพิ่มเติม</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div 
               className="group p-4 border rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer hover:border-purple/50 hover:bg-purple/5" 
               onClick={() => navigate('/employees')}

@@ -16,8 +16,12 @@ import {
   StockAlert
 } from '../types/stock';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
 
 export function useBranchData() {
+  // Get user profile from auth context
+  const { profile } = useAuth();
+  
   // Branch State
   const [branches, setBranches] = useState<Branch[]>([]);
   const [currentBranch, setCurrentBranch] = useState<Branch | null>(null);
@@ -121,10 +125,16 @@ export function useBranchData() {
 
         setBranches(transformedBranches);
         
-        // Set default current branch
-        if (transformedBranches.length > 0) {
-          setCurrentBranch(transformedBranches[0]);
-          setSelectedBranchIds([transformedBranches[0].id]);
+        // Set current branch based on user profile or default to first branch
+        let userBranch = null;
+        if (profile?.branch_id) {
+          userBranch = transformedBranches.find(branch => branch.id === profile.branch_id);
+        }
+        
+        const defaultBranch = userBranch || transformedBranches[0];
+        if (defaultBranch) {
+          setCurrentBranch(defaultBranch);
+          setSelectedBranchIds([defaultBranch.id]);
         }
 
         // Initialize empty arrays for other data (to be implemented later)
@@ -135,16 +145,18 @@ export function useBranchData() {
         setBranchStockMovements([]);
         setBranchStockAlerts([]);
         
-        // Set mock context for now - disable branch switching
+        // Set context based on user profile
         setBranchContext({
-          currentBranch: transformedBranches[0] || null,
+          currentBranch: defaultBranch || null,
           userPermissions: {
-            canSwitchBranch: false,
-            canViewAllBranches: false,
+            canSwitchBranch: !profile?.branch_id, // Allow switching only if no specific branch assigned
+            canViewAllBranches: !profile?.branch_id, // Allow viewing all branches only if no specific branch assigned
             canManageBranches: true,
             allowedOperations: ['view', 'create', 'update', 'delete']
           },
-          accessibleBranches: transformedBranches
+          accessibleBranches: profile?.branch_id 
+            ? transformedBranches.filter(branch => branch.id === profile.branch_id)
+            : transformedBranches
         });
         
       } catch (error) {
@@ -163,7 +175,7 @@ export function useBranchData() {
     };
 
     initializeData();
-  }, []);
+  }, [profile?.branch_id]); // Re-initialize when user's branch changes
 
   // Filtered Branches
   const filteredBranches = useMemo(() => {

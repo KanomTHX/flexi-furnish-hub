@@ -275,7 +275,7 @@ export function AddInvoiceModal({
   };
 
   const updateItemTotal = () => {
-    const subtotal = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
+    const subtotal = (formData.items || []).reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
     setFormData({ ...formData, subtotal });
   };
 
@@ -343,7 +343,7 @@ export function AddInvoiceModal({
           <div className="space-y-2">
             <Label>รายการสินค้า</Label>
             <div className="border rounded-lg p-4 space-y-3">
-              {formData.items.map((item, index) => (
+              {(formData.items || []).map((item, index) => (
                 <div key={index} className="grid grid-cols-4 gap-2">
                   <Input
                     placeholder="รหัสสินค้า"

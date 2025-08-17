@@ -179,7 +179,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   // Handle serial number selection
   const handleSerialNumberSelect = (serialNumber: SerialNumber, adjustmentType: 'add' | 'remove' | 'status_change' | 'correction') => {
-    const existingItem = adjustmentForm.items.find(
+    const existingItem = (adjustmentForm.items || []).find(
       item => item.serialNumber.id === serialNumber.id
     );
 
@@ -220,7 +220,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         return;
       }
 
-      if (adjustmentForm.items.length === 0) {
+      if ((adjustmentForm.items || []).length === 0) {
         toast.error('กรุณาเลือกสินค้าที่ต้องการปรับปรุง');
         return;
       }
@@ -233,7 +233,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       setLoading(true);
 
       // Process adjustment for each item
-      for (const item of adjustmentForm.items) {
+      for (const item of (adjustmentForm.items || [])) {
         // Update serial number status if needed
         if (item.adjustmentType === 'status_change' && item.newStatus) {
           await updateSerialNumberStatus(item.serialNumber.id, item.newStatus, {
@@ -257,7 +257,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         });
       }
 
-      toast.success(`ปรับปรุงสต็อกสำเร็จ ${adjustmentForm.items.length} รายการ`);
+      toast.success(`ปรับปรุงสต็อกสำเร็จ ${(adjustmentForm.items || []).length} รายการ`);
       
       // Reset form
       setAdjustmentForm({
@@ -290,7 +290,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('product_inventory')
       .update({
         status,
         reference_number: updates.referenceNumber,
@@ -304,8 +304,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   // Calculate totals
   const calculateTotals = () => {
-    const totalItems = adjustmentForm.items.length;
-    const totalValue = adjustmentForm.items.reduce(
+    const totalItems = (adjustmentForm.items || []).length;
+    const totalValue = (adjustmentForm.items || []).reduce(
       (sum, item) => sum + item.serialNumber.unitCost, 
       0
     );
@@ -356,11 +356,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           <p className="text-muted-foreground">จัดการการปรับปรุงและแก้ไขสต็อกสินค้า</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowAdjustmentPreview(true)} disabled={adjustmentForm.items.length === 0}>
+          <Button variant="outline" onClick={() => setShowAdjustmentPreview(true)} disabled={(adjustmentForm.items || []).length === 0}>
             <Eye className="h-4 w-4 mr-2" />
             ดูตัวอย่าง
           </Button>
-          <Button onClick={handleSubmitAdjustment} disabled={loading || adjustmentForm.items.length === 0}>
+          <Button onClick={handleSubmitAdjustment} disabled={loading || (adjustmentForm.items || []).length === 0}>
             <CheckCircle className="h-4 w-4 mr-2" />
             {loading ? 'กำลังดำเนินการ...' : 'ยืนยันการปรับปรุง'}
           </Button>
@@ -398,7 +398,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="create">สร้างการปรับปรุง</TabsTrigger>
-            <TabsTrigger value="items">รายการที่เลือก ({adjustmentForm.items.length})</TabsTrigger>
+            <TabsTrigger value="items">รายการที่เลือก ({(adjustmentForm.items || []).length})</TabsTrigger>
             <TabsTrigger value="history">ประวัติการปรับปรุง</TabsTrigger>
           </TabsList>
 
@@ -553,7 +553,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {adjustmentForm.items.length === 0 ? (
+                {(adjustmentForm.items || []).length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>ยังไม่มีสินค้าที่เลือก</p>
@@ -572,7 +572,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {adjustmentForm.items.map((item) => (
+                        {(adjustmentForm.items || []).map((item) => (
                           <TableRow key={item.serialNumber.id}>
                             <TableCell>
                               <div>

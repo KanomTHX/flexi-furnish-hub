@@ -1,28 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Import warehouse components - using placeholders
 import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
-import { SimpleReceiveGoods } from '@/components/warehouses/SimpleReceiveGoods';
-import SupplierBillingFixed2 from '@/components/warehouses/SupplierBillingFixed2';
+import { IntegratedGoodsReceiptBilling } from '@/components/warehouses/IntegratedGoodsReceiptBilling';
 import { IntegrationDashboard } from '@/components/integration/IntegrationDashboard';
 import {
   WithdrawDispatch,
-  Transfer,
-  BarcodeScanner,
   BatchOperations,
   StockAdjustment
 } from '@/components/warehouses/WarehousePlaceholders';
+import { BarcodeScanner } from '@/components/warehouses/BarcodeScanner';
 import { RealTimeStockMonitor } from '@/components/warehouses/RealTimeStockMonitor';
 import AuditTrail from '@/components/warehouses/AuditTrail';
 import PrintButton from '@/components/warehouses/PrintButton';
+import { ZoneManagement } from '@/components/warehouses/ZoneManagement';
+import { TaskManagement } from '@/components/warehouses/TaskManagement';
+import { WarehouseAlertSystem } from '@/components/warehouses/WarehouseAlertSystem';
+import { TransferManagementEnhanced } from '@/components/warehouses/TransferManagementEnhanced';
+import { WarrantyClaimManagement } from '@/components/warehouses/WarrantyClaimManagement';
+import { WarehouseAnalytics } from '@/components/warehouses/WarehouseAnalytics';
+import { supabase } from '@/integrations/supabase/client';
 
 import {
   Warehouse as WarehouseIcon,
@@ -50,7 +57,11 @@ import {
   Activity,
   Zap,
   Shield,
-  RefreshCw
+  RefreshCw,
+  MapPin,
+  CheckSquare,
+  Bell,
+  ArrowRightLeft
 } from 'lucide-react';
 import { useBranchData } from '../hooks/useBranchData';
 import { BranchSelector } from '../components/branch/BranchSelector';
@@ -96,7 +107,59 @@ export default function Warehouses() {
 
   const loadSystemStats = async () => {
     try {
-      // Mock data for demonstration - in real app, fetch from API
+      // ดึงข้อมูลจาก Supabase
+      toast({
+        title: "กำลังโหลดข้อมูล",
+        description: "กำลังดึงข้อมูลสถิติจากฐานข้อมูล",
+        variant: "default"
+      });
+      
+      // 1. ดึงข้อมูลสินค้าทั้งหมด
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('*');
+      
+      if (productsError) throw productsError;
+      
+      // 2. ดึงข้อมูลการเคลื่อนไหวัดล่าสุด
+      const { data: movements, error: movementsError } = await supabase
+        .from('stock_movements')
+        .select('*')
+        .gte('created_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
+      
+      if (movementsError) throw movementsError;
+      
+      // คำนวณมูลค่าสต็อกทั้งหมด
+      const totalValue = products?.reduce((sum, product) => {
+        return sum + ((product.selling_price || 0) * (product.max_stock_level - product.min_stock_level));
+      }, 0) || 0;
+      
+      // นับจำนวนสินค้าที่มีสต็อกต่ำ
+      const lowStockItems = products?.filter(p => (p.max_stock_level - p.min_stock_level) <= 10 && (p.max_stock_level - p.min_stock_level) > 0).length || 0;
+      
+      // อัปเดตข้อมูลสถิติ
+      setSystemStats({
+        totalProducts: products?.length || 0,
+        totalValue,
+        lowStockItems,
+        recentTransactions: movements?.length || 0,
+        systemHealth: 98
+      });
+      
+      toast({
+        title: "โหลดข้อมูลสำเร็จ",
+        description: "อัปเดตข้อมูลสถิติเรียบร้อยแล้ว",
+        variant: "success"
+      });
+    } catch (error) {
+      console.error('Error loading system stats:', error);
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "ไม่สามารถโหลดข้อมูลสถิติได้",
+        variant: "destructive"
+      });
+      
+      // ใช้ข้อมูลจำลองในกรณีที่เกิดข้อผิดพลาด
       setSystemStats({
         totalProducts: 1247,
         totalValue: 2850000,
@@ -104,8 +167,6 @@ export default function Warehouses() {
         recentTransactions: 156,
         systemHealth: 98
       });
-    } catch (error) {
-      console.error('Error loading system stats:', error);
     }
   };
 
@@ -120,41 +181,69 @@ export default function Warehouses() {
   return (
     <div className="space-y-6">
       {/* Enhanced Header with Branch Info and Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <WarehouseIcon className="h-8 w-8 text-blue-600" />
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-none shadow-md mb-6">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
+                <WarehouseIcon className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700">คลัง & สต็อก</h1>
+                <p className="text-blue-700 font-medium">
+                  จัดการคลังสินค้าและระบบสต็อกแบบครบวงจร
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">คลัง & สต็อก</h1>
-              <p className="text-muted-foreground">
-                จัดการคลังสินค้าและระบบสต็อกแบบครบวงจร
-              </p>
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+              {currentBranch && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg border border-blue-200 shadow-sm w-full sm:w-auto">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
+                    <span className="text-xs text-blue-600">สาขาหลัก</span>
+                  </div>
+                  <Badge variant="secondary" className="ml-auto bg-green-100 text-green-800 hover:bg-green-200">
+                    <Activity className="h-3 w-3 mr-1" />
+                    ออนไลน์
+                  </Badge>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" onClick={loadSystemStats} className="bg-white/80 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        รีเฟรช
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>รีเฟรชข้อมูลคลังสินค้า</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="bg-white/80 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800">
+                        <Settings className="h-4 w-4 mr-2" />
+                        ตั้งค่า
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>ตั้งค่าระบบคลังสินค้า</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
           </div>
-          {currentBranch && (
-            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-              <Building2 className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
-              <Badge variant="secondary" className="ml-2">
-                <Activity className="h-3 w-3 mr-1" />
-                ออนไลน์
-              </Badge>
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={loadSystemStats}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            รีเฟรช
-          </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            ตั้งค่า
-          </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Branch Selector */}
       {showBranchSelector && (
@@ -169,63 +258,83 @@ export default function Warehouses() {
         </Card>
       )}
 
-      
-
       {/* Real-time Stock Monitor */}
       <RealTimeStockMonitor />
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="flex flex-wrap justify-start gap-2">
-          <TabsTrigger value="overview" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+          <TabsList className="inline-flex h-auto min-h-[4rem] w-max space-x-1 rounded-none bg-transparent p-1">
+          <TabsTrigger value="overview" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <BarChart3 className="w-5 h-5" />
             <span className="font-semibold">ภาพรวม</span>
           </TabsTrigger>
-          <TabsTrigger value="inquiry" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+          <TabsTrigger value="inquiry" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <Search className="w-5 h-5" />
             <span className="font-semibold">ตรวจสอบ</span>
           </TabsTrigger>
-          <TabsTrigger value="receive" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
-            <Download className="w-5 h-5" />
-            <span className="font-semibold">รับสินค้า</span>
+          <TabsTrigger value="integrated-receipt" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
+            <Package className="w-5 h-5" />
+            <span className="font-semibold">รับสินค้า & เรียกเก็บเงิน</span>
           </TabsTrigger>
-          <TabsTrigger value="billing" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
-            <Receipt className="w-5 h-5" />
-            <span className="font-semibold">ใบวางบิล</span>
-          </TabsTrigger>
-          <TabsTrigger value="withdraw" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+          <TabsTrigger value="withdraw" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <Upload className="w-5 h-5" />
             <span className="font-semibold">จ่ายสินค้า</span>
           </TabsTrigger>
-          <TabsTrigger value="transfer" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+          <TabsTrigger value="transfer" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <ArrowUpDown className="w-5 h-5" />
             <span className="font-semibold">โอนย้าย</span>
           </TabsTrigger>
-          <TabsTrigger value="barcode" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+          <TabsTrigger value="barcode" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <QrCode className="w-5 h-5" />
             <span className="font-semibold">บาร์โค้ด</span>
           </TabsTrigger>
-          <TabsTrigger value="batch" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+          <TabsTrigger value="batch" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <Layers className="w-5 h-5" />
             <span className="font-semibold">กลุ่ม</span>
           </TabsTrigger>
-          <TabsTrigger value="adjust" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+          <TabsTrigger value="adjust" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <Edit className="w-5 h-5" />
             <span className="font-semibold">ปรับปรุง</span>
           </TabsTrigger>
-          <TabsTrigger value="audit" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+          <TabsTrigger value="audit" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <History className="w-5 h-5" />
             <span className="font-semibold">ประวัติ</span>
           </TabsTrigger>
-          <TabsTrigger value="integration" className="flex-1 min-w-[120px] h-16 flex-col gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all">
+          <TabsTrigger value="integration" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <BarChart3 className="w-5 h-5" />
             <span className="font-semibold">Integration</span>
           </TabsTrigger>
-        </TabsList>
+          <TabsTrigger value="zones" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
+            <MapPin className="w-5 h-5" />
+            <span className="font-semibold">โซนคลัง</span>
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
+            <CheckSquare className="w-5 h-5" />
+            <span className="font-semibold">งาน</span>
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
+            <Bell className="w-5 h-5" />
+            <span className="font-semibold">แจ้งเตือน</span>
+          </TabsTrigger>
+          <TabsTrigger value="transfers" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
+            <ArrowRightLeft className="w-5 h-5" />
+            <span className="font-semibold">โอนย้าย</span>
+          </TabsTrigger>
+          <TabsTrigger value="warranty" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
+            <Shield className="w-5 h-5" />
+            <span className="font-semibold">การรับประกัน</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
+            <TrendingUp className="w-5 h-5" />
+            <span className="font-semibold">วิเคราะห์</span>
+          </TabsTrigger>
+          </TabsList>
+        </ScrollArea>
 
         <TabsContent value="overview" className="space-y-6 mt-4">
           {/* Enhanced Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-l-4 border-l-blue-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">สินค้าทั้งหมด</CardTitle>
@@ -291,7 +400,7 @@ export default function Warehouses() {
           </div>
 
           {/* System Health and Quick Stats */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -318,136 +427,149 @@ export default function Warehouses() {
                     <Badge variant="secondary" className="ml-auto">เสถียร</Badge>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-indigo-500" />
+                    <span className="text-sm">ผู้ใช้งานออนไลน์</span>
+                    <Badge variant="secondary" className="ml-auto">5 คน</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-orange-500" />
+                    <span className="text-sm">เวลาตอบสนอง</span>
+                    <Badge variant="secondary" className="ml-auto">120ms</Badge>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-indigo-500" />
-                  ผู้ใช้งานออนไลน์
+                  <Truck className="h-5 w-5 text-blue-500" />
+                  คลังสินค้า
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-indigo-600 mb-2">12</div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Admin</span>
-                    <span className="text-muted-foreground">3</span>
+              <CardContent className="space-y-4">
+                {warehouses.slice(0, 3).map((warehouse, index) => (
+                  <div key={index} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-blue-100 text-blue-700">{warehouse.code.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">{warehouse.name}</p>
+                        <p className="text-xs text-muted-foreground">{warehouse.location}</p>
+                      </div>
+                    </div>
+                    <Badge variant={warehouse.status === 'active' ? 'outline' : 'secondary'} className={warehouse.status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}>
+                      {warehouse.status === 'active' ? 'พร้อมใช้งาน' : 'ปิดปรับปรุง'}
+                    </Badge>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Manager</span>
-                    <span className="text-muted-foreground">4</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Staff</span>
-                    <span className="text-muted-foreground">5</span>
-                  </div>
-                </div>
+                ))}
+
+                <Button variant="outline" className="w-full" onClick={() => setActiveTab('inquiry')}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  ดูทั้งหมด
+                </Button>
               </CardContent>
             </Card>
           </div>
 
-          {/* Feature Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  ฟีเจอร์หลัก
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Search className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm">ตรวจสอบสต็อกแบบเรียลไทม์</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Download className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">รับสินค้าเข้าคลัง</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Upload className="h-4 w-4 text-orange-600" />
-                  <span className="text-sm">จ่ายสินค้าออกจากคลัง</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <ArrowUpDown className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm">โอนย้ายระหว่างคลัง</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  ฟีเจอร์ขั้นสูง
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <QrCode className="h-4 w-4 text-indigo-600" />
-                  <span className="text-sm">สแกนบาร์โค้ดและ QR Code</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Layers className="h-4 w-4 text-teal-600" />
-                  <span className="text-sm">จัดการสินค้าเป็นกลุ่ม</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Edit className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm">ปรับปรุงสต็อกและแก้ไข</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <History className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm">ติดตามประวัติการใช้งาน</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-yellow-500" />
+                ดำเนินการด่วน
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center gap-2" onClick={() => handleQuickAction('รับสินค้า')}>
+                  <Download className="h-5 w-5 text-green-500" />
+                  <span>รับสินค้า</span>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center gap-2" onClick={() => handleQuickAction('จ่ายสินค้า')}>
+                  <Upload className="h-5 w-5 text-orange-500" />
+                  <span>จ่ายสินค้า</span>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center gap-2" onClick={() => handleQuickAction('ตรวจสอบสต็อก')}>
+                  <Search className="h-5 w-5 text-blue-500" />
+                  <span>ตรวจสอบสต็อก</span>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center gap-2" onClick={() => handleQuickAction('พิมพ์รายงาน')}>
+                  <Printer className="h-5 w-5 text-purple-500" />
+                  <span>พิมพ์รายงาน</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="inquiry" className="space-y-6 mt-4">
+        <TabsContent value="inquiry" className="mt-4">
           <SimpleStockInquiry />
         </TabsContent>
 
-        <TabsContent value="receive" className="space-y-6 mt-4">
-          <SimpleReceiveGoods />
+        <TabsContent value="integrated-receipt" className="mt-4">
+          <IntegratedGoodsReceiptBilling />
         </TabsContent>
 
-        <TabsContent value="billing" className="space-y-6 mt-4">
-          <SupplierBillingFixed2 />
-        </TabsContent>
-
-        <TabsContent value="withdraw" className="space-y-6 mt-4">
+        <TabsContent value="withdraw" className="mt-4">
           <WithdrawDispatch warehouses={warehouses} />
         </TabsContent>
 
-        <TabsContent value="transfer" className="space-y-6 mt-4">
-          <Transfer warehouses={warehouses} currentWarehouseId={warehouses[0]?.id || ''} />
+
+
+        <TabsContent value="barcode" className="mt-4">
+          <BarcodeScanner />
         </TabsContent>
 
-        <TabsContent value="barcode" className="space-y-6 mt-4">
-          <BarcodeScanner onScan={() => { }} warehouses={warehouses} />
+        <TabsContent value="batch" className="mt-4">
+          <BatchOperations warehouses={warehouses} />
         </TabsContent>
 
-        <TabsContent value="batch" className="space-y-6 mt-4">
-          <BatchOperations onBatchProcess={() => { }} availableOperations={[]} warehouses={warehouses} />
+        <TabsContent value="adjust" className="mt-4">
+          <StockAdjustment warehouses={warehouses} warehouseId="" />
         </TabsContent>
 
-        <TabsContent value="adjust" className="space-y-6 mt-4">
-          <StockAdjustment warehouseId={warehouses[0]?.id || ''} onAdjustmentComplete={() => { }} warehouses={warehouses} />
-        </TabsContent>
-
-        <TabsContent value="audit" className="space-y-6 mt-4">
+        <TabsContent value="audit" className="mt-4">
           <AuditTrail />
         </TabsContent>
 
-        <TabsContent value="integration" className="space-y-6 mt-4">
+        <TabsContent value="integration" className="mt-4">
           <IntegrationDashboard />
         </TabsContent>
 
+        <TabsContent value="zones" className="mt-4">
+          <ZoneManagement warehouseId={warehouses[0]?.id || 'default'} />
+        </TabsContent>
 
+        <TabsContent value="tasks" className="mt-4">
+          <TaskManagement />
+        </TabsContent>
+
+        <TabsContent value="alerts" className="mt-4">
+          <WarehouseAlertSystem />
+        </TabsContent>
+
+        <TabsContent value="transfers" className="mt-4">
+          <TransferManagementEnhanced />
+        </TabsContent>
+
+        <TabsContent value="warranty" className="mt-4">
+          <WarrantyClaimManagement />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-4">
+          <WarehouseAnalytics />
+        </TabsContent>
       </Tabs>
+
+      {/* Print Button */}
+      <div className="fixed bottom-6 right-6">
+        <PrintButton />
+      </div>
     </div>
   );
 }

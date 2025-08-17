@@ -35,15 +35,30 @@ export const ErrorConsole: React.FC<ErrorConsoleProps> = ({
 
   useEffect(() => {
     const updateData = () => {
-      setErrors(browserErrorHandler.getErrors());
-      setLogs(ConsoleMonitor.getLogs());
+      const newErrors = browserErrorHandler.getErrors();
+      const newLogs = ConsoleMonitor.getLogs();
+      
+      // Only update if data actually changed
+      setErrors(prevErrors => {
+        if (JSON.stringify(prevErrors) !== JSON.stringify(newErrors)) {
+          return newErrors;
+        }
+        return prevErrors;
+      });
+      
+      setLogs(prevLogs => {
+        if (JSON.stringify(prevLogs) !== JSON.stringify(newLogs)) {
+          return newLogs;
+        }
+        return prevLogs;
+      });
     };
 
     updateData();
 
     let interval: NodeJS.Timeout;
     if (autoRefresh) {
-      interval = setInterval(updateData, 1000);
+      interval = setInterval(updateData, 2000); // Increase interval to 2 seconds
     }
 
     return () => {

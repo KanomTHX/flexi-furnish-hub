@@ -300,7 +300,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
               <SelectValue placeholder="เลือกคลังสินค้า" />
             </SelectTrigger>
             <SelectContent>
-              {warehouses.map((warehouse) => (
+              {warehouses?.map((warehouse) => (
                 <SelectItem key={warehouse.id} value={warehouse.id}>
                   {warehouse.name} ({warehouse.code})
                 </SelectItem>
@@ -367,7 +367,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {stockLevels.map((stock) => (
+                      {stockLevels?.map((stock) => (
                         <TableRow key={`${stock.productId}-${stock.warehouseId}`}>
                           <TableCell>
                             <div>
@@ -521,7 +521,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {withdrawForm.items.map((item) => (
+                        {withdrawForm.items?.map((item) => (
                           <TableRow key={item.serialNumber.id}>
                             <TableCell>
                               <div>
@@ -595,7 +595,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {withdrawHistory.map((movement) => (
+                      {withdrawHistory?.map((movement) => (
                         <TableRow key={movement.id}>
                           <TableCell>
                             {new Date(movement.createdAt).toLocaleDateString('th-TH')}
@@ -643,7 +643,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
             <CardContent>
               {loading ? (
                 <div className="text-center py-8">กำลังโหลด...</div>
-              ) : serialNumbers.length === 0 ? (
+              ) : !serialNumbers || serialNumbers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   ไม่มี Serial Number ที่พร้อมจ่าย
                 </div>
@@ -658,7 +658,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {serialNumbers.map((sn) => (
+                    {serialNumbers?.map((sn) => (
                       <TableRow key={sn.id}>
                         <TableCell className="font-mono">{sn.serialNumber}</TableCell>
                         <TableCell>฿{sn.unitCost.toLocaleString()}</TableCell>
@@ -733,7 +733,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {withdrawForm.items.map((item) => (
+                    {withdrawForm.items?.map((item) => (
                       <TableRow key={item.serialNumber.id}>
                         <TableCell className="text-sm">
                           {item.serialNumber.product?.name}

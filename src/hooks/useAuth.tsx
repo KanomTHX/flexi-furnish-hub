@@ -69,14 +69,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        // Only log error if it's not a "not found" error
+        if (error.code !== 'PGRST116') {
+          console.error('Error fetching profile:', error);
+        }
         setProfile(null);
         return;
       }
 
       setProfile(profileData);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      // Silently handle network errors to avoid console spam
       setProfile(null);
     }
   };
