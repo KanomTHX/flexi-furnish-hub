@@ -19,8 +19,7 @@ import {
   UserCheck,
   Bell,
   Plus,
-  Clock,
-  Database
+  Clock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarQuickActions } from "./SidebarQuickActions";
@@ -98,12 +97,6 @@ const navigationItems = [
     title: "รายงาน",
     url: "/reports",
     icon: TrendingUp,
-    badge: null
-  },
-  {
-    title: "ฐานข้อมูล",
-    url: "/database",
-    icon: Database,
     badge: null
   },
   {

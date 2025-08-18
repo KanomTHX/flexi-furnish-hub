@@ -29,6 +29,7 @@ export interface AuditFilter {
   record_id?: string;
   date_from?: string;
   date_to?: string;
+  branch_id?: string;
   limit?: number;
 }
 
@@ -107,6 +108,10 @@ export const auditTrailService = {
 
       if (filters.date_to) {
         query = query.lte('timestamp', filters.date_to);
+      }
+
+      if (filters.branch_id) {
+        query = query.eq('branch_id', filters.branch_id);
       }
 
       // Apply limit

@@ -13,6 +13,7 @@ export interface UseWarehouseStockOptions {
 
 export interface StockFilters {
   warehouseId?: string;
+  branchId?: string;
   productId?: string;
   search?: string;
   status?: string;
@@ -22,6 +23,7 @@ export interface StockFilters {
 
 export interface MovementFilters {
   warehouseId?: string;
+  branchId?: string;
   productId?: string;
   movementType?: string;
   dateFrom?: string;
@@ -57,6 +59,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
 
       const searchFilters = {
         warehouseId: filters?.warehouseId || warehouseId,
+        branchId: filters?.branchId,
         productId: filters?.productId || productId,
         search: filters?.search,
         status: filters?.status,
@@ -108,6 +111,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
 
       const searchFilters = {
         warehouseId: filters?.warehouseId || warehouseId,
+        branchId: filters?.branchId,
         productId: filters?.productId || productId,
         movementType: filters?.movementType,
         dateFrom: filters?.dateFrom,
@@ -136,6 +140,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
   // Fetch serial numbers
   const fetchSerialNumbers = useCallback(async (filters?: {
     warehouseId?: string;
+    branchId?: string;
     productId?: string;
     status?: string;
     search?: string;
@@ -148,6 +153,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
 
       const searchFilters = {
         warehouseId: filters?.warehouseId || warehouseId,
+        branchId: filters?.branchId,
         productId: filters?.productId || productId,
         status: filters?.status,
         search: filters?.search,

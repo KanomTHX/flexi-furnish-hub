@@ -234,6 +234,7 @@ export class WarehouseService {
    */
   static async getStockMovements(filters?: {
     warehouseId?: string;
+    branchId?: string;
     productId?: string;
     movementType?: string;
     dateFrom?: string;
@@ -250,11 +251,15 @@ export class WarehouseService {
         .select(`
           *,
           product:products(id, name, product_code),
-          warehouse:warehouses(id, name, code)
+          warehouse:warehouses(id, name, code, branch_id)
         `, { count: 'exact' });
 
       if (filters?.warehouseId) {
         query = query.eq('warehouse_id', filters.warehouseId);
+      }
+
+      if (filters?.branchId) {
+        query = query.eq('warehouse.branch_id', filters.branchId);
       }
 
       if (filters?.productId) {
@@ -1455,9 +1460,10 @@ export class WarehouseService {
   /**
    * Get low stock alerts
    */
-  static async getLowStockAlerts(threshold: number = 5): Promise<StockLevel[]> {
+  static async getLowStockAlerts(threshold: number = 5, warehouseId?: string): Promise<StockLevel[]> {
     try {
       const { data } = await this.getStockLevels({
+        warehouseId,
         limit: 100
       });
 
@@ -1473,9 +1479,10 @@ export class WarehouseService {
   /**
    * Get out of stock items
    */
-  static async getOutOfStockItems(): Promise<StockLevel[]> {
+  static async getOutOfStockItems(warehouseId?: string): Promise<StockLevel[]> {
     try {
       const { data } = await this.getStockLevels({
+        warehouseId,
         status: 'out_of_stock',
         limit: 100
       });

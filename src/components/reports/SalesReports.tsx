@@ -21,58 +21,33 @@ import {
   Users,
   Package
 } from 'lucide-react';
-import { SalesReport } from '@/types/reports';
 import { formatCurrency, formatNumber } from '@/utils/reportHelpers';
+import { useSalesReports } from '@/hooks/useSalesReports';
 
-interface SalesReportsProps {
-  salesReports: SalesReport[];
-  onGenerateReport: () => void;
-  onExportReport: () => void;
-  loading: boolean;
-}
-
-export const SalesReports: React.FC<SalesReportsProps> = ({
-  salesReports,
-  onGenerateReport,
-  onExportReport,
-  loading
-}) => {
+export const SalesReports: React.FC = () => {
+  const {
+    salesSummary,
+    salesChartData,
+    topProducts,
+    salesByCategory,
+    salesTeam,
+    loading,
+    error,
+    generateReport,
+    exportReport
+  } = useSalesReports();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
 
-  // Mock chart data
-  const salesChartData = [
-    { date: '01/01', sales: 125000, orders: 45 },
-    { date: '02/01', sales: 135000, orders: 52 },
-    { date: '03/01', sales: 115000, orders: 38 },
-    { date: '04/01', sales: 145000, orders: 58 },
-    { date: '05/01', sales: 155000, orders: 62 },
-    { date: '06/01', sales: 140000, orders: 48 },
-    { date: '07/01', sales: 165000, orders: 65 }
-  ];
-
-  const topProducts = [
-    { name: 'โซฟา 3 ที่นั่ง Modern', sales: 32000, quantity: 8, growth: 12.5 },
-    { name: 'เตียงนอน King Size', sales: 25000, quantity: 5, growth: 8.3 },
-    { name: 'ตู้เสื้อผ้า 4 บาน', sales: 18000, quantity: 6, growth: -2.1 },
-    { name: 'โต๊ะทำงาน Executive', sales: 15000, quantity: 10, growth: 15.7 },
-    { name: 'เก้าอี้ทำงาน Ergonomic', sales: 12000, quantity: 15, growth: 5.2 }
-  ];
-
-  const salesByCategory = [
-    { category: 'โซฟา', sales: 45000, percentage: 36, color: 'bg-blue-500' },
-    { category: 'เตียง', sales: 35000, percentage: 28, color: 'bg-green-500' },
-    { category: 'ตู้', sales: 25000, percentage: 20, color: 'bg-yellow-500' },
-    { category: 'โต๊ะ', sales: 20000, percentage: 16, color: 'bg-purple-500' }
-  ];
-
-  const salesTeam = [
-    { name: 'สมชาย ใจดี', sales: 45000, orders: 15, commission: 2250, growth: 18.5 },
-    { name: 'สมหญิง รักงาน', sales: 38000, orders: 12, commission: 1900, growth: 12.3 },
-    { name: 'วิชัย ขยัน', sales: 42000, orders: 18, commission: 2100, growth: 8.7 },
-    { name: 'มาลี ขยัน', sales: 35000, orders: 14, commission: 1750, growth: 15.2 }
-  ];
+  // แสดงข้อความเมื่อไม่มีข้อมูล
+  if (!salesSummary && !loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">ไม่มีข้อมูลรายงานยอดขาย</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -85,11 +60,11 @@ export const SalesReports: React.FC<SalesReportsProps> = ({
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={onExportReport} variant="outline" size="sm">
+          <Button onClick={exportReport} variant="outline" size="sm" disabled={!salesSummary}>
             <Download className="h-4 w-4 mr-2" />
             ส่งออก
           </Button>
-          <Button onClick={onGenerateReport} size="sm" disabled={loading}>
+          <Button onClick={generateReport} size="sm" disabled={loading}>
             <TrendingUp className="h-4 w-4 mr-2" />
             {loading ? 'กำลังสร้าง...' : 'สร้างรายงาน'}
           </Button>
@@ -148,10 +123,16 @@ export const SalesReports: React.FC<SalesReportsProps> = ({
                 <p className="text-sm font-medium text-muted-foreground">
                   ยอดขายรวม
                 </p>
-                <p className="text-2xl font-bold">{formatCurrency(125000)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(salesSummary?.totalSales || 0)}</p>
                 <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-                  <span className="text-sm text-green-600">+12.5%</span>
+                  <TrendingUp className={`h-4 w-4 mr-1 ${
+                    (salesSummary?.salesGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`} />
+                  <span className={`text-sm ${
+                    (salesSummary?.salesGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {(salesSummary?.salesGrowth || 0) >= 0 ? '+' : ''}{(salesSummary?.salesGrowth || 0).toFixed(1)}%
+                  </span>
                 </div>
               </div>
               <div className="p-3 rounded-full bg-blue-100 text-blue-600">
@@ -168,10 +149,16 @@ export const SalesReports: React.FC<SalesReportsProps> = ({
                 <p className="text-sm font-medium text-muted-foreground">
                   จำนวนออเดอร์
                 </p>
-                <p className="text-2xl font-bold">45</p>
+                <p className="text-2xl font-bold">{salesSummary?.totalOrders || 0}</p>
                 <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-                  <span className="text-sm text-green-600">+8.2%</span>
+                  <TrendingUp className={`h-4 w-4 mr-1 ${
+                    (salesSummary?.ordersGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`} />
+                  <span className={`text-sm ${
+                    (salesSummary?.ordersGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {(salesSummary?.ordersGrowth || 0) >= 0 ? '+' : ''}{(salesSummary?.ordersGrowth || 0).toFixed(1)}%
+                  </span>
                 </div>
               </div>
               <div className="p-3 rounded-full bg-green-100 text-green-600">
@@ -188,10 +175,16 @@ export const SalesReports: React.FC<SalesReportsProps> = ({
                 <p className="text-sm font-medium text-muted-foreground">
                   ค่าเฉลี่ยต่อออเดอร์
                 </p>
-                <p className="text-2xl font-bold">{formatCurrency(2778)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(salesSummary?.averageOrderValue || 0)}</p>
                 <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-                  <span className="text-sm text-green-600">+3.8%</span>
+                  <TrendingUp className={`h-4 w-4 mr-1 ${
+                    (salesSummary?.avgOrderGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`} />
+                  <span className={`text-sm ${
+                    (salesSummary?.avgOrderGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {(salesSummary?.avgOrderGrowth || 0) >= 0 ? '+' : ''}{(salesSummary?.avgOrderGrowth || 0).toFixed(1)}%
+                  </span>
                 </div>
               </div>
               <div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
@@ -208,10 +201,16 @@ export const SalesReports: React.FC<SalesReportsProps> = ({
                 <p className="text-sm font-medium text-muted-foreground">
                   ลูกค้าใหม่
                 </p>
-                <p className="text-2xl font-bold">23</p>
+                <p className="text-2xl font-bold">{salesSummary?.newCustomers || 0}</p>
                 <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-                  <span className="text-sm text-green-600">+15.3%</span>
+                  <TrendingUp className={`h-4 w-4 mr-1 ${
+                    (salesSummary?.newCustomersGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`} />
+                  <span className={`text-sm ${
+                    (salesSummary?.newCustomersGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {(salesSummary?.newCustomersGrowth || 0) >= 0 ? '+' : ''}{(salesSummary?.newCustomersGrowth || 0).toFixed(1)}%
+                  </span>
                 </div>
               </div>
               <div className="p-3 rounded-full bg-purple-100 text-purple-600">
@@ -229,25 +228,32 @@ export const SalesReports: React.FC<SalesReportsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="h-64 flex items-end justify-between gap-2">
-            {salesChartData.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div className="w-full bg-gray-200 rounded-t relative">
-                  <div 
-                    className="bg-blue-500 rounded-t transition-all duration-500"
-                    style={{ 
-                      height: `${(data.sales / 165000) * 200}px`,
-                      minHeight: '20px'
-                    }}
-                  ></div>
+            {salesChartData.length > 0 ? salesChartData.map((data, index) => {
+              const maxSales = Math.max(...salesChartData.map(d => d.sales));
+              return (
+                <div key={index} className="flex-1 flex flex-col items-center">
+                  <div className="w-full bg-gray-200 rounded-t relative">
+                    <div 
+                      className="bg-blue-500 rounded-t transition-all duration-500"
+                      style={{ 
+                        height: `${maxSales > 0 ? (data.sales / maxSales) * 200 : 20}px`,
+                        minHeight: '20px'
+                      }}
+                    ></div>
+                  </div>
+                  <div className="text-center mt-2">
+                    <p className="text-xs font-medium">{data.date}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatCurrency(data.sales)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center mt-2">
-                  <p className="text-xs font-medium">{data.date}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatCurrency(data.sales)}
-                  </p>
-                </div>
+              );
+            }) : (
+              <div className="flex items-center justify-center w-full h-full">
+                <p className="text-muted-foreground">ไม่มีข้อมูลแนวโน้มยอดขาย</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>

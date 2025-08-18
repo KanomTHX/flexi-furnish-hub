@@ -8,18 +8,23 @@ import { Button } from '@/components/ui/button';
 import { WarehouseService } from '@/services/warehouseService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useBranchData } from '@/hooks/useBranchData';
 
 export interface RealTimeStockMonitorProps {
   warehouseId?: string;
+  branchId?: string;
   productId?: string;
   className?: string;
 }
 
 export function RealTimeStockMonitor({ 
   warehouseId, 
+  branchId, 
   productId, 
   className 
 }: RealTimeStockMonitorProps) {
+  const { currentBranch } = useBranchData();
+  const effectiveBranchId = branchId || currentBranch?.id;
   // State for stock data
   const [stockData, setStockData] = useState({
     totalItems: 0,
@@ -60,8 +65,8 @@ export function RealTimeStockMonitor({
         `);
       
       // กรองตามสาขาที่เลือก (ถ้ามี)
-      if (warehouseId) {
-        query = query.eq('branch_id', warehouseId);
+      if (effectiveBranchId) {
+        query = query.eq('branch_id', effectiveBranchId);
       }
       
       // กรองตามสินค้าที่เลือก (ถ้ามี)
@@ -272,7 +277,7 @@ export function RealTimeStockMonitor({
     }, 30000);
     
     return () => clearInterval(interval);
-  }, [warehouseId, productId]);
+  }, [warehouseId, productId, effectiveBranchId]);
 
   const stockPercentage = Math.round((stockData.inStock / stockData.totalItems) * 100) || 0;
   

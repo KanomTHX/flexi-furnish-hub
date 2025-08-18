@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useBranchSwitching } from '../../hooks/useBranchAwareData';
+import { useBranchData } from '../../hooks/useBranchData';
 import {
   Building2,
   CheckCircle,
@@ -31,19 +31,21 @@ export function BranchContextSwitcher({
 }: BranchContextSwitcherProps) {
   const {
     currentBranch,
-    userAccessibleBranches,
-    switchingState,
-    switchBranchSecurely,
-    getSessionInfo
-  } = useBranchSwitching();
+    branches: userAccessibleBranches,
+    switchBranch,
+    isSwitchingBranch
+  } = useBranchData();
 
   const [selectedBranchId, setSelectedBranchId] = useState(currentBranch?.id || '');
-  const sessionInfo = getSessionInfo();
+  const [switchingError, setSwitchingError] = useState<string | null>(null);
 
   const handleSwitchBranch = async (branchId: string) => {
-    await switchBranchSecurely(branchId);
-    if (!switchingState.error) {
+    try {
+      setSwitchingError(null);
+      await switchBranch(branchId);
       onSwitchComplete?.(branchId);
+    } catch (error) {
+      setSwitchingError(error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการเปลี่ยนสาขา');
     }
   };
 
@@ -53,8 +55,8 @@ export function BranchContextSwitcher({
   };
 
   const getSwitchProgress = () => {
-    if (!switchingState.isLoading) return 0;
-    return switchingState.progress;
+    if (!isSwitchingBranch) return 0;
+    return 50; // Simple progress indicator
   };
 
   return (
@@ -74,21 +76,21 @@ export function BranchContextSwitcher({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Progress Bar during switching */}
-          {switchingState.isLoading && (
+          {isSwitchingBranch && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">กำลังเปลี่ยนสาขา...</span>
-                <span className="font-medium">{switchingState.progress}%</span>
+                <span className="font-medium">{getSwitchProgress()}%</span>
               </div>
               <Progress value={getSwitchProgress()} className="h-2" />
             </div>
           )}
 
           {/* Error Display */}
-          {switchingState.error && (
+          {switchingError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{switchingState.error}</AlertDescription>
+              <AlertDescription>{switchingError}</AlertDescription>
             </Alert>
           )}
 
@@ -100,10 +102,10 @@ export function BranchContextSwitcher({
                 className={cn(
                   "relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200",
                   getBranchStatusColor(branch.id),
-                  switchingState.isLoading && "pointer-events-none opacity-50"
+                  isSwitchingBranch && "pointer-events-none opacity-50"
                 )}
                 onClick={() => {
-                  if (branch.id !== currentBranch?.id && !switchingState.isLoading) {
+                  if (branch.id !== currentBranch?.id && !isSwitchingBranch) {
                     setSelectedBranchId(branch.id);
                     handleSwitchBranch(branch.id);
                   }
@@ -178,16 +180,16 @@ export function BranchContextSwitcher({
         </CardContent>
       </Card>
 
-      {/* Session Information */}
-      {showSessionInfo && sessionInfo && 'isValid' in sessionInfo && (
+      {/* Current Branch Information */}
+      {showSessionInfo && currentBranch && (
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Shield className="h-5 w-5 text-info" />
               <div>
-                <CardTitle className="text-base">ข้อมูล Session</CardTitle>
+                <CardTitle className="text-base">ข้อมูลสาขาปัจจุบัน</CardTitle>
                 <CardDescription>
-                  รายละเอียดการเข้าใช้งานสาขาปัจจุบัน
+                  รายละเอียดสาขาที่กำลังใช้งาน
                 </CardDescription>
               </div>
             </div>
@@ -195,33 +197,34 @@ export function BranchContextSwitcher({
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-muted-foreground">เซสชัน ID:</span>
+                <span className="text-muted-foreground">รหัสสาขา:</span>
                 <p className="font-medium text-xs font-mono">
-                  {Math.random().toString(36).substr(2, 8)}
+                  {currentBranch.id}
                 </p>
               </div>
               
               <div>
-                <span className="text-muted-foreground">ระยะเวลาการใช้งาน:</span>
+                <span className="text-muted-foreground">ชื่อสาขา:</span>
                 <p className="font-medium">
-                  {Math.floor(Math.random() * 60) + 10} นาที
+                  {currentBranch.name}
                 </p>
               </div>
               
               <div>
-                <span className="text-muted-foreground">การเข้าถึงข้อมูล:</span>
+                <span className="text-muted-foreground">ที่อยู่:</span>
                 <p className="font-medium">
-                  {Math.floor(Math.random() * 50) + 10} ครั้ง
+                  {currentBranch.address.street}, {currentBranch.address.district}
                 </p>
               </div>
               
               <div>
-                <span className="text-muted-foreground">สถานะความปลอดภัย:</span>
+                <span className="text-muted-foreground">สถานะ:</span>
                 <Badge 
-                  variant="default"
+                  variant={currentBranch.status === 'active' ? "default" : "secondary"}
                   className="text-xs"
                 >
-                  ปลอดภัย
+                  {currentBranch.status === 'active' ? 'เปิดใช้งาน' : 
+                   currentBranch.status === 'inactive' ? 'ปิดใช้งาน' : 'ปรับปรุง'}
                 </Badge>
               </div>
             </div>

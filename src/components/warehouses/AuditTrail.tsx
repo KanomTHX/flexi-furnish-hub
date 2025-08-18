@@ -13,6 +13,7 @@ interface AuditTrailProps {
   recordId?: string;
   tableName?: string;
   userId?: string;
+  branchId?: string;
   showFilters?: boolean;
 }
 
@@ -20,6 +21,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
   recordId,
   tableName,
   userId,
+  branchId,
   showFilters = true
 }) => {
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
@@ -28,6 +30,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
     record_id: recordId,
     table_name: tableName,
     user_id: userId,
+    branch_id: branchId,
     limit: 50
   });
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
@@ -61,6 +64,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
       record_id: recordId,
       table_name: tableName,
       user_id: userId,
+      branch_id: branchId,
       limit: 50
     });
   };

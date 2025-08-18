@@ -87,9 +87,10 @@ interface WorkflowStep {
 interface IntegratedGoodsReceiptBillingProps {
   onComplete?: (data: any) => void;
   defaultWarehouseId?: string;
+  branchId?: string;
 }
 
-export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId }: IntegratedGoodsReceiptBillingProps) {
+export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, branchId }: IntegratedGoodsReceiptBillingProps) {
   const { toast } = useToast();
   
   // State management
@@ -130,7 +131,7 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId }
   // Load initial data
   useEffect(() => {
     loadInitialData();
-  }, []);
+  }, [branchId]);
 
   // Filter products based on search term
   useEffect(() => {
@@ -150,29 +151,47 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId }
     setIsLoading(true);
     try {
       // Load warehouses
-      const { data: warehousesData, error: warehousesError } = await supabase
+      let warehousesQuery = supabase
         .from('warehouses')
         .select('*')
         .eq('status', 'active');
+      
+      if (branchId) {
+        warehousesQuery = warehousesQuery.eq('branch_id', branchId);
+      }
+      
+      const { data: warehousesData, error: warehousesError } = await warehousesQuery;
       
       if (warehousesError) throw warehousesError;
       setWarehouses(warehousesData || []);
 
       // Load products
-      const { data: productsData, error: productsError } = await supabase
+      let productsQuery = supabase
         .from('products')
         .select('*')
         .eq('status', 'active');
+      
+      if (branchId) {
+        productsQuery = productsQuery.eq('branch_id', branchId);
+      }
+      
+      const { data: productsData, error: productsError } = await productsQuery;
       
       if (productsError) throw productsError;
       setProducts(productsData || []);
       setFilteredProducts(productsData || []);
 
       // Load suppliers
-      const { data: suppliersData, error: suppliersError } = await supabase
+      let suppliersQuery = supabase
         .from('suppliers')
         .select('*')
         .eq('status', 'active');
+      
+      if (branchId) {
+        suppliersQuery = suppliersQuery.eq('branch_id', branchId);
+      }
+      
+      const { data: suppliersData, error: suppliersError } = await suppliersQuery;
       
       if (suppliersError) throw suppliersError;
       setSuppliers(suppliersData || []);

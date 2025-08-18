@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useWarehouseStock } from '@/hooks/useWarehouseStock';
 import { useWarehouses } from '@/hooks/useWarehouses';
+import { useBranchData } from '@/hooks/useBranchData';
 
 export function SimpleStockInquiry() {
+  const { currentBranch } = useBranchData();
   // State for search and filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
@@ -30,10 +32,11 @@ export function SimpleStockInquiry() {
     const filters = {
       search: searchTerm.trim() || undefined,
       warehouseId: selectedWarehouse && selectedWarehouse !== 'all' ? selectedWarehouse : undefined,
+      branchId: currentBranch?.id,
       status: selectedStatus && selectedStatus !== 'all' ? selectedStatus : undefined
     };
     fetchStockLevels(filters);
-  }, [searchTerm, selectedWarehouse, selectedStatus, fetchStockLevels]);
+  }, [searchTerm, selectedWarehouse, selectedStatus, currentBranch, fetchStockLevels]);
 
   // Group stock levels by product for better display
   const groupedStock = useMemo(() => {

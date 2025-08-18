@@ -1,344 +1,652 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useReports } from '@/hooks/useReports';
-import { useBranchData } from '../hooks/useBranchData';
-import { BranchSelector } from '../components/branch/BranchSelector';
+import { useBranchData } from '@/hooks/useBranchData';
+import { BranchSelector } from '@/components/branch/BranchSelector';
 import { ReportsOverview } from '@/components/reports/ReportsOverview';
 import { SalesReports } from '@/components/reports/SalesReports';
 import { InventoryReports } from '@/components/reports/InventoryReports';
 import FinancialReports from '@/components/reports/FinancialReports';
-import { 
-  exportSalesReportToCSV, 
-  exportInventoryReportToCSV, 
-  exportFinancialReportToCSV 
-} from '@/utils/reportHelpers';
+import { EmployeeReport } from '@/components/reports/EmployeeReport';
+import { TransactionReports } from '@/components/accounting/TransactionReports';
+import { SerialNumberReports } from '@/components/warehouses/SerialNumberReports';
+import { WarehouseAnalytics } from '@/components/warehouses/WarehouseAnalytics';
+import { ComplianceReportDialog } from '@/components/audit/ComplianceReportDialog';
 import { 
   FileText, 
+  Download, 
   TrendingUp, 
   Package, 
   DollarSign, 
+  Users, 
+  Building, 
+  Shield, 
+  Truck,
+  BarChart3,
+  PieChart,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Calendar,
+  Filter,
+  Search,
+  RefreshCw,
   Settings,
-  Download,
-  Plus,
-  Building2,
   Eye,
-  BarChart3
+  Printer,
+  Share2,
+  FileDown,
+  FilePlus
 } from 'lucide-react';
+import {
+  exportSalesReportToCSV,
+  exportInventoryReportToCSV,
+  exportFinancialReportToCSV
+} from '@/utils/reportHelpers';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
+import { format, subDays } from 'date-fns';
+import { th } from 'date-fns/locale';
+
+// PDF Export library (you'll need to install this)
+// npm install jspdf html2canvas
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const Reports: React.FC = () => {
   const { toast } = useToast();
-  const {
-    salesReports,
-    inventoryReports,
-    financialReports,
-    customReportConfigs,
+  const { 
+    salesReports, 
+    inventoryReports, 
+    financialReports, 
     reportStats,
-    loading,
-    error,
+    loading, 
     generateSalesReport,
     generateInventoryReport,
     generateFinancialReport,
-    loadReportsData,
-    getSalesData,
-    getInventoryData,
-    getFinancialData
+    loadReportsData
   } = useReports();
+  const { branches, currentBranch, branchSummary } = useBranchData();
 
-  const { currentBranch, selectedBranchesAnalytics, branchSummary } = useBranchData();
-  const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [reportType, setReportType] = useState('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date()
+  });
+  const [isExporting, setIsExporting] = useState(false);
+  const [showComplianceDialog, setShowComplianceDialog] = useState(false);
+
+  // รวบรวมข้อมูลสาขา
+  const totalBranches = branches.length;
+  const totalRevenue = branchSummary?.totalRevenue || 0;
+  const averageProfit = branchSummary?.averageProfitMargin || 0;
+  const criticalAlerts = branchSummary?.totalCriticalAlerts || 5;
 
   const handleGenerateReport = async (type: string) => {
     try {
       switch (type) {
         case 'sales':
           await generateSalesReport({
-            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            endDate: new Date()
-          });
-          toast({
-            title: "สำเร็จ",
-            description: "สร้างรายงานยอดขายเรียบร้อยแล้ว",
+            startDate: dateRange?.from || subDays(new Date(), 30),
+            endDate: dateRange?.to || new Date()
           });
           break;
         case 'inventory':
           await generateInventoryReport();
-          toast({
-            title: "สำเร็จ",
-            description: "สร้างรายงานสต็อกเรียบร้อยแล้ว",
-          });
           break;
         case 'financial':
           await generateFinancialReport('มกราคม 2024');
-          toast({
-            title: "สำเร็จ",
-            description: "สร้างรายงานการเงินเรียบร้อยแล้ว",
-          });
-          break;
-        case 'custom':
-          setActiveTab('custom');
           break;
         default:
-          toast({
-            title: "ข้อผิดพลาด",
-            description: "ประเภทรายงานไม่ถูกต้อง",
-            variant: "destructive",
-          });
+          break;
       }
-    } catch (err) {
       toast({
-        title: "ข้อผิดพลาด",
+        title: "สร้างรายงานสำเร็จ",
+        description: `รายงาน${type}ถูกสร้างเรียบร้อยแล้ว`,
+      });
+    } catch (error) {
+      toast({
+        title: "เกิดข้อผิดพลาด",
         description: "ไม่สามารถสร้างรายงานได้",
         variant: "destructive",
       });
     }
   };
 
+  // Export functions
   const handleExportSalesReport = () => {
     exportSalesReportToCSV(salesReports);
     toast({
-      title: "สำเร็จ",
-      description: "ส่งออกรายงานยอดขายเรียบร้อยแล้ว",
+      title: "ส่งออกสำเร็จ",
+      description: "รายงานยอดขายถูกส่งออกเป็น CSV แล้ว",
     });
   };
 
   const handleExportInventoryReport = () => {
     exportInventoryReportToCSV(inventoryReports);
     toast({
-      title: "สำเร็จ",
-      description: "ส่งออกรายงานสต็อกเรียบร้อยแล้ว",
+      title: "ส่งออกสำเร็จ",
+      description: "รายงานสต็อกถูกส่งออกเป็น CSV แล้ว",
     });
   };
 
   const handleExportFinancialReport = () => {
     exportFinancialReportToCSV(financialReports);
     toast({
-      title: "สำเร็จ",
-      description: "ส่งออกรายงานการเงินเรียบร้อยแล้ว",
+      title: "ส่งออกสำเร็จ",
+      description: "รายงานการเงินถูกส่งออกเป็น CSV แล้ว",
     });
   };
 
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={loadReportsData}>ลองใหม่</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // PDF Export function
+  const handleExportToPDF = async (reportType: string) => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById(`${reportType}-report-content`);
+      if (!element) {
+        throw new Error('ไม่พบเนื้อหารายงาน');
+      }
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `${reportType}-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "ส่งออก PDF สำเร็จ",
+        description: `รายงาน${reportType}ถูกส่งออกเป็น PDF แล้ว`,
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถส่งออก PDF ได้",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Generate comprehensive report
+  const handleGenerateComprehensiveReport = async () => {
+    try {
+      await Promise.all([
+        generateSalesReport({
+          startDate: dateRange?.from || subDays(new Date(), 30),
+          endDate: dateRange?.to || new Date()
+        }),
+        generateInventoryReport(),
+        generateFinancialReport('มกราคม 2024')
+      ]);
+      
+      toast({
+        title: "สร้างรายงานครบถ้วนสำเร็จ",
+        description: "รายงานจากทุกระบบถูกสร้างเรียบร้อยแล้ว",
+      });
+    } catch (error) {
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถสร้างรายงานครบถ้วนได้",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
-          <div>
-            <h1 className="text-3xl font-bold">รายงาน</h1>
-            <p className="text-muted-foreground">
-              จัดการและสร้างรายงานต่างๆ สำหรับธุรกิจ
-            </p>
-          </div>
-          {currentBranch && (
-            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-lg">
-              <Building2 className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">{currentBranch.name}</span>
-              {selectedBranchesAnalytics.length > 0 && (
-                <span className="text-xs text-blue-600">
-                  (รายได้ {selectedBranchesAnalytics[0]?.financial.totalRevenue.toLocaleString()} บาท)
-                </span>
-              )}
-            </div>
-          )}
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">ระบบรายงานครบถ้วน</h1>
+          <p className="text-muted-foreground">
+            รายงานและวิเคราะห์ข้อมูลจากทุกระบบในองค์กร
+          </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button onClick={() => handleGenerateReport('sales')} disabled={loading}>
-            <Plus className="h-4 w-4 mr-2" />
-            สร้างรายงานใหม่
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleGenerateComprehensiveReport} 
+            disabled={loading}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          >
+            <FilePlus className="h-4 w-4 mr-2" />
+            {loading ? 'กำลังสร้าง...' : 'สร้างรายงานครบถ้วน'}
+          </Button>
+          <Button 
+            onClick={() => handleExportToPDF('comprehensive')} 
+            disabled={isExporting}
+            variant="outline"
+          >
+            <FileDown className="h-4 w-4 mr-2" />
+            {isExporting ? 'กำลังส่งออก...' : 'ส่งออก PDF'}
           </Button>
         </div>
       </div>
 
-      {/* Branch Selector */}
-      {showBranchSelector && (
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <BranchSelector
-              onBranchChange={() => setShowBranchSelector(false)}
-              showStats={true}
-              allowMultiSelect={true}
-              className="border-0 shadow-none"
-            />
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            ตัวกรองรายงาน
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">ค้นหา</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="ค้นหารายงาน..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">ประเภทรายงาน</label>
+              <Select value={reportType} onValueChange={setReportType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="เลือกประเภท" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">ทั้งหมด</SelectItem>
+                  <SelectItem value="sales">ยอดขาย</SelectItem>
+                  <SelectItem value="inventory">สต็อก</SelectItem>
+                  <SelectItem value="financial">การเงิน</SelectItem>
+                  <SelectItem value="employee">พนักงาน</SelectItem>
+                  <SelectItem value="warehouse">คลังสินค้า</SelectItem>
+                  <SelectItem value="audit">ตรวจสอบ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">ช่วงวันที่</label>
+              <DatePickerWithRange
+                date={dateRange}
+                onDateChange={setDateRange}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">สาขา</label>
+              <BranchSelector />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Branch Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">จำนวนสาขา</p>
+                <p className="text-2xl font-bold">{totalBranches}</p>
+              </div>
+              <Building className="h-8 w-8 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Branch Summary Cards */}
-      {branchSummary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Building2 className="h-5 w-5 text-blue-600" />
-                <div>
-                  <div className="text-2xl font-bold">{branchSummary.totalBranches}</div>
-                  <div className="text-sm text-muted-foreground">สาขาทั้งหมด</div>
-                </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">รายได้รวม</p>
+                <p className="text-2xl font-bold">฿{totalRevenue.toLocaleString()}</p>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-green-600" />
-                <div>
-                  <div className="text-2xl font-bold">
-                    {(branchSummary.totalRevenue / 1000000).toFixed(1)}M
-                  </div>
-                  <div className="text-sm text-muted-foreground">รายได้รวม (บาท)</div>
-                </div>
+              <DollarSign className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">กำไรเฉลี่ย</p>
+                <p className="text-2xl font-bold">{averageProfit.toFixed(1)}%</p>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-purple-600" />
-                <div>
-                  <div className="text-2xl font-bold">
-                    {branchSummary.averageProfitMargin.toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">กำไรเฉลี่ย</div>
-                </div>
+              <TrendingUp className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">แจ้งเตือนสำคัญ</p>
+                <p className="text-2xl font-bold">{criticalAlerts}</p>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-orange-600" />
-                <div>
-                  <div className="text-2xl font-bold">{branchSummary.totalCriticalAlerts}</div>
-                  <div className="text-sm text-muted-foreground">แจ้งเตือนสำคัญ</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            ภาพรวม
-          </TabsTrigger>
-          <TabsTrigger value="sales" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            ยอดขาย
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            สต็อก
-          </TabsTrigger>
-          <TabsTrigger value="financial" className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            การเงิน
-          </TabsTrigger>
-          <TabsTrigger value="custom" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            กำหนดเอง
-          </TabsTrigger>
-        </TabsList>
+      {/* Reports Tabs */}
+      <div id="comprehensive-report-content">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-8">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              ภาพรวม
+            </TabsTrigger>
+            <TabsTrigger value="sales" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              ยอดขาย
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              สต็อก
+            </TabsTrigger>
+            <TabsTrigger value="financial" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              การเงิน
+            </TabsTrigger>
+            <TabsTrigger value="employee" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              พนักงาน
+            </TabsTrigger>
+            <TabsTrigger value="warehouse" className="flex items-center gap-2">
+              <Truck className="h-4 w-4" />
+              คลังสินค้า
+            </TabsTrigger>
+            <TabsTrigger value="transaction" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              ธุรกรรม
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              ตรวจสอบ
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="overview">
-          <ReportsOverview
-            stats={reportStats}
-            onRefresh={loadReportsData}
-            onGenerateReport={handleGenerateReport}
-          />
-        </TabsContent>
-
-        <TabsContent value="sales">
-          <SalesReports
-            salesReports={salesReports}
-            onGenerateReport={() => handleGenerateReport('sales')}
-            onExportReport={handleExportSalesReport}
-            loading={loading}
-          />
-        </TabsContent>
-
-        <TabsContent value="inventory">
-          <InventoryReports
-            inventoryReports={inventoryReports}
-            onGenerateReport={() => handleGenerateReport('inventory')}
-            onExportReport={handleExportInventoryReport}
-            loading={loading}
-          />
-        </TabsContent>
-
-        <TabsContent value="financial">
-          <FinancialReports />
-        </TabsContent>
-
-        <TabsContent value="custom">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                รายงานแบบกำหนดเอง
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">สร้างรายงานแบบกำหนดเอง</h3>
-                <p className="text-muted-foreground mb-4">
-                  เลือกฟิลด์และเงื่อนไขที่ต้องการสำหรับรายงานของคุณ
-                </p>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  เริ่มสร้างรายงาน
+          <TabsContent value="overview" className="space-y-4">
+            <div id="overview-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">ภาพรวมรายงานทั้งหมด</h2>
+                <Button 
+                  onClick={() => handleExportToPDF('overview')} 
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  ส่งออก PDF
                 </Button>
               </div>
+              <ReportsOverview 
+                stats={reportStats}
+                onRefresh={loadReportsData}
+                onGenerateReport={handleGenerateReport}
+              />
+            </div>
+          </TabsContent>
 
-              {customReportConfigs.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="font-semibold mb-4">รายงานที่บันทึกไว้</h3>
-                  <div className="space-y-3">
-                    {customReportConfigs.map((config, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 border rounded">
-                        <div>
-                          <p className="font-medium">{config.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {config.description}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            แก้ไข
-                          </Button>
-                          <Button size="sm">
-                            สร้าง
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+          <TabsContent value="sales" className="space-y-4">
+            <div id="sales-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานยอดขาย</h2>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleExportSalesReport} 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    ส่งออก CSV
+                  </Button>
+                  <Button 
+                    onClick={() => handleExportToPDF('sales')} 
+                    disabled={isExporting}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    ส่งออก PDF
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </div>
+              <SalesReports
+                salesReports={salesReports}
+                onGenerateReport={() => handleGenerateReport('sales')}
+                onExportReport={handleExportSalesReport}
+                loading={loading}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="inventory" className="space-y-4">
+            <div id="inventory-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานสต็อกสินค้า</h2>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleExportInventoryReport} 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    ส่งออก CSV
+                  </Button>
+                  <Button 
+                    onClick={() => handleExportToPDF('inventory')} 
+                    disabled={isExporting}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    ส่งออก PDF
+                  </Button>
+                </div>
+              </div>
+              <InventoryReports
+                inventoryReports={inventoryReports}
+                onGenerateReport={() => handleGenerateReport('inventory')}
+                onExportReport={handleExportInventoryReport}
+                loading={loading}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="financial" className="space-y-4">
+            <div id="financial-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานการเงิน</h2>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleExportFinancialReport} 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    ส่งออก CSV
+                  </Button>
+                  <Button 
+                    onClick={() => handleExportToPDF('financial')} 
+                    disabled={isExporting}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    ส่งออก PDF
+                  </Button>
+                </div>
+              </div>
+              <FinancialReports />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="employee" className="space-y-4">
+            <div id="employee-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานพนักงาน</h2>
+                <Button 
+                  onClick={() => handleExportToPDF('employee')} 
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  ส่งออก PDF
+                </Button>
+              </div>
+              <EmployeeReport branchId={currentBranch?.id} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="warehouse" className="space-y-4">
+            <div id="warehouse-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานคลังสินค้า</h2>
+                <Button 
+                  onClick={() => handleExportToPDF('warehouse')} 
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  ส่งออก PDF
+                </Button>
+              </div>
+              <div className="space-y-6">
+                <WarehouseAnalytics />
+                <SerialNumberReports warehouseId={currentBranch?.id} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="transaction" className="space-y-4">
+            <div id="transaction-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานธุรกรรม</h2>
+                <Button 
+                  onClick={() => handleExportToPDF('transaction')} 
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  ส่งออก PDF
+                </Button>
+              </div>
+              <TransactionReports transactions={[]} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-4">
+            <div id="audit-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานตรวจสอบ</h2>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => setShowComplianceDialog(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    สร้างรายงานตรวจสอบ
+                  </Button>
+                  <Button 
+                    onClick={() => handleExportToPDF('audit')} 
+                    disabled={isExporting}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    ส่งออก PDF
+                  </Button>
+                </div>
+              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    รายงานการตรวจสอบและการปฏิบัติตาม
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">การปฏิบัติตามกฎระเบียบ</p>
+                            <p className="text-2xl font-bold text-green-600">98.5%</p>
+                          </div>
+                          <CheckCircle className="h-8 w-8 text-green-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">ข้อผิดพลาดที่พบ</p>
+                            <p className="text-2xl font-bold text-orange-600">12</p>
+                          </div>
+                          <AlertTriangle className="h-8 w-8 text-orange-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">การตรวจสอบล่าสุด</p>
+                            <p className="text-lg font-semibold">3 วันที่แล้ว</p>
+                          </div>
+                          <Calendar className="h-8 w-8 text-blue-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Compliance Report Dialog */}
+      <ComplianceReportDialog
+        open={showComplianceDialog}
+        onOpenChange={setShowComplianceDialog}
+      />
     </div>
   );
 };

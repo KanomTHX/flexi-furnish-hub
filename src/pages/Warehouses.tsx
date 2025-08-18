@@ -81,17 +81,19 @@ export default function Warehouses() {
   });
   const { toast } = useToast();
 
-  // Load warehouses and stats on component mount
+  // Load warehouses and stats on component mount and when branch changes
   useEffect(() => {
     loadWarehouses();
     loadSystemStats();
-  }, []);
+  }, [currentBranch]);
 
   const loadWarehouses = async () => {
     try {
       setLoading(true);
       const { WarehouseService } = await import('@/services/warehouseService');
-      const warehousesData = await WarehouseService.getWarehouses();
+      const warehousesData = await WarehouseService.getWarehouses({
+        branchId: currentBranch?.id
+      });
       setWarehouses(warehousesData);
     } catch (error) {
       console.error('Error loading warehouses:', error);
@@ -259,7 +261,7 @@ export default function Warehouses() {
       )}
 
       {/* Real-time Stock Monitor */}
-      <RealTimeStockMonitor />
+      <RealTimeStockMonitor branchId={currentBranch?.id} />
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -512,7 +514,7 @@ export default function Warehouses() {
         </TabsContent>
 
         <TabsContent value="integrated-receipt" className="mt-4">
-          <IntegratedGoodsReceiptBilling />
+          <IntegratedGoodsReceiptBilling branchId={currentBranch?.id} />
         </TabsContent>
 
         <TabsContent value="withdraw" className="mt-4">
@@ -534,7 +536,7 @@ export default function Warehouses() {
         </TabsContent>
 
         <TabsContent value="audit" className="mt-4">
-          <AuditTrail />
+          <AuditTrail branchId={currentBranch?.id} />
         </TabsContent>
 
         <TabsContent value="integration" className="mt-4">

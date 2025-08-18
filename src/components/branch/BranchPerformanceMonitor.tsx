@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useBranchAwareData, useCrossBranchData } from '../../hooks/useBranchAwareData';
-import { useBranchSecurity } from '../../hooks/useBranchSecurity';
+import { useBranchData } from '../../hooks/useBranchData';
 import {
   TrendingUp,
   TrendingDown,
@@ -47,148 +46,80 @@ interface BranchPerformanceData {
 }
 
 export function BranchPerformanceMonitor() {
-  // ใช้ค่า default แทนการเรียก useBranchSecurity เพื่อหลีกเลี่ยง error
-  const accessStats = null;
-  const isSecurityEnabled = false;
-  const [viewMode, setViewMode] = useState<'current' | 'all'>('current');
   const [refreshInterval, setRefreshInterval] = useState(30000); // 30 วินาที
 
-  // ข้อมูลยอดขายแบบ real-time
-  const salesData = useBranchAwareData(
-    ['performance-sales'],
-    {
-      tableName: 'sales_transactions',
-      columns: 'id, total_amount, created_at, payment_status',
-      realtime: true,
-      resourceType: 'sales',
-      filters: {
-        // ใช้ mock data แทนการ query จริงเพื่อหลีกเลี่ยง timestamp error
-      },
-      fallbackData: [
-        { id: '1', total_amount: 15000, created_at: new Date().toISOString(), payment_status: 'completed' },
-        { id: '2', total_amount: 25000, created_at: new Date().toISOString(), payment_status: 'completed' },
-        { id: '3', total_amount: 18000, created_at: new Date().toISOString(), payment_status: 'completed' }
-      ]
-    }
-  );
+  // ใช้ useBranchData hook เพื่อดึงข้อมูลจริงจากฐานข้อมูล
+  const {
+    currentBranch,
+    branchSummary,
+    isLoading
+  } = useBranchData();
 
-  // ข้อมูลสต็อกแบบ real-time
-  const inventoryData = useBranchAwareData(
-    ['performance-inventory'],
-    {
-      tableName: 'product_inventory',
-      columns: 'id, quantity, status',
-      realtime: true,
-      resourceType: 'stock',
-      fallbackData: [
-        { id: '1', quantity: 25, status: 'available' },
-        { id: '2', quantity: 8, status: 'low_stock' },
-        { id: '3', quantity: 15, status: 'available' },
-        { id: '4', quantity: 5, status: 'low_stock' },
-        { id: '5', quantity: 30, status: 'available' }
-      ]
-    }
-  );
-
-  // ข้อมูลพนักงานแบบ real-time
-  const employeeData = useBranchAwareData(
-    ['performance-employees'],
-    {
-      tableName: 'employees',
-      columns: 'id, status',
-      realtime: true,
-      resourceType: 'employees',
-      fallbackData: [
-        { id: '1', status: 'active' },
-        { id: '2', status: 'active' },
-        { id: '3', status: 'active' },
-        { id: '4', status: 'active' },
-        { id: '5', status: 'active' },
-        { id: '6', status: 'active' },
-        { id: '7', status: 'active' },
-        { id: '8', status: 'active' }
-      ]
-    }
-  );
-
-  // ข้อมูลข้ามสาขาสำหรับ comparison
-  const crossBranchData = useCrossBranchData(
-    ['performance-cross-branch'],
-    {
-      tableName: 'sales_transactions',
-      columns: 'id, total_amount, branch_id, created_at',
-      realtime: true,
-      resourceType: 'sales',
-      includeSummary: true,
-      sortBy: 'total_amount',
-      sortOrder: 'desc',
-      filters: {
-        // ใช้ mock data แทนการ query จริงเพื่อหลีกเลี่ยง timestamp error
-      }
-    }
-  );
-
-  // คำนวณ Performance Metrics
+  // คำนวณ Performance Metrics จากข้อมูลจริง
   const calculateMetrics = (): PerformanceMetric[] => {
-    const todaySales = salesData.filteredData.length;
-    const todayRevenue = salesData.filteredData.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-    const lowStockItems = inventoryData.filteredData.filter(item => item.quantity < 10).length;
-    const activeEmployees = employeeData.filteredData.filter(emp => emp.status === 'active').length;
+    if (!branchSummary || !currentBranch) {
+      return [];
+    }
+
+    const totalRevenue = branchSummary.totalRevenue || 0;
+    const totalCustomers = branchSummary.totalCustomers || 0;
+    const totalOutOfStockItems = branchSummary.totalOutOfStockItems || 0;
+    const totalEmployees = branchSummary.totalEmployees || 0;
 
     return [
       {
-        id: 'daily-sales',
-        name: 'ยอดขายวันนี้',
-        value: todaySales,
-        target: 20,
-        unit: 'รายการ',
-        trend: todaySales > 15 ? 'up' : todaySales < 10 ? 'down' : 'stable',
+        id: 'total-customers',
+        name: 'ลูกค้าทั้งหมด',
+        value: totalCustomers,
+        target: 100,
+        unit: 'คน',
+        trend: totalCustomers > 80 ? 'up' : totalCustomers < 50 ? 'down' : 'stable',
         trendValue: 12,
-        status: todaySales >= 20 ? 'excellent' : todaySales >= 15 ? 'good' : todaySales >= 10 ? 'warning' : 'critical',
+        status: totalCustomers >= 100 ? 'excellent' : totalCustomers >= 75 ? 'good' : totalCustomers >= 50 ? 'warning' : 'critical',
         category: 'sales'
       },
       {
-        id: 'daily-revenue',
-        name: 'รายได้วันนี้',
-        value: todayRevenue,
-        target: 100000,
+        id: 'total-revenue',
+        name: 'รายได้รวม',
+        value: totalRevenue,
+        target: 500000,
         unit: '฿',
-        trend: todayRevenue > 80000 ? 'up' : 'stable',
+        trend: totalRevenue > 400000 ? 'up' : 'stable',
         trendValue: 8.5,
-        status: todayRevenue >= 100000 ? 'excellent' : todayRevenue >= 75000 ? 'good' : 'warning',
+        status: totalRevenue >= 500000 ? 'excellent' : totalRevenue >= 350000 ? 'good' : 'warning',
         category: 'sales'
       },
       {
-        id: 'low-stock',
-        name: 'สินค้าใกล้หมด',
-        value: lowStockItems,
+        id: 'out-of-stock',
+        name: 'สินค้าหมดสต็อก',
+        value: totalOutOfStockItems,
         target: 5,
         unit: 'รายการ',
-        trend: lowStockItems > 10 ? 'up' : 'stable',
+        trend: totalOutOfStockItems > 10 ? 'up' : 'stable',
         trendValue: -2,
-        status: lowStockItems <= 5 ? 'excellent' : lowStockItems <= 10 ? 'good' : lowStockItems <= 15 ? 'warning' : 'critical',
+        status: totalOutOfStockItems <= 5 ? 'excellent' : totalOutOfStockItems <= 10 ? 'good' : totalOutOfStockItems <= 15 ? 'warning' : 'critical',
         category: 'inventory'
       },
       {
-        id: 'active-employees',
-        name: 'พนักงานที่ทำงาน',
-        value: activeEmployees,
-        target: 8,
+        id: 'total-employees',
+        name: 'พนักงานทั้งหมด',
+        value: totalEmployees,
+        target: 10,
         unit: 'คน',
         trend: 'stable',
         trendValue: 0,
-        status: activeEmployees >= 8 ? 'excellent' : activeEmployees >= 6 ? 'good' : 'warning',
+        status: totalEmployees >= 10 ? 'excellent' : totalEmployees >= 8 ? 'good' : 'warning',
         category: 'employees'
       },
       {
-        id: 'security-score',
-        name: 'คะแนนความปลอดภัย',
-        value: accessStats ? Math.round((accessStats.allowedAccess / Math.max(accessStats.totalChecks, 1)) * 100) : 100,
-        target: 95,
+        id: 'branch-status',
+        name: 'สถานะสาขา',
+        value: currentBranch.status === 'active' ? 100 : 0,
+        target: 100,
         unit: '%',
-        trend: !accessStats || accessStats.deniedAccess === 0 ? 'up' : 'stable',
-        trendValue: 2,
-        status: !accessStats || accessStats.deniedAccess === 0 ? 'excellent' : accessStats.deniedAccess < 3 ? 'good' : 'warning',
+        trend: currentBranch.status === 'active' ? 'up' : 'down',
+        trendValue: 0,
+        status: currentBranch.status === 'active' ? 'excellent' : 'critical',
         category: 'security'
       }
     ];
@@ -196,6 +127,11 @@ export function BranchPerformanceMonitor() {
 
   const performanceData = useMemo(() => {
     const metrics = calculateMetrics();
+    
+    if (metrics.length === 0) {
+      return null;
+    }
+
     const overallScore = Math.round(
       metrics.reduce((sum, metric) => {
         const score = metric.status === 'excellent' ? 100 : 
@@ -214,33 +150,22 @@ export function BranchPerformanceMonitor() {
       }));
 
     return {
-      branchId: salesData.metadata?.allowedBranches?.[0] || 'current',
-      branchName: 'สาขาปัจจุบัน',
+      branchId: currentBranch?.id || 'current',
+      branchName: currentBranch?.name || 'สาขาปัจจุบัน',
       overallScore,
       metrics,
       lastUpdated: new Date(),
       alerts
     };
-  }, [salesData.filteredData?.length, inventoryData.filteredData?.length, employeeData.filteredData?.length, accessStats]);
-
-  // Auto refresh
-  useEffect(() => {
-    const interval = setInterval(() => {
-      salesData.refetch();
-      inventoryData.refetch();
-      employeeData.refetch();
-    }, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [refreshInterval, salesData.refetch, inventoryData.refetch, employeeData.refetch]);
+  }, [currentBranch, branchSummary]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'excellent': return 'text-success bg-success/10 border-success';
-      case 'good': return 'text-info bg-info/10 border-info';
-      case 'warning': return 'text-warning bg-warning/10 border-warning';
-      case 'critical': return 'text-destructive bg-destructive/10 border-destructive';
-      default: return 'text-muted-foreground bg-muted border-border';
+      case 'excellent': return 'text-green-600 bg-green-50 border-green-200';
+      case 'good': return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'warning': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'critical': return 'text-red-600 bg-red-50 border-red-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
@@ -264,7 +189,7 @@ export function BranchPerformanceMonitor() {
     }
   };
 
-  if (!performanceData) {
+  if (isLoading || !performanceData) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-48">
@@ -281,28 +206,15 @@ export function BranchPerformanceMonitor() {
         <div>
           <h2 className="text-xl font-semibold">Branch Performance Monitor</h2>
           <p className="text-sm text-muted-foreground">
-            ติดตามประสิทธิภาพการทำงานแบบ real-time
+            ติดตามประสิทธิภาพการทำงานของสาขา {performanceData.branchName}
           </p>
         </div>
         
         <div className="flex items-center space-x-3">
-            <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs">
             <Clock className="w-3 h-3 mr-1" />
             อัปเดต {performanceData.lastUpdated.toLocaleTimeString('th-TH')}
           </Badge>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              salesData.refetch();
-              inventoryData.refetch();
-              employeeData.refetch();
-            }}
-          >
-            <Zap className="w-4 h-4 mr-1" />
-            รีเฟรช
-          </Button>
         </div>
       </div>
 
@@ -370,22 +282,22 @@ export function BranchPerformanceMonitor() {
                     </span>
                   </div>
                   <div className="flex items-center space-x-1 text-xs">
-                    {metric.trend === 'up' && <TrendingUp className="w-3 h-3 text-success" />}
-                    {metric.trend === 'down' && <TrendingDown className="w-3 h-3 text-destructive" />}
+                    {metric.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-600" />}
+                    {metric.trend === 'down' && <TrendingDown className="w-3 h-3 text-red-600" />}
                     {metric.trend === 'stable' && <Activity className="w-3 h-3 text-muted-foreground" />}
                     <span className={cn(
-                      metric.trend === 'up' ? 'text-success' : 
-                      metric.trend === 'down' ? 'text-destructive' : 'text-muted-foreground'
+                      metric.trend === 'up' ? 'text-green-600' : 
+                      metric.trend === 'down' ? 'text-red-600' : 'text-muted-foreground'
                     )}>
-                      {metric.trend === 'up' ? '+' : ''}{metric.trendValue}%
+                      {metric.trend === 'up' ? '+' : metric.trend === 'down' ? '-' : ''}
+                      {Math.abs(metric.trendValue)}%
                     </span>
                   </div>
                 </div>
-                
                 <div className="text-right">
                   <Progress 
-                    value={Math.min((metric.value / metric.target) * 100, 100)} 
-                    className="w-16 h-2"
+                    value={(metric.value / metric.target) * 100} 
+                    className="h-2 w-16"
                   />
                   <div className="text-xs text-muted-foreground mt-1">
                     {Math.round((metric.value / metric.target) * 100)}%
@@ -401,46 +313,41 @@ export function BranchPerformanceMonitor() {
       {performanceData.alerts && performanceData.alerts.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center space-x-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-              <span>แจ้งเตือน</span>
+            <CardTitle className="text-lg flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2 text-yellow-600" />
+              การแจ้งเตือน
             </CardTitle>
             <CardDescription>
-              สิ่งที่ต้องดำเนินการหรือติดตาม
+              ประเด็นที่ต้องให้ความสนใจ
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {performanceData.alerts?.map((alert, index) => (
-              <div 
-                key={index}
-                className={cn(
-                  "p-3 rounded-lg border-l-4 bg-card",
-                  alert.type === 'critical' ? 'border-l-destructive bg-destructive/5' :
-                  alert.type === 'warning' ? 'border-l-warning bg-warning/5' :
-                  'border-l-info bg-info/5'
-                )}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium">{alert.message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {alert.timestamp.toLocaleTimeString('th-TH')}
-                    </p>
+          <CardContent>
+            <div className="space-y-3">
+              {performanceData.alerts.map((alert, index) => (
+                <div 
+                  key={index}
+                  className={cn(
+                    "p-3 rounded-lg border-l-4",
+                    alert.type === 'critical' ? 'bg-red-50 border-red-500' : 'bg-yellow-50 border-yellow-500'
+                  )}
+                >
+                  <div className="flex items-start space-x-2">
+                    {alert.type === 'critical' ? 
+                      <TrendingDown className="w-4 h-4 text-red-600 mt-0.5" /> :
+                      <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                    }
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {alert.message}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {alert.timestamp.toLocaleString('th-TH')}
+                      </p>
+                    </div>
                   </div>
-                    <Badge 
-                    variant="outline" 
-                    className={cn("text-xs",
-                      alert.type === 'critical' ? 'border-destructive text-destructive' :
-                      alert.type === 'warning' ? 'border-warning text-warning' :
-                      'border-info text-info'
-                    )}
-                  >
-                    {alert.type === 'critical' ? 'วิกฤติ' : 
-                     alert.type === 'warning' ? 'เตือน' : 'แจ้งเพื่อทราบ'}
-                  </Badge>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

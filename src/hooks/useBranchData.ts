@@ -15,7 +15,7 @@ import {
   StockMovement,
   StockAlert
 } from '../types/stock';
-import { supabase } from '@/integrations/supabase/client';
+import { branchService } from '@/services/branchService';
 import { useAuth } from './useAuth';
 
 export function useBranchData() {
@@ -45,93 +45,22 @@ export function useBranchData() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSwitchingBranch, setIsSwitchingBranch] = useState(false);
 
-  // Initialize data from Supabase
+  // Initialize data from database
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
       try {
-        // Load branches from Supabase
-        const { data: branchesData, error: branchError } = await supabase
-          .from('branches')
-          .select('*')
-          .order('name');
-
-        if (branchError) throw branchError;
-
-        // Transform Supabase data to match expected format
-        const transformedBranches: Branch[] = (branchesData || []).map(branch => ({
-          id: branch.id,
-          code: branch.code || `BR-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-          name: branch.name,
-          type: 'main' as const,
-          status: 'active' as const,
-          businessInfo: {
-            taxId: '',
-            registrationNumber: '',
-            businessType: 'retail',
-            establishedDate: branch.created_at,
-            businessHours: {
-              open: '09:00',
-              close: '18:00',
-              workingDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-            }
-          },
-          address: {
-            street: branch.address || '',
-            district: '',
-            province: '',
-            postalCode: '',
-            country: 'ไทย'
-          },
-          contact: {
-            phone: branch.phone || '',
-            email: '',
-            manager: '',
-            managerPhone: '',
-            website: ''
-          },
-          settings: {
-            timezone: 'Asia/Bangkok',
-            currency: 'THB',
-            language: 'th',
-            dateFormat: 'DD/MM/YYYY',
-            numberFormat: '0,0.00',
-            taxRate: 7,
-            allowNegativeStock: false,
-            autoApproveTransfers: false,
-            requireManagerApproval: false
-          },
-          permissions: {
-            canAccessOtherBranches: false,
-            canTransferToBranches: [],
-            canViewReports: ['sales', 'inventory'],
-            dataIsolationLevel: 'partial' as const
-          },
-          stats: {
-            totalEmployees: 0,
-            totalCustomers: 0,
-            totalProducts: 0,
-            totalSales: 0,
-            totalOrders: 0,
-            averageOrderValue: 0,
-            monthlyRevenue: 0,
-            yearlyRevenue: 0
-          },
-          createdAt: branch.created_at,
-          updatedAt: branch.updated_at,
-          createdBy: 'system',
-          updatedBy: 'system'
-        }));
-
-        setBranches(transformedBranches);
+        // Load branches using branchService
+        const branchesData = await branchService.getBranches();
+        setBranches(branchesData);
         
         // Set current branch based on user profile or default to first branch
         let userBranch = null;
         if (profile?.branch_id) {
-          userBranch = transformedBranches.find(branch => branch.id === profile.branch_id);
+          userBranch = branchesData.find(branch => branch.id === profile.branch_id);
         }
         
-        const defaultBranch = userBranch || transformedBranches[0];
+        const defaultBranch = userBranch || branchesData[0];
         if (defaultBranch) {
           setCurrentBranch(defaultBranch);
           setSelectedBranchIds([defaultBranch.id]);
@@ -155,8 +84,8 @@ export function useBranchData() {
             allowedOperations: ['view', 'create', 'update', 'delete']
           },
           accessibleBranches: profile?.branch_id 
-            ? transformedBranches.filter(branch => branch.id === profile.branch_id)
-            : transformedBranches
+            ? branchesData.filter(branch => branch.id === profile.branch_id)
+            : branchesData
         });
         
       } catch (error) {
@@ -313,27 +242,84 @@ export function useBranchData() {
   const updateBranch = useCallback(async (branchId: string, updates: Partial<Branch>) => {
     setIsUpdating(true);
     try {
+      // Prepare update data for branchService
+      const updateData = {
+        name: updates.name,
+        code: updates.code,
+        address: updates.address?.street,
+        phone: updates.contact?.phone,
+        email: updates.contact?.email,
+        manager_name: updates.contact?.manager,
+        status: updates.status === 'maintenance' ? 'inactive' : updates.status // Convert maintenance to inactive
+      };
+
+      // Update branch using branchService
+      const updatedBranch = await branchService.updateBranch(branchId, updateData);
+      
+      // Update local state
       setBranches(prev => prev.map(branch => 
-        branch.id === branchId 
-          ? { 
-              ...branch, 
-              ...updates, 
-              updatedAt: new Date().toISOString(),
-              updatedBy: 'current-user'
-            } 
-          : branch
+        branch.id === branchId ? updatedBranch : branch
       ));
       
       // Update current branch if it's the one being updated
       if (currentBranch?.id === branchId) {
-        setCurrentBranch(prev => prev ? { ...prev, ...updates } : null);
+        setCurrentBranch(updatedBranch);
       }
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error('Error updating branch:', error);
+      throw error;
     } finally {
       setIsUpdating(false);
     }
   }, [currentBranch]);
+
+  const createBranch = useCallback(async (branchData: { name: string; code?: string; address?: string; phone?: string; email?: string; manager_name?: string }) => {
+    setIsUpdating(true);
+    try {
+      // Create branch using branchService
+      const newBranch = await branchService.createBranch({
+        name: branchData.name,
+        code: branchData.code,
+        address: branchData.address,
+        phone: branchData.phone,
+        email: branchData.email,
+        manager_name: branchData.manager_name,
+        status: 'active'
+      });
+      
+      // Update local state
+      setBranches(prev => [...prev, newBranch]);
+      
+      return newBranch;
+    } catch (error) {
+      console.error('Error creating branch:', error);
+      throw error;
+    } finally {
+      setIsUpdating(false);
+    }
+  }, []);
+
+  const deleteBranch = useCallback(async (branchId: string) => {
+    setIsUpdating(true);
+    try {
+      // Delete branch using branchService
+      await branchService.deleteBranch(branchId);
+      
+      // Update local state
+      setBranches(prev => prev.filter(branch => branch.id !== branchId));
+      
+      // If current branch is deleted, switch to first available branch
+      if (currentBranch?.id === branchId) {
+        const remainingBranches = branches.filter(branch => branch.id !== branchId);
+        setCurrentBranch(remainingBranches[0] || null);
+      }
+    } catch (error) {
+      console.error('Error deleting branch:', error);
+      throw error;
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [currentBranch, branches]);
 
   const createBranchTransfer = useCallback(async (transfer: Omit<BranchTransfer, 'id' | 'createdAt' | 'updatedAt'>) => {
     setIsUpdating(true);
@@ -558,6 +544,8 @@ export function useBranchData() {
     // Actions
     switchBranch,
     updateBranch,
+    createBranch,
+    deleteBranch,
     createBranchTransfer,
     approveBranchTransfer,
     
