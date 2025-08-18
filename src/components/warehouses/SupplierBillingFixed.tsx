@@ -428,7 +428,7 @@ export default function SupplierBillingFixed() {
                     <SelectValue placeholder="สถานะ" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกสถานะ</SelectItem>
+                    <SelectItem value="all">ทุกสถานะ</SelectItem>
                     <SelectItem value="active">ใช้งาน</SelectItem>
                     <SelectItem value="inactive">ไม่ใช้งาน</SelectItem>
                     <SelectItem value="suspended">ระงับ</SelectItem>
@@ -535,7 +535,7 @@ export default function SupplierBillingFixed() {
                     <SelectValue placeholder="เลือกซัพพลายเออร์" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกซัพพลายเออร์</SelectItem>
+                    <SelectItem value="all">ทุกซัพพลายเออร์</SelectItem>
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.supplierName}
@@ -548,8 +548,8 @@ export default function SupplierBillingFixed() {
                     <SelectValue placeholder="สถานะ" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกสถานะ</SelectItem>
-                    <SelectItem value="pending">รอชำระ</SelectItem>
+                    <SelectItem value="all">ทุกสถานะ</SelectItem>
+                <SelectItem value="pending">รอชำระ</SelectItem>
                     <SelectItem value="paid">ชำระแล้ว</SelectItem>
                     <SelectItem value="overdue">เกินกำหนด</SelectItem>
                     <SelectItem value="cancelled">ยกเลิก</SelectItem>
@@ -612,8 +612,8 @@ export default function SupplierBillingFixed() {
                     <SelectValue placeholder="เลือกซัพพลายเออร์" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกซัพพลายเออร์</SelectItem>
-                    {suppliers.map((supplier) => (
+                    <SelectItem value="all">ทุกซัพพลายเออร์</SelectItem>
+                {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.supplierName}
                       </SelectItem>

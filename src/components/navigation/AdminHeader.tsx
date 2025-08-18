@@ -28,58 +28,58 @@ export function AdminHeader() {
     navigate("/auth");
   };
   return (
-    <header className="bg-card border-b border-border shadow-sm">
-      <div className="flex items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-4">
-          <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+    <header className="nav-modern shadow-modern">
+      <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-6">
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
           
-          {/* Search */}
+          {/* Modern Search */}
           <div className="relative w-96 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="ค้นหาสินค้า ลูกค้า หรือใบแจ้งหนี้..."
-              className="pl-10 bg-background"
+              className="pl-12 pr-4 py-2.5 bg-background/50 border-border/50 rounded-xl focus:bg-background focus:border-primary/50 transition-all duration-300"
             />
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Notifications */}
+          {/* Modern Notifications */}
           <Button 
             variant="ghost" 
             size="sm" 
-            className="relative"
+            className="relative p-2.5 rounded-xl hover:bg-accent/50 transition-all duration-300"
             onClick={() => setShowNotifications(true)}
           >
-            <Bell className="w-4 h-4" />
+            <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
               <Badge
                 variant="destructive"
-                className="absolute -top-1 -right-1 w-5 h-5 text-xs p-0 flex items-center justify-center"
+                className="absolute -top-1 -right-1 w-5 h-5 text-xs p-0 flex items-center justify-center animate-bounce-in"
               >
                 {unreadCount > 99 ? '99+' : unreadCount}
               </Badge>
             )}
           </Button>
 
-          {/* Branch Selector */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="w-2 h-2 bg-success rounded-full"></div>
-            <span>สาขาหลัก</span>
+          {/* Modern Branch Selector */}
+          <div className="flex items-center gap-3 px-3 py-2 bg-success/10 border border-success/20 rounded-xl text-sm">
+            <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse"></div>
+            <span className="text-success-foreground font-medium">สาขาหลัก</span>
           </div>
 
-          {/* User Menu */}
+          {/* Modern User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 px-3">
-                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
+              <Button variant="ghost" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-accent/50 transition-all duration-300">
+                <div className="w-9 h-9 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-xl flex items-center justify-center shadow-lg">
                   <User className="w-4 h-4" />
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium">{profile?.full_name || profile?.username || user?.email || 'Admin'}</p>
-                  <p className="text-xs text-muted-foreground">Admin</p>
+                  <p className="text-sm font-semibold">{profile?.full_name || profile?.username || user?.email || 'Admin'}</p>
+                  <p className="text-xs text-muted-foreground">ผู้ดูแลระบบ</p>
                 </div>
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

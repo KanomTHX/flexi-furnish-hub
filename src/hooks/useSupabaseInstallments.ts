@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { InstallmentContract, InstallmentSummary, Customer } from '@/types/pos';
+import { InstallmentContract, InstallmentSummary, Customer, SerialNumber } from '@/types/pos';
+import { useSerialNumbers } from './useSerialNumbers';
 
 interface SupabaseInstallmentPlan {
   id: string;
@@ -15,6 +16,7 @@ interface SupabaseInstallmentPlan {
   interest_rate: number;
   start_date: string;
   status: string;
+  serial_numbers?: string[]; // Array of serial number IDs
   created_at: string;
   updated_at: string;
 }
@@ -58,12 +60,14 @@ export function useSupabaseInstallments() {
   const [contracts, setContracts] = useState<InstallmentContract[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { updateMultipleSerialNumbers } = useSerialNumbers();
 
   // แปลงข้อมูลจาก Supabase เป็น InstallmentContract
   const convertToInstallmentContract = useCallback((
     plan: SupabaseInstallmentPlan,
     payments: SupabaseInstallmentPayment[],
-    customer: SupabaseCustomer
+    customer: SupabaseCustomer,
+    serialNumbers?: SerialNumber[]
   ): InstallmentContract => {
     const paidPayments = payments.filter(p => p.status === 'paid');
     const totalPaid = plan.down_payment + paidPayments.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
@@ -87,6 +91,9 @@ export function useSupabaseInstallments() {
         occupation: customer.occupation || '',
         monthlyIncome: customer.monthly_income || 0
       },
+      // Serial Numbers
+      serialNumbers: plan.serial_numbers || [],
+      serialNumberDetails: serialNumbers || [],
       totalAmount: plan.total_amount,
       downPayment: plan.down_payment,
       financedAmount: plan.total_amount - plan.down_payment,
@@ -171,17 +178,42 @@ export function useSupabaseInstallments() {
 
       if (customersError) throw customersError;
 
+      // โหลด Serial Numbers สำหรับสัญญาที่มี serial_numbers
+      const allSerialNumberIds = plans
+        .filter(p => p.serial_numbers && p.serial_numbers.length > 0)
+        .flatMap(p => p.serial_numbers || []);
+      
+      let serialNumbers: SerialNumber[] = [];
+      if (allSerialNumberIds.length > 0) {
+        const { data: serialNumbersData, error: serialNumbersError } = await supabase
+          .from('serial_numbers')
+          .select(`
+            *,
+            product:products(*)
+          `)
+          .in('id', allSerialNumberIds);
+
+        if (serialNumbersError) {
+          console.warn('Error loading serial numbers:', serialNumbersError);
+        } else {
+          serialNumbers = serialNumbersData || [];
+        }
+      }
+
       // แปลงข้อมูล
       const contractsData = plans.map(plan => {
         const planPayments = payments?.filter(p => p.installment_plan_id === plan.id) || [];
         const customer = customers?.find(c => c.id === plan.customer_id);
+        const planSerialNumbers = serialNumbers.filter(sn => 
+          plan.serial_numbers?.includes(sn.id)
+        );
         
         if (!customer) {
           console.warn(`Customer not found for plan ${plan.id}`);
           return null;
         }
 
-        return convertToInstallmentContract(plan, planPayments, customer);
+        return convertToInstallmentContract(plan, planPayments, customer, planSerialNumbers);
       }).filter(Boolean) as InstallmentContract[];
 
       setContracts(contractsData);
@@ -240,12 +272,22 @@ export function useSupabaseInstallments() {
           number_of_installments: contract.plan.months,
           interest_rate: contract.plan.interestRate,
           start_date: contract.createdAt.split('T')[0],
-          status: contract.status
+          status: contract.status,
+          serial_numbers: contract.serialNumbers || []
         })
         .select()
         .single();
 
       if (planError) throw planError;
+
+      // อัปเดตสถานะ Serial Numbers เป็น 'installment'
+      if (contract.serialNumbers && contract.serialNumbers.length > 0) {
+        await updateMultipleSerialNumbers(
+          contract.serialNumbers,
+          'installment',
+          planData.id
+        );
+      }
 
       // สร้างรายการชำระเงิน
       const paymentsData = contract.payments.map(payment => ({
@@ -271,7 +313,7 @@ export function useSupabaseInstallments() {
     } finally {
       setLoading(false);
     }
-  }, [loadContracts]);
+  }, [loadContracts, updateMultipleSerialNumbers]);
 
   // อัปเดตสัญญา
   const updateContract = useCallback(async (updatedContract: InstallmentContract) => {

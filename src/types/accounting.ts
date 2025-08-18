@@ -28,6 +28,7 @@ export interface JournalEntry {
   date: string;
   description: string;
   reference?: string;
+  sourceType?: string;
   totalDebit: number;
   totalCredit: number;
   status: JournalEntryStatus;
@@ -314,4 +315,142 @@ export interface TransactionFilter {
 }
 
 // Export all accounting types for easy importing
+// Invoice Management Types
+export interface APInvoice {
+  id: string;
+  vendor_name: string;
+  vendor_address?: string;
+  vendor_tax_id?: string;
+  invoice_number: string;
+  invoice_date: string;
+  due_date: string;
+  payment_terms: PaymentTerm;
+  subtotal: number;
+  tax_amount: number;
+  total_amount: number;
+  paid_amount: number;
+  outstanding_amount: number;
+  status: InvoiceStatus;
+  notes?: string;
+  branch_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ARInvoice {
+  id: string;
+  customer_name: string;
+  customer_address?: string;
+  customer_tax_id?: string;
+  invoice_number: string;
+  invoice_date: string;
+  due_date: string;
+  payment_terms: PaymentTerm;
+  subtotal: number;
+  tax_amount: number;
+  total_amount: number;
+  paid_amount: number;
+  outstanding_amount: number;
+  status: InvoiceStatus;
+  notes?: string;
+  branch_id: string;
+  contract_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  invoice_id: string;
+  invoice_type: 'ap' | 'ar';
+  description: string;
+  quantity: number;
+  unit_price: number;
+  tax_rate?: number;
+  total_amount: number;
+}
+
+export type InvoiceStatus = 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled';
+
+export type PaymentTerm = 'net_15' | 'net_30' | 'net_45' | 'net_60' | 'due_on_receipt' | 'custom';
+
+// Financial Reports Types
+export interface IncomeStatement {
+  id: string;
+  period: FinancialPeriod;
+  revenues: AccountBalance[];
+  expenses: AccountBalance[];
+  grossProfit: number;
+  operatingIncome: number;
+  netIncome: number;
+  totalRevenues: number;
+  totalExpenses: number;
+  branchId?: string;
+  generatedAt: string;
+  generatedBy: string;
+}
+
+export interface BalanceSheet {
+  id: string;
+  period: FinancialPeriod;
+  assets: {
+    currentAssets: AccountBalance[];
+    fixedAssets: AccountBalance[];
+    totalAssets: number;
+  };
+  liabilities: {
+    currentLiabilities: AccountBalance[];
+    longTermLiabilities: AccountBalance[];
+    totalLiabilities: number;
+  };
+  equity: {
+    ownerEquity: AccountBalance[];
+    retainedEarnings: number;
+    totalEquity: number;
+  };
+  branchId?: string;
+  generatedAt: string;
+  generatedBy: string;
+}
+
+export interface CashFlowStatement {
+  id: string;
+  period: FinancialPeriod;
+  operatingActivities: CashFlowItem[];
+  investingActivities: CashFlowItem[];
+  financingActivities: CashFlowItem[];
+  netCashFromOperating: number;
+  netCashFromInvesting: number;
+  netCashFromFinancing: number;
+  netCashFlow: number;
+  beginningCash: number;
+  endingCash: number;
+  branchId?: string;
+  generatedAt: string;
+  generatedBy: string;
+}
+
+export interface CashFlowItem {
+  description: string;
+  amount: number;
+  accountId?: string;
+}
+
+export interface FinancialPeriod {
+  startDate: string;
+  endDate: string;
+  periodType: 'monthly' | 'quarterly' | 'yearly' | 'custom';
+  fiscalYear: number;
+  quarter?: number;
+  month?: number;
+}
+
+export interface ReportFilters {
+  startDate: string;
+  endDate: string;
+  branchId?: string;
+  accountType?: AccountType;
+  includeInactive?: boolean;
+}
+
 export * from './errors';

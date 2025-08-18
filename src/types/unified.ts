@@ -1,4 +1,24 @@
 // Unified types for installments
+export interface SerialNumber {
+  id: string;
+  serialNumber: string;
+  productId: string;
+  warehouseId: string;
+  supplierId?: string;
+  purchaseOrderId?: string;
+  status: 'available' | 'reserved' | 'sold' | 'installment' | 'claimed' | 'damaged' | 'transferred' | 'returned' | 'maintenance' | 'disposed';
+  position?: string;
+  unitCost?: number;
+  purchaseDate?: Date;
+  warrantyExpiry?: Date;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  updatedBy: string;
+  product?: Product;
+}
+
 export interface EmergencyContact {
   name: string;
   phone: string;

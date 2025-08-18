@@ -11,6 +11,7 @@ export interface Employee {
   position: Position;
   department: Department;
   salary: number;
+  commissionRate: number; // อัตราค่าคอมมิชชั่น (%)
   status: EmployeeStatus;
   avatar?: string;
   emergencyContact: EmergencyContact;
@@ -18,6 +19,7 @@ export interface Employee {
   documents: EmployeeDocument[];
   permissions: EmployeePermission[];
   workSchedule: WorkSchedule;
+  branchId?: string; // สาขาที่สังกัด
   createdAt: string;
   updatedAt: string;
   createdBy: string;
@@ -30,9 +32,13 @@ export interface Position {
   description: string;
   level: number;
   baseSalary: number;
+  hasCommission: boolean; // ตำแหน่งนี้มีค่าคอมมิชชั่นหรือไม่
+  defaultCommissionRate: number; // อัตราค่าคอมมิชชั่นเริ่มต้น (%)
   permissions: string[];
   requirements: string[];
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Department {
@@ -224,6 +230,66 @@ export interface Training {
   createdAt: string;
 }
 
+// ระบบคอมมิชชั่น
+export interface Commission {
+  id: string;
+  employeeId: string;
+  transactionType: 'pos' | 'installment' | 'manual'; // ประเภทการขาย
+  transactionId: string; // ID ของการขาย (POS หรือ Installment)
+  saleAmount: number; // ยอดขาย
+  commissionRate: number; // อัตราค่าคอมมิชชั่น (%)
+  commissionAmount: number; // จำนวนค่าคอมมิชชั่น
+  status: CommissionStatus;
+  calculatedAt: string;
+  paidAt?: string;
+  notes?: string;
+  branchId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ตำแหน่งงานที่กำหนดไว้ (Reference Data)
+export interface PredefinedPosition {
+  id: string;
+  name: 'manager' | 'sales' | 'stock' | 'accounting' | 'credit_officer' | 'cash_collector';
+  displayName: string;
+  description: string;
+  hasCommission: boolean;
+  defaultCommissionRate: number;
+  responsibilities: string[];
+}
+
+// การเข้างาน (Check-in/Check-out)
+export interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  date: string;
+  checkIn?: string;
+  checkOut?: string;
+  totalHours?: number;
+  status: 'present' | 'absent' | 'late' | 'half-day';
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+// การลา
+export interface LeaveRequest {
+  id: string;
+  employeeId: string;
+  type: LeaveType;
+  startDate: string;
+  endDate: string;
+  days: number;
+  reason: string;
+  status: LeaveStatus;
+  appliedAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectedReason?: string;
+  createdAt: string;
+}
+
 export interface TrainingParticipant {
   employeeId: string;
   enrolledAt: string;
@@ -303,14 +369,20 @@ export type PermissionAction = 'create' | 'read' | 'update' | 'delete' | 'approv
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'half-day' | 'overtime' | 'holiday';
 
 export type LeaveType = 
+  | 'sick' // ลาป่วย
+  | 'personal' // ลากิจ
+  | 'vacation' // ลาพักร้อน
   | 'annual' 
-  | 'sick' 
   | 'maternity' 
   | 'paternity' 
   | 'emergency' 
   | 'unpaid' 
   | 'study' 
   | 'other';
+
+export type CommissionStatus = 'pending' | 'calculated' | 'paid' | 'cancelled';
+
+export type PredefinedPositionType = 'manager' | 'sales' | 'stock' | 'accounting' | 'credit_officer' | 'cash_collector';
 
 export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 

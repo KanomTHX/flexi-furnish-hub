@@ -334,7 +334,7 @@ export function ChartOfAccounts({
                 <SelectValue placeholder="ประเภทบัญชี" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="asset">สินทรัพย์</SelectItem>
                 <SelectItem value="liability">หนี้สิน</SelectItem>
                 <SelectItem value="equity">ส่วนของเจ้าของ</SelectItem>
@@ -351,7 +351,7 @@ export function ChartOfAccounts({
                 <SelectValue placeholder="หมวดหมู่" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทั้งหมด</SelectItem>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
                 <SelectItem value="current_asset">สินทรัพย์หมุนเวียน</SelectItem>
                 <SelectItem value="fixed_asset">สินทรัพย์ถาวร</SelectItem>
                 <SelectItem value="current_liability">หนี้สินหมุนเวียน</SelectItem>
@@ -699,7 +699,11 @@ function CreateAccountForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const submitData = {
+      ...formData,
+      parentId: formData.parentId === 'none' ? null : formData.parentId
+    };
+    onSubmit(submitData);
   };
 
   return (
@@ -776,7 +780,7 @@ function CreateAccountForm({
             <SelectValue placeholder="เลือกบัญชีหลัก" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">ไม่มีบัญชีหลัก</SelectItem>
+            <SelectItem value="none">ไม่มีบัญชีหลัก</SelectItem>
             {accounts
               .filter(account => account.type === formData.type && account.isActive)
               .map(account => (
@@ -826,7 +830,7 @@ function EditAccountForm({
     name: account.name,
     type: account.type,
     category: account.category,
-    parentId: account.parentId || '',
+    parentId: account.parentId || 'none',
     balance: account.balance,
     isActive: account.isActive,
     description: account.description || ''
@@ -840,7 +844,8 @@ function EditAccountForm({
     if (formData.name !== account.name) updates.name = formData.name;
     if (formData.type !== account.type) updates.type = formData.type;
     if (formData.category !== account.category) updates.category = formData.category;
-    if (formData.parentId !== (account.parentId || '')) updates.parentId = formData.parentId || null;
+    const newParentId = formData.parentId === 'none' ? null : formData.parentId;
+    if (newParentId !== account.parentId) updates.parentId = newParentId;
     if (formData.balance !== account.balance) updates.balance = formData.balance;
     if (formData.isActive !== account.isActive) updates.isActive = formData.isActive;
     if (formData.description !== (account.description || '')) updates.description = formData.description;
@@ -922,7 +927,7 @@ function EditAccountForm({
             <SelectValue placeholder="เลือกบัญชีหลัก" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">ไม่มีบัญชีหลัก</SelectItem>
+            <SelectItem value="none">ไม่มีบัญชีหลัก</SelectItem>
             {accounts
               .filter(acc => acc.type === formData.type && acc.isActive && acc.id !== account.id)
               .map(acc => (

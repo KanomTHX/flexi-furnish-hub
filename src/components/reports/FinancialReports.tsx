@@ -1,567 +1,713 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { 
+import React, { useState, useEffect } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../ui/tabs';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { 
-  DollarSign, 
-  Download, 
-  TrendingUp,
-  TrendingDown,
-  Search,
-  Filter,
-  Calendar,
-  BarChart3,
-  PieChart,
-  Calculator,
-  CreditCard,
-  Wallet
-} from 'lucide-react';
-import { FinancialReport } from '@/types/reports';
-import { formatCurrency, formatNumber } from '@/utils/reportHelpers';
+} from '../ui/select';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/table';
+import { Badge } from '../ui/badge';
+import { Separator } from '../ui/separator';
+import { useFinancialReports } from '../../hooks/useFinancialReports';
+import { useSettings } from '../../hooks/useSettings';
+import { useBranchData } from '../../hooks/useBranchData';
+import { Loader2, Download, FileText, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 
-interface FinancialReportsProps {
-  financialReports: FinancialReport[];
-  onGenerateReport: () => void;
-  onExportReport: () => void;
-  loading: boolean;
+// Utility function for formatting currency
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('th-TH', {
+    style: 'currency',
+    currency: 'THB',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+interface ReportFilters {
+  startDate: string;
+  endDate: string;
+  branchId?: string;
+  reportType: 'profit_loss' | 'balance_sheet' | 'cash_flow';
 }
 
-export const FinancialReports: React.FC<FinancialReportsProps> = ({
-  financialReports,
-  onGenerateReport,
-  onExportReport,
-  loading
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [periodFilter, setPeriodFilter] = useState('month');
-  const [reportType, setReportType] = useState('summary');
+const FinancialReports: React.FC = () => {
+  const {
+    loading,
+    reports,
+    currentReport,
+    fetchReports,
+    generateProfitLossReport,
+    generateBalanceSheetReport,
+    generateCashFlowReport,
+    exportReport
+  } = useFinancialReports();
+  
+  const { branches } = useBranchData();
+  
+  const [filters, setFilters] = useState<ReportFilters>({
+    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    reportType: 'profit_loss'
+  });
+  
+  const [activeTab, setActiveTab] = useState('generate');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedReport, setGeneratedReport] = useState<any>(null);
 
-  // Mock financial data
-  const financialSummary = {
-    revenue: 2850000,
-    expenses: 1950000,
-    profit: 900000,
-    profitMargin: 31.6,
-    accountsReceivable: 450000,
-    accountsPayable: 320000,
-    cashFlow: 580000
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const handleGenerateReport = async () => {
+    try {
+      setIsGenerating(true);
+      let report;
+      
+      switch (filters.reportType) {
+        case 'profit_loss':
+          report = await generateProfitLossReport(filters.startDate, filters.endDate, filters.branchId);
+          break;
+        case 'balance_sheet':
+          report = await generateBalanceSheetReport(filters.endDate, filters.branchId);
+          break;
+        case 'cash_flow':
+          report = await generateCashFlowReport(filters.startDate, filters.endDate, filters.branchId);
+          break;
+        default:
+          throw new Error('Invalid report type');
+      }
+      
+      setGeneratedReport(report);
+      setActiveTab('view');
+    } catch (error) {
+      console.error('Error generating report:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const monthlyTrends = [
-    { month: 'ม.ค.', revenue: 2200000, expenses: 1800000, profit: 400000 },
-    { month: 'ก.พ.', revenue: 2450000, expenses: 1850000, profit: 600000 },
-    { month: 'มี.ค.', revenue: 2850000, expenses: 1950000, profit: 900000 },
-    { month: 'เม.ย.', revenue: 2650000, expenses: 1900000, profit: 750000 },
-    { month: 'พ.ค.', revenue: 2950000, expenses: 2000000, profit: 950000 },
-    { month: 'มิ.ย.', revenue: 3100000, expenses: 2100000, profit: 1000000 }
-  ];
+  const handleExportReport = async (format: 'pdf' | 'excel') => {
+    if (!generatedReport) return;
+    
+    try {
+      await exportReport(generatedReport, {
+          format,
+          includeDetails: true,
+          includeSummary: true
+        });
+    } catch (error) {
+      console.error('Error exporting report:', error);
+    }
+  };
 
-  const expenseBreakdown = [
-    { category: 'ต้นทุนสินค้า', amount: 1200000, percentage: 61.5, color: 'bg-red-500' },
-    { category: 'เงินเดือนพนักงาน', amount: 350000, percentage: 17.9, color: 'bg-blue-500' },
-    { category: 'ค่าเช่าและสาธารณูปโภค', amount: 180000, percentage: 9.2, color: 'bg-green-500' },
-    { category: 'การตลาดและโฆษณา', amount: 120000, percentage: 6.2, color: 'bg-yellow-500' },
-    { category: 'อื่นๆ', amount: 100000, percentage: 5.1, color: 'bg-purple-500' }
-  ];
+  const renderProfitLossReport = (report: any) => {
+    if (!report) return null;
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">รายงานกำไรขาดทุน</h2>
+          <p className="text-muted-foreground">
+            ระหว่างวันที่ {new Date(report.period.startDate).toLocaleDateString('th-TH')} 
+            ถึง {new Date(report.period.endDate).toLocaleDateString('th-TH')}
+          </p>
+          {report.branchId && (
+            <p className="text-sm text-muted-foreground">
+              สาขา: {branches.find(b => b.id === report.branchId)?.name || 'ไม่ระบุ'}
+            </p>
+          )}
+        </div>
 
-  const revenueStreams = [
-    { source: 'ขายหน้าร้าน', amount: 1850000, percentage: 64.9, growth: 12.5 },
-    { source: 'ขายออนไลน์', amount: 650000, percentage: 22.8, growth: 25.3 },
-    { source: 'ขายส่ง', amount: 250000, percentage: 8.8, growth: -5.2 },
-    { source: 'บริการติดตั้ง', amount: 100000, percentage: 3.5, growth: 18.7 }
-  ];
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">รายได้รวม</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {formatCurrency(report.revenues?.reduce((sum: number, item: any) => sum + item.amount, 0) || 0)}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">ค่าใช้จ่ายรวม</CardTitle>
+              <TrendingDown className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                {formatCurrency(
+                  (report.costOfGoodsSold?.reduce((sum: number, item: any) => sum + item.amount, 0) || 0) +
+                  (report.operatingExpenses?.reduce((sum: number, item: any) => sum + item.amount, 0) || 0)
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">กำไรสุทธิ</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${
+                report.netIncome >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {formatCurrency(report.netIncome || 0)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-  const cashFlowData = [
-    { date: '01/03', inflow: 450000, outflow: 380000, netFlow: 70000, balance: 1250000 },
-    { date: '08/03', inflow: 520000, outflow: 420000, netFlow: 100000, balance: 1350000 },
-    { date: '15/03', inflow: 480000, outflow: 450000, netFlow: 30000, balance: 1380000 },
-    { date: '22/03', inflow: 650000, outflow: 520000, netFlow: 130000, balance: 1510000 },
-    { date: '29/03', inflow: 580000, outflow: 480000, netFlow: 100000, balance: 1610000 }
-  ];
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>รายการ</TableHead>
+              <TableHead className="text-right">จำนวนเงิน</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {/* รายได้ */}
+            <TableRow className="bg-green-50">
+              <TableCell className="font-semibold">รายได้</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            {report.revenues?.map((item: any, index: number) => (
+              <TableRow key={index}>
+                <TableCell className="pl-8">{item.accountName}</TableCell>
+                <TableCell className="text-right text-green-600">
+                  {formatCurrency(item.amount)}
+                </TableCell>
+              </TableRow>
+            ))}
+            
+            {/* ต้นทุนขาย */}
+            <TableRow className="bg-red-50">
+              <TableCell className="font-semibold">ต้นทุนขาย</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            {report.costOfGoodsSold?.map((item: any, index: number) => (
+              <TableRow key={index}>
+                <TableCell className="pl-8">{item.accountName}</TableCell>
+                <TableCell className="text-right text-red-600">
+                  {formatCurrency(item.amount)}
+                </TableCell>
+              </TableRow>
+            ))}
+            
+            {/* กำไรขั้นต้น */}
+            <TableRow className="border-t-2">
+              <TableCell className="font-semibold">กำไรขั้นต้น</TableCell>
+              <TableCell className="text-right font-semibold">
+                {formatCurrency(report.grossProfit || 0)}
+              </TableCell>
+            </TableRow>
+            
+            {/* ค่าใช้จ่ายในการดำเนินงาน */}
+            <TableRow className="bg-orange-50">
+              <TableCell className="font-semibold">ค่าใช้จ่ายในการดำเนินงาน</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            {report.operatingExpenses?.map((item: any, index: number) => (
+              <TableRow key={index}>
+                <TableCell className="pl-8">{item.accountName}</TableCell>
+                <TableCell className="text-right text-red-600">
+                  {formatCurrency(item.amount)}
+                </TableCell>
+              </TableRow>
+            ))}
+            
+            {/* กำไรจากการดำเนินงาน */}
+            <TableRow className="border-t-2">
+              <TableCell className="font-semibold">กำไรจากการดำเนินงาน</TableCell>
+              <TableCell className="text-right font-semibold">
+                {formatCurrency(report.operatingIncome || 0)}
+              </TableCell>
+            </TableRow>
+            
+            {/* กำไรสุทธิ */}
+            <TableRow className="border-t-4 bg-blue-50">
+              <TableCell className="font-bold text-lg">กำไรสุทธิ</TableCell>
+              <TableCell className={`text-right font-bold text-lg ${
+                report.netIncome >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {formatCurrency(report.netIncome || 0)}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
 
-  const keyRatios = [
-    { name: 'อัตรากำไรขั้นต้น', value: 57.9, unit: '%', trend: 2.3, good: true },
-    { name: 'อัตรากำไรสุทธิ', value: 31.6, unit: '%', trend: 1.8, good: true },
-    { name: 'อัตราส่วนหนี้ต่อทุน', value: 0.71, unit: ':1', trend: -0.05, good: true },
-    { name: 'อัตราหมุนเวียนสินค้า', value: 4.2, unit: 'ครั้ง', trend: 0.3, good: true },
-    { name: 'ระยะเวลาเก็บหนี้', value: 28, unit: 'วัน', trend: -2, good: true },
-    { name: 'ระยะเวลาจ่ายหนี้', value: 35, unit: 'วัน', trend: 1, good: false }
-  ];
+  const renderBalanceSheetReport = (report: any) => {
+    if (!report) return null;
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">งบดุล</h2>
+          <p className="text-muted-foreground">
+            ณ วันที่ {new Date(report.asOfDate).toLocaleDateString('th-TH')}
+          </p>
+          {report.branchId && (
+            <p className="text-sm text-muted-foreground">
+              สาขา: {branches.find(b => b.id === report.branchId)?.name || 'ไม่ระบุ'}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* สินทรัพย์ */}
+          <Card>
+            <CardHeader>
+              <CardTitle>สินทรัพย์</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableBody>
+                  <TableRow className="bg-blue-50">
+                    <TableCell className="font-semibold">สินทรัพย์หมุนเวียน</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(report.assets?.currentAssets?.totalCurrentAssets || 0)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="bg-blue-50">
+                    <TableCell className="font-semibold">สินทรัพย์ไม่หมุนเวียน</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(report.assets?.nonCurrentAssets?.totalNonCurrentAssets || 0)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="border-t-4 bg-blue-100">
+                    <TableCell className="font-bold">รวมสินทรัพย์</TableCell>
+                    <TableCell className="text-right font-bold">
+                      {formatCurrency(report.assets?.totalAssets || 0)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* หนี้สินและส่วนของเจ้าของ */}
+          <Card>
+            <CardHeader>
+              <CardTitle>หนี้สินและส่วนของเจ้าของ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableBody>
+                  <TableRow className="bg-red-50">
+                    <TableCell className="font-semibold">หนี้สินหมุนเวียน</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(report.liabilities?.currentLiabilities?.totalCurrentLiabilities || 0)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="bg-red-50">
+                    <TableCell className="font-semibold">หนี้สินไม่หมุนเวียน</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(report.liabilities?.nonCurrentLiabilities?.totalNonCurrentLiabilities || 0)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="bg-green-50">
+                    <TableCell className="font-semibold">ส่วนของเจ้าของ</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(report.equity?.totalEquity || 0)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="border-t-4 bg-gray-100">
+                    <TableCell className="font-bold">รวมหนี้สินและส่วนของเจ้าของ</TableCell>
+                    <TableCell className="text-right font-bold">
+                      {formatCurrency(
+                        (report.liabilities?.totalLiabilities || 0) + (report.equity?.totalEquity || 0)
+                      )}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCashFlowReport = (report: any) => {
+    if (!report) return null;
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">งบกระแสเงินสด</h2>
+          <p className="text-muted-foreground">
+            ระหว่างวันที่ {new Date(report.period.startDate).toLocaleDateString('th-TH')} 
+            ถึง {new Date(report.period.endDate).toLocaleDateString('th-TH')}
+          </p>
+          {report.branchId && (
+            <p className="text-sm text-muted-foreground">
+              สาขา: {branches.find(b => b.id === report.branchId)?.name || 'ไม่ระบุ'}
+            </p>
+          )}
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>รายการ</TableHead>
+              <TableHead className="text-right">จำนวนเงิน</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {/* กิจกรรมดำเนินงาน */}
+            <TableRow className="bg-blue-50">
+              <TableCell className="font-semibold">กระแสเงินสดจากกิจกรรมดำเนินงาน</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="pl-8">เงินสดสุทธิจากกิจกรรมดำเนินงาน</TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(report.operatingActivities?.netOperatingCashFlow || 0)}
+              </TableCell>
+            </TableRow>
+            
+            {/* กิจกรรมลงทุน */}
+            <TableRow className="bg-green-50">
+              <TableCell className="font-semibold">กระแสเงินสดจากกิจกรรมลงทุน</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="pl-8">เงินสดสุทธิจากกิจกรรมลงทุน</TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(report.investingActivities?.netInvestingCashFlow || 0)}
+              </TableCell>
+            </TableRow>
+            
+            {/* กิจกรรมจัดหาเงิน */}
+            <TableRow className="bg-orange-50">
+              <TableCell className="font-semibold">กระแสเงินสดจากกิจกรรมจัดหาเงิน</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="pl-8">เงินสดสุทธิจากกิจกรรมจัดหาเงิน</TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(report.financingActivities?.netFinancingCashFlow || 0)}
+              </TableCell>
+            </TableRow>
+            
+            {/* เงินสดสุทธิ */}
+            <TableRow className="border-t-4 bg-blue-100">
+              <TableCell className="font-bold">เงินสดสุทธิเพิ่มขึ้น (ลดลง)</TableCell>
+              <TableCell className="text-right font-bold">
+                {formatCurrency(report.netCashFlow || 0)}
+              </TableCell>
+            </TableRow>
+            
+            <TableRow>
+              <TableCell>เงินสดต้นงวด</TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(report.beginningCashBalance || 0)}
+              </TableCell>
+            </TableRow>
+            
+            <TableRow className="border-t-2 bg-gray-100">
+              <TableCell className="font-bold">เงินสดปลายงวด</TableCell>
+              <TableCell className="text-right font-bold">
+                {formatCurrency(report.endingCashBalance || 0)}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
+  const renderReport = () => {
+    if (!generatedReport) return null;
+    
+    switch (filters.reportType) {
+      case 'profit_loss':
+        return renderProfitLossReport(generatedReport);
+      case 'balance_sheet':
+        return renderBalanceSheetReport(generatedReport);
+      case 'cash_flow':
+        return renderCashFlowReport(generatedReport);
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold">รายงานการเงิน</h2>
-          <p className="text-muted-foreground">
-            รายงานและวิเคราะห์ข้อมูลทางการเงิน
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={onExportReport} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            ส่งออก
-          </Button>
-          <Button onClick={onGenerateReport} size="sm" disabled={loading}>
-            <Calculator className="h-4 w-4 mr-2" />
-            {loading ? 'กำลังสร้าง...' : 'สร้างรายงาน'}
-          </Button>
+          <h1 className="text-3xl font-bold">รายงานทางการเงิน</h1>
+          <p className="text-muted-foreground">สร้างและจัดการรายงานทางการเงินแยกตามสาขา</p>
         </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="ค้นหารายงาน..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={periodFilter} onValueChange={setPeriodFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Calendar className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="ช่วงเวลา" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">สัปดาห์นี้</SelectItem>
-                <SelectItem value="month">เดือนนี้</SelectItem>
-                <SelectItem value="quarter">ไตรมาสนี้</SelectItem>
-                <SelectItem value="year">ปีนี้</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={reportType} onValueChange={setReportType}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="ประเภทรายงาน" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="summary">สรุปภาพรวม</SelectItem>
-                <SelectItem value="profit_loss">กำไรขาดทุน</SelectItem>
-                <SelectItem value="balance_sheet">งบดุล</SelectItem>
-                <SelectItem value="cash_flow">กระแสเงินสด</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="generate">สร้างรายงาน</TabsTrigger>
+          <TabsTrigger value="view">ดูรายงาน</TabsTrigger>
+          <TabsTrigger value="history">ประวัติรายงาน</TabsTrigger>
+        </TabsList>
 
-      {/* Financial Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  รายได้รวม
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(financialSummary.revenue)}
-                </p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-                  <span className="text-sm text-green-600">+16.3%</span>
+        <TabsContent value="generate" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>สร้างรายงานใหม่</CardTitle>
+              <CardDescription>
+                เลือกประเภทรายงานและช่วงเวลาที่ต้องการสร้างรายงาน
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reportType">ประเภทรายงาน</Label>
+                  <Select
+                    value={filters.reportType}
+                    onValueChange={(value: any) => setFilters(prev => ({ ...prev, reportType: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="เลือกประเภทรายงาน" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="profit_loss">รายงานกำไรขาดทุน</SelectItem>
+                      <SelectItem value="balance_sheet">งบดุล</SelectItem>
+                      <SelectItem value="cash_flow">งบกระแสเงินสด</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  ค่าใช้จ่ายรวม
-                </p>
-                <p className="text-2xl font-bold text-red-600">
-                  {formatCurrency(financialSummary.expenses)}
-                </p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 mr-1 text-red-600" />
-                  <span className="text-sm text-red-600">+8.5%</span>
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">วันที่เริ่มต้น</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={filters.startDate}
+                    onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">วันที่สิ้นสุด</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={filters.endDate}
+                    onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="branch">สาขา</Label>
+                  <Select
+                    value={filters.branchId || ''}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, branchId: value || undefined }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="ทุกสาขา" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">ทุกสาขา</SelectItem>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <CreditCard className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  กำไรสุทธิ
-                </p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(financialSummary.profit)}
-                </p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-                  <span className="text-sm text-green-600">+50.0%</span>
-                </div>
-              </div>
-              <Wallet className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  อัตรากำไร
-                </p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {financialSummary.profitMargin.toFixed(1)}%
-                </p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-                  <span className="text-sm text-green-600">+2.8%</span>
-                </div>
-              </div>
-              <BarChart3 className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Monthly Trends Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            แนวโน้มรายได้และกำไร (6 เดือนล่าสุด)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-end justify-between gap-2">
-            {monthlyTrends.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div className="w-full flex flex-col gap-1">
-                  {/* Revenue Bar */}
-                  <div className="w-full bg-gray-200 rounded-t relative">
-                    <div 
-                      className="bg-green-500 rounded-t transition-all duration-500"
-                      style={{ 
-                        height: `${(data.revenue / 3100000) * 120}px`,
-                        minHeight: '20px'
-                      }}
-                    ></div>
-                  </div>
-                  {/* Profit Bar */}
-                  <div className="w-full bg-gray-200 rounded-b relative">
-                    <div 
-                      className="bg-blue-500 rounded-b transition-all duration-500"
-                      style={{ 
-                        height: `${(data.profit / 1000000) * 80}px`,
-                        minHeight: '15px'
-                      }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="text-center mt-2">
-                  <p className="text-xs font-medium">{data.month}</p>
-                  <p className="text-xs text-green-600">
-                    {formatCurrency(data.revenue)}
-                  </p>
-                  <p className="text-xs text-blue-600">
-                    {formatCurrency(data.profit)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 flex justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded"></div>
-              <span>รายได้</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded"></div>
-              <span>กำไร</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Streams */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              แหล่งรายได้
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {revenueStreams.map((stream, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{stream.source}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{formatCurrency(stream.amount)}</span>
-                      <div className="flex items-center">
-                        {stream.growth > 0 ? (
-                          <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
-                        )}
-                        <span className={`text-xs ${
-                          stream.growth > 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {stream.growth > 0 ? '+' : ''}{stream.growth}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full" 
-                      style={{ width: `${stream.percentage}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {stream.percentage.toFixed(1)}% ของรายได้รวม
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Expense Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              การแบ่งค่าใช้จ่าย
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {expenseBreakdown.map((expense, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{expense.category}</span>
-                    <span className="font-semibold">{formatCurrency(expense.amount)}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${expense.color}`}
-                      style={{ width: `${expense.percentage}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {expense.percentage.toFixed(1)}% ของค่าใช้จ่ายรวม
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Cash Flow */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            กระแสเงินสด (5 สัปดาห์ล่าสุด)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2">วันที่</th>
-                  <th className="text-right py-2">เงินเข้า</th>
-                  <th className="text-right py-2">เงินออก</th>
-                  <th className="text-right py-2">กระแสเงินสุทธิ</th>
-                  <th className="text-right py-2">ยอดคงเหลือ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cashFlowData.map((flow, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-3 font-medium">{flow.date}</td>
-                    <td className="text-right py-3 text-green-600">
-                      {formatCurrency(flow.inflow)}
-                    </td>
-                    <td className="text-right py-3 text-red-600">
-                      {formatCurrency(flow.outflow)}
-                    </td>
-                    <td className={`text-right py-3 font-semibold ${
-                      flow.netFlow > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {flow.netFlow > 0 ? '+' : ''}{formatCurrency(flow.netFlow)}
-                    </td>
-                    <td className="text-right py-3 font-semibold">
-                      {formatCurrency(flow.balance)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Key Financial Ratios */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-4 w-4" />
-            อัตราส่วนทางการเงินสำคัญ
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {keyRatios.map((ratio, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-sm">{ratio.name}</h4>
-                  <div className="flex items-center">
-                    {ratio.trend > 0 ? (
-                      <TrendingUp className={`h-3 w-3 mr-1 ${
-                        ratio.good ? 'text-green-600' : 'text-red-600'
-                      }`} />
-                    ) : (
-                      <TrendingDown className={`h-3 w-3 mr-1 ${
-                        ratio.good ? 'text-red-600' : 'text-green-600'
-                      }`} />
-                    )}
-                    <span className={`text-xs ${
-                      (ratio.trend > 0 && ratio.good) || (ratio.trend < 0 && !ratio.good) 
-                        ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {ratio.trend > 0 ? '+' : ''}{ratio.trend}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {ratio.value}{ratio.unit}
-                </div>
-                <Badge 
-                  variant={ratio.good ? 'default' : 'secondary'}
-                  className="mt-2 text-xs"
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleGenerateReport}
+                  disabled={isGenerating}
+                  className="min-w-[120px]"
                 >
-                  {ratio.good ? 'ดี' : 'ต้องปรับปรุง'}
-                </Badge>
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      กำลังสร้าง...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="mr-2 h-4 w-4" />
+                      สร้างรายงาน
+                    </>
+                  )}
+                </Button>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Balance Sheet Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">สินทรัพย์</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm">เงินสดและเงินฝาก</span>
-                <span className="font-semibold">{formatCurrency(1610000)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">ลูกหนี้การค้า</span>
-                <span className="font-semibold">{formatCurrency(financialSummary.accountsReceivable)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">สินค้าคงเหลือ</span>
-                <span className="font-semibold">{formatCurrency(2850000)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">สินทรัพย์ถาวร</span>
-                <span className="font-semibold">{formatCurrency(1200000)}</span>
-              </div>
-              <hr />
-              <div className="flex justify-between font-bold">
-                <span>รวมสินทรัพย์</span>
-                <span>{formatCurrency(6110000)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="view" className="space-y-6">
+          {generatedReport ? (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>รายงานที่สร้าง</CardTitle>
+                    <CardDescription>
+                      สร้างเมื่อ {new Date(generatedReport.generatedAt).toLocaleString('th-TH')}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleExportReport('pdf')}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Export PDF
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleExportReport('excel')}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Export Excel
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {renderReport()}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">ยังไม่มีรายงาน</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  กรุณาสร้างรายงานใหม่ในแท็บ "สร้างรายงาน"
+                </p>
+                <Button onClick={() => setActiveTab('generate')}>
+                  สร้างรายงานใหม่
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">หนี้สิน</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm">เจ้าหนี้การค้า</span>
-                <span className="font-semibold">{formatCurrency(financialSummary.accountsPayable)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">หนี้สินหมุนเวียนอื่น</span>
-                <span className="font-semibold">{formatCurrency(180000)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">หนี้สินระยะยาว</span>
-                <span className="font-semibold">{formatCurrency(800000)}</span>
-              </div>
-              <hr />
-              <div className="flex justify-between font-bold">
-                <span>รวมหนี้สิน</span>
-                <span>{formatCurrency(1300000)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">ส่วนของเจ้าของ</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm">ทุนจดทะเบียน</span>
-                <span className="font-semibold">{formatCurrency(2000000)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">กำไรสะสม</span>
-                <span className="font-semibold">{formatCurrency(2810000)}</span>
-              </div>
-              <hr />
-              <div className="flex justify-between font-bold">
-                <span>รวมส่วนของเจ้าของ</span>
-                <span>{formatCurrency(4810000)}</span>
-              </div>
-              <hr />
-              <div className="flex justify-between font-bold text-lg">
-                <span>รวมหนี้สินและส่วนของเจ้าของ</span>
-                <span>{formatCurrency(6110000)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="history" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>ประวัติรายงาน</CardTitle>
+              <CardDescription>
+                รายงานที่สร้างไว้ทั้งหมด
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : reports.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ชื่อรายงาน</TableHead>
+                      <TableHead>ประเภท</TableHead>
+                      <TableHead>ช่วงเวลา</TableHead>
+                      <TableHead>สาขา</TableHead>
+                      <TableHead>สถานะ</TableHead>
+                      <TableHead>วันที่สร้าง</TableHead>
+                      <TableHead className="text-right">การดำเนินการ</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reports.map((report) => (
+                      <TableRow key={report.id}>
+                        <TableCell className="font-medium">{report.report_name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {report.report_type === 'profit_loss' && 'กำไรขาดทุน'}
+                            {report.report_type === 'balance_sheet' && 'งบดุล'}
+                            {report.report_type === 'cash_flow' && 'กระแสเงินสด'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(report.period_start).toLocaleDateString('th-TH')} - 
+                          {new Date(report.period_end).toLocaleDateString('th-TH')}
+                        </TableCell>
+                        <TableCell>
+                          {report.branch_id 
+                            ? branches.find(b => b.id === report.branch_id)?.name || 'ไม่ระบุ'
+                            : 'ทุกสาขา'
+                          }
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={report.status === 'completed' ? 'default' : 'secondary'}
+                          >
+                            {report.status === 'completed' ? 'เสร็จสิ้น' : 'กำลังดำเนินการ'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(report.created_at).toLocaleDateString('th-TH')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setGeneratedReport(report.data);
+                              setActiveTab('view');
+                            }}
+                          >
+                            ดูรายงาน
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">ยังไม่มีรายงาน</h3>
+                  <p className="text-muted-foreground">
+                    ยังไม่มีรายงานที่สร้างไว้
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
+
+export default FinancialReports;

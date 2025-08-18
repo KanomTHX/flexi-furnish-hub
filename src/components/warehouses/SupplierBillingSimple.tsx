@@ -522,7 +522,7 @@ export default function SupplierBillingSimple() {
                     <SelectValue placeholder="เลือกซัพพลายเออร์" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกซัพพลายเออร์</SelectItem>
+                    <SelectItem value="all">ทุกซัพพลายเออร์</SelectItem>
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.supplierName}
@@ -535,7 +535,7 @@ export default function SupplierBillingSimple() {
                     <SelectValue placeholder="สถานะ" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกสถานะ</SelectItem>
+                    <SelectItem value="all">ทุกสถานะ</SelectItem>
                     <SelectItem value="pending">รอชำระ</SelectItem>
                     <SelectItem value="paid">ชำระแล้ว</SelectItem>
                     <SelectItem value="overdue">เกินกำหนด</SelectItem>
@@ -618,8 +618,8 @@ export default function SupplierBillingSimple() {
                     <SelectValue placeholder="เลือกซัพพลายเออร์" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ทุกซัพพลายเออร์</SelectItem>
-                    {suppliers.map((supplier) => (
+                    <SelectItem value="all">ทุกซัพพลายเออร์</SelectItem>
+                {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.supplierName}
                       </SelectItem>

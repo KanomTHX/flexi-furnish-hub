@@ -1,3 +1,21 @@
+// Utility functions
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('th-TH', {
+    style: 'currency',
+    currency: 'THB',
+    minimumFractionDigits: 2
+  }).format(amount);
+};
+
+export const formatDate = (date: string | Date): string => {
+  const d = new Date(date);
+  return d.toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
 // Placeholder utility functions
 export const accountingHelpers = {};
 export const auditHelpers = {};

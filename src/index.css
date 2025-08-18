@@ -2,78 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Furniture Store Admin Design System */
+/* Modern Flexi Furnish Hub Design System */
 
 @layer base {
   :root {
-    /* Core Admin Colors */
-    --background: 0 0% 100%;
-    --foreground: 220 13% 18%;
+    /* Modern Core Colors */
+    --background: 0 0% 99%;
+    --foreground: 222 84% 4.9%;
 
-    /* Card & Surface Colors */
+    /* Enhanced Card & Surface */
     --card: 0 0% 100%;
-    --card-foreground: 220 13% 18%;
-    --card-header: 220 14% 96%;
+    --card-foreground: 222 84% 4.9%;
+    --card-header: 210 40% 98%;
 
-    /* Navigation & UI */
+    /* Modern Navigation */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 18%;
+    --popover-foreground: 222 84% 4.9%;
 
-    /* Professional Navy Blue Primary */
-    --primary: 217 91% 24%;
-    --primary-light: 217 91% 32%;
-    --primary-dark: 217 91% 16%;
-    --primary-foreground: 0 0% 100%;
+    /* Modern Blue Primary */
+    --primary: 221.2 83.2% 53.3%;
+    --primary-light: 221.2 83.2% 63.3%;
+    --primary-dark: 221.2 83.2% 43.3%;
+    --primary-foreground: 210 40% 98%;
 
-    /* Clean Secondary Gray */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 13% 18%;
+    /* Modern Secondary */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
 
-    /* Subtle Backgrounds */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Enhanced Muted */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    /* Success & Status Colors */
+    /* Modern Status Colors */
     --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --info: 217 91% 60%;
-    --info-foreground: 0 0% 100%;
+    --success-foreground: 210 40% 98%;
+    --warning: 32 95% 44%;
+    --warning-foreground: 210 40% 98%;
+    --info: 221.2 83.2% 53.3%;
+    --info-foreground: 210 40% 98%;
 
-    /* Accent & Highlight */
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 13% 18%;
+    /* Enhanced Accent */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
 
-    /* Error & Destructive */
+    /* Modern Destructive */
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    /* Borders & Inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 24%;
+    /* Clean Borders & Inputs */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
 
-    /* Design System Tokens */
-    --radius: 0.5rem;
-    --radius-lg: 0.75rem;
-    --radius-xl: 1rem;
+    /* Modern Design Tokens */
+    --radius: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
 
-    /* Professional Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 24%), hsl(217 91% 32%));
-    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(220 14% 98%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(220 14% 99%));
+    /* Modern Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(221.2 83.2% 53.3%), hsl(221.2 83.2% 63.3%));
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 99%), hsl(210 40% 98%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 99%));
+    --gradient-hero: linear-gradient(135deg, hsl(221.2 83.2% 53.3%) 0%, hsl(262.1 83.3% 57.8%) 100%);
 
-    /* Elegant Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 13% 69% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(220 13% 69% / 0.1), 0 2px 4px -1px hsl(220 13% 69% / 0.06);
-    --shadow-lg: 0 10px 15px -3px hsl(220 13% 69% / 0.1), 0 4px 6px -2px hsl(220 13% 69% / 0.05);
-    --shadow-xl: 0 20px 25px -5px hsl(220 13% 69% / 0.1), 0 10px 10px -5px hsl(220 13% 69% / 0.04);
+    /* Enhanced Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -2px hsl(0 0% 0% / 0.05);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 10px 10px -5px hsl(0 0% 0% / 0.04);
+    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
 
-    /* Professional Transitions */
+    /* Modern Transitions */
     --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* Modern Typography */
+    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
     /* Light Sidebar */
     --sidebar-background: 0 0% 100%;
@@ -151,8 +159,153 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.6;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+}
+
+@layer components {
+  /* Modern Typography */
+  .font-heading {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  /* Modern Card Styles */
+  .card-modern {
+    @apply bg-card border border-border rounded-xl shadow-lg backdrop-blur-sm;
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card-header)) 100%);
+  }
+  
+  .card-glass {
+    @apply bg-card/80 border border-border/50 rounded-xl shadow-xl backdrop-blur-md;
+  }
+  
+  /* Modern Button Variants */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-light text-primary-foreground;
+    @apply hover:shadow-lg transition-all duration-300;
+  }
+  
+  .btn-glass {
+    @apply bg-card/80 border border-border/50 backdrop-blur-md;
+    @apply hover:bg-card/90 transition-all duration-300;
+  }
+  
+  /* Modern Navigation */
+  .nav-modern {
+    @apply bg-card/95 border-b border-border/50 backdrop-blur-md;
+  }
+  
+  /* Modern Sidebar */
+  .sidebar-modern {
+    @apply bg-sidebar/95 border-r border-sidebar-border/50 backdrop-blur-md;
+  }
+  
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+  
+  .animate-bounce-in {
+    animation: bounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+}
+
+@layer utilities {
+  /* Modern Spacing */
+  .space-modern > * + * {
+    @apply mt-6;
+  }
+  
+  /* Modern Grid */
+  .grid-modern {
+    @apply grid gap-6;
+  }
+  
+  /* Modern Flex */
+  .flex-modern {
+    @apply flex gap-4;
+  }
+  
+  /* Modern Text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent;
+  }
+  
+  /* Modern Shadows */
+  .shadow-modern {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .shadow-glow {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

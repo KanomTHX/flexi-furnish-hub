@@ -77,6 +77,37 @@ export interface InstallmentPayment {
     notes?: string;
 }
 
+// Serial Number Types
+export interface SerialNumber {
+    id: string;
+    productId: string;
+    branchId: string;
+    serialNumber: string;
+    status: 'available' | 'reserved' | 'sold' | 'installment' | 'returned';
+    costPrice?: number;
+    sellingPrice?: number;
+    installmentContractId?: string;
+    receivedDate: string;
+    soldDate?: string;
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+    
+    // Relations
+    product?: Product;
+    installmentContract?: InstallmentContract;
+}
+
+export interface SerialNumberSelection {
+    productId: string;
+    productName: string;
+    serialNumbers: SerialNumber[];
+    selectedSerialNumbers: string[];
+    totalQuantity: number;
+    unitPrice: number;
+    totalPrice: number;
+}
+
 export interface InstallmentContract {
     id: string;
     contractNumber: string;
@@ -85,6 +116,10 @@ export interface InstallmentContract {
     customer: Customer;
     planId: string;
     plan: InstallmentPlan;
+    
+    // Serial Numbers
+    serialNumbers: string[]; // Array of serial number IDs
+    serialNumberDetails?: SerialNumber[]; // Full serial number objects
     
     // จำนวนเงิน
     totalAmount: number; // ยอดรวมสินค้า

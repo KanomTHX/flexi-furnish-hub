@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Customer, InstallmentPlan, InstallmentContract, Guarantor } from '@/types/unified';
+import { Customer, InstallmentPlan, InstallmentContract, Guarantor, SerialNumber } from '@/types/unified';
 // import { installmentPlans, getActiveInstallmentPlans } from '@/data/constants';
 import {
   createInstallmentContract,
@@ -21,7 +21,8 @@ import { createInstallmentContract as createContract } from '@/lib/supabase-inst
 import { createGuarantor } from '@/lib/supabase-guarantors';
 import { supabase } from '@/lib/supabase';
 import { ThaiAddressSelector } from '@/components/ui/thai-address-selector';
-import { AlertTriangle, Calculator, CreditCard, FileText, User } from 'lucide-react';
+import { AlertTriangle, Calculator, CreditCard, FileText, User, Package } from 'lucide-react';
+import SerialNumberSelector from '@/components/installments/SerialNumberSelector';
 
 interface InstallmentDialogProps {
   open: boolean;
@@ -46,7 +47,8 @@ export function InstallmentDialog({
   const [notes, setNotes] = useState('');
   const [terms, setTerms] = useState('');
   const [requireGuarantor, setRequireGuarantor] = useState(false);
-  const [step, setStep] = useState<'customer' | 'plan' | 'guarantor' | 'details' | 'review'>('customer');
+  const [step, setStep] = useState<'customer' | 'plan' | 'serials' | 'guarantor' | 'details' | 'review'>('customer');
+  const [selectedSerialNumbers, setSelectedSerialNumbers] = useState<SerialNumber[]>([]);
   
   // State สำหรับแก้ไขแผน
   const [customInterestRate, setCustomInterestRate] = useState<number | null>(null);
@@ -410,7 +412,8 @@ export function InstallmentDialog({
         guarantorId: guarantorId,
         collateral: collateral || undefined,
         terms: terms || undefined,
-        notes: notes || undefined
+        notes: notes || undefined,
+        // serialNumbers: selectedSerialNumbers // TODO: Add serialNumbers support to createContract function
       });
 
       onConfirm(contract);
@@ -954,8 +957,43 @@ export function InstallmentDialog({
           ย้อนกลับ
         </Button>
         <Button
-          onClick={() => setStep(requireGuarantor ? 'guarantor' : 'details')}
+          onClick={() => setStep('serials')}
           disabled={!selectedPlan}
+        >
+          ถัดไป
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderSerialsStep = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            เลือกหมายเลขเครื่อง (Serial Numbers)
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            เลือกหมายเลขเครื่องที่จะผูกกับสัญญาเช่าซื้อนี้
+          </p>
+        </CardHeader>
+        <CardContent>
+          <SerialNumberSelector
+            selectedSerialNumbers={selectedSerialNumbers}
+            onSelectionChange={setSelectedSerialNumbers}
+            contractAmount={contractAmount}
+          />
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={() => setStep('serials')}>
+          ย้อนกลับ
+        </Button>
+        <Button
+          onClick={() => setStep(requireGuarantor ? 'guarantor' : 'details')}
+          disabled={selectedSerialNumbers.length === 0}
         >
           ถัดไป
         </Button>
@@ -1197,7 +1235,7 @@ export function InstallmentDialog({
       </Card>
 
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => setStep(requireGuarantor ? 'guarantor' : 'plan')}>
+        <Button variant="outline" onClick={() => setStep(requireGuarantor ? 'guarantor' : 'serials')}>
           ย้อนกลับ
         </Button>
         <Button onClick={() => setStep('review')}>
@@ -1352,8 +1390,49 @@ export function InstallmentDialog({
                   </div>
                 </CardContent>
               </Card>
-            )}
+              )}
           </div>
+
+          {/* แสดงรายการ Serial Numbers */}
+          {selectedSerialNumbers.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  หมายเลขเครื่องที่เลือก
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {selectedSerialNumbers.map((serial, index) => (
+                    <div key={serial.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{serial.serial_number}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {serial.product_name}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {serial.brand} | {serial.model}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">฿{serial.price?.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">{serial.status}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-2 border-t">
+                    <div className="flex justify-between font-medium">
+                      <span>รวม {selectedSerialNumbers.length} รายการ:</span>
+                      <span>฿{selectedSerialNumbers.reduce((sum, serial) => sum + (serial.price || 0), 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {(collateral || terms || notes) && (
             <Card>
@@ -1425,6 +1504,7 @@ export function InstallmentDialog({
             {[
               { key: 'customer', label: 'ข้อมูลลูกค้า' },
               { key: 'plan', label: 'เลือกแผน' },
+              { key: 'serials', label: 'เลือก SN' },
               { key: 'guarantor', label: 'ผู้ค้ำประกัน' },
               { key: 'details', label: 'ข้อมูลเพิ่มเติม' },
               { key: 'review', label: 'ตรวจสอบ' }
@@ -1451,6 +1531,7 @@ export function InstallmentDialog({
 
         {step === 'customer' && renderCustomerStep()}
         {step === 'plan' && renderPlanStep()}
+        {step === 'serials' && renderSerialsStep()}
         {step === 'guarantor' && renderGuarantorStep()}
         {step === 'details' && renderDetailsStep()}
         {step === 'review' && renderReviewStep()}

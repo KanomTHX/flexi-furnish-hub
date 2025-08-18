@@ -240,6 +240,117 @@ export function useAccounting() {
     return account ? account.balance : 0;
   }, [getAccountById]);
 
+  // Invoice accounting integration
+  const createAccountingEntriesFromInvoice = useCallback(async (
+    invoice: any, 
+    invoiceType: 'ap' | 'ar', 
+    paymentAmount?: number
+  ) => {
+    try {
+      const entries: JournalEntryLine[] = [];
+      const description = paymentAmount 
+        ? `Payment for ${invoiceType.toUpperCase()} Invoice ${invoice.invoice_number}`
+        : `${invoiceType.toUpperCase()} Invoice ${invoice.invoice_number}`;
+
+      if (paymentAmount) {
+        // Payment entries
+        if (invoiceType === 'ap') {
+          // AP Payment: Debit Accounts Payable, Credit Cash
+          entries.push({
+            id: `line-${Date.now()}-1`,
+            accountId: 'acc-accounts-payable',
+            account: { id: 'acc-accounts-payable', name: 'Accounts Payable', code: '2100', type: 'liability', category: 'current_liability', balance: 0, isActive: true, createdAt: '', updatedAt: '' },
+            description: `Payment to ${invoice.vendor_name}`,
+            debitAmount: paymentAmount,
+            creditAmount: 0
+          });
+          entries.push({
+            id: `line-${Date.now()}-2`,
+            accountId: 'acc-cash',
+            account: { id: 'acc-cash', name: 'Cash', code: '1100', type: 'asset', category: 'current_asset', balance: 0, isActive: true, createdAt: '', updatedAt: '' },
+            description: `Payment to ${invoice.vendor_name}`,
+            debitAmount: 0,
+            creditAmount: paymentAmount
+          });
+        } else {
+          // AR Payment: Debit Cash, Credit Accounts Receivable
+          entries.push({
+            id: `line-${Date.now()}-1`,
+            accountId: 'acc-cash',
+            account: { id: 'acc-cash', name: 'Cash', code: '1100', type: 'asset', category: 'current_asset', balance: 0, isActive: true, createdAt: '', updatedAt: '' },
+            description: `Payment from ${invoice.customer_name}`,
+            debitAmount: paymentAmount,
+            creditAmount: 0
+          });
+          entries.push({
+            id: `line-${Date.now()}-2`,
+            accountId: 'acc-accounts-receivable',
+            account: { id: 'acc-accounts-receivable', name: 'Accounts Receivable', code: '1200', type: 'asset', category: 'current_asset', balance: 0, isActive: true, createdAt: '', updatedAt: '' },
+            description: `Payment from ${invoice.customer_name}`,
+            debitAmount: 0,
+            creditAmount: paymentAmount
+          });
+        }
+      } else {
+        // Invoice creation entries
+        if (invoiceType === 'ap') {
+          // AP Invoice: Debit Expense/Asset, Credit Accounts Payable
+          entries.push({
+            id: `line-${Date.now()}-1`,
+            accountId: 'acc-operating-expenses',
+            account: { id: 'acc-operating-expenses', name: 'Operating Expenses', code: '5100', type: 'expense', category: 'operating_expense', balance: 0, isActive: true, createdAt: '', updatedAt: '' },
+            description: `Purchase from ${invoice.vendor_name}`,
+            debitAmount: invoice.total_amount,
+            creditAmount: 0
+          });
+          entries.push({
+            id: `line-${Date.now()}-2`,
+            accountId: 'acc-accounts-payable',
+            account: { id: 'acc-accounts-payable', name: 'Accounts Payable', code: '2100', type: 'liability', category: 'current_liability', balance: 0, isActive: true, createdAt: '', updatedAt: '' },
+            description: `Purchase from ${invoice.vendor_name}`,
+            debitAmount: 0,
+            creditAmount: invoice.total_amount
+          });
+        } else {
+          // AR Invoice: Debit Accounts Receivable, Credit Sales Revenue
+          entries.push({
+            id: `line-${Date.now()}-1`,
+            accountId: 'acc-accounts-receivable',
+            account: { id: 'acc-accounts-receivable', name: 'Accounts Receivable', code: '1200', type: 'asset', category: 'current_asset', balance: 0, isActive: true, createdAt: '', updatedAt: '' },
+            description: `Sale to ${invoice.customer_name}`,
+            debitAmount: invoice.total_amount,
+            creditAmount: 0
+          });
+          entries.push({
+            id: `line-${Date.now()}-2`,
+            accountId: 'acc-sales-revenue',
+            account: { id: 'acc-sales-revenue', name: 'Sales Revenue', code: '4100', type: 'revenue', category: 'sales_revenue', balance: 0, isActive: true, createdAt: '', updatedAt: '' },
+            description: `Sale to ${invoice.customer_name}`,
+            debitAmount: 0,
+            creditAmount: invoice.total_amount
+          });
+        }
+      }
+
+      // Create journal entry
+      const journalEntry = createJournalEntry({
+        date: new Date().toISOString().split('T')[0],
+        description,
+        reference: invoice.invoice_number,
+        totalDebit: entries.reduce((sum, entry) => sum + entry.debitAmount, 0),
+        totalCredit: entries.reduce((sum, entry) => sum + entry.creditAmount, 0),
+        status: 'approved' as JournalEntryStatus,
+        createdBy: 'system',
+        entries
+      });
+
+      return journalEntry;
+    } catch (error) {
+      console.error('Error creating accounting entries from invoice:', error);
+      throw error;
+    }
+  }, [createJournalEntry]);
+
   // Financial statement helpers
   const getTrialBalance = useCallback(() => {
     return accounts.map(account => ({
@@ -298,6 +409,11 @@ export function useAccounting() {
     getPendingJournalEntries,
     getRecentTransactions,
     getAccountBalance,
-    getTrialBalance
+    getTrialBalance,
+
+    // Invoice integration
+    createAccountingEntriesFromInvoice,
+    isProcessing: loading,
+    error
   };
 }

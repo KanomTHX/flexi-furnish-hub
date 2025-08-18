@@ -4,9 +4,19 @@ import {
   calculateContractStatus, 
   updatePaymentStatus 
 } from '@/utils/installmentHelpers';
+import { useInstallmentAccountingIntegration } from './useInstallmentAccountingIntegration';
+import { useEmployees } from './useEmployees';
+import type { InstallmentContract as UnifiedInstallmentContract, InstallmentPayment } from '@/types/unified';
 
 export function useInstallments() {
   const [contracts, setContracts] = useState<InstallmentContract[]>([]);
+  const {
+    createAccountingEntriesFromContract,
+    createAccountingEntriesFromPayment,
+    isProcessing: isAccountingProcessing,
+    error: accountingError
+  } = useInstallmentAccountingIntegration();
+  const { calculateCommission } = useEmployees();
 
   // อัพเดทสถานะสัญญาทั้งหมด
   const updatedContracts = useMemo(() => updatePaymentStatus(contracts), [contracts]);
@@ -34,9 +44,33 @@ export function useInstallments() {
   }, [updatedContracts]);
 
   // เพิ่มสัญญาใหม่
-  const addContract = useCallback((contract: InstallmentContract) => {
+  const addContract = useCallback(async (contract: InstallmentContract) => {
     setContracts(prev => [...prev, contract]);
-  }, []);
+    
+    // สร้างรายการบัญชีสำหรับสัญญาใหม่
+    try {
+      const unifiedContract = contract as unknown as UnifiedInstallmentContract;
+      await createAccountingEntriesFromContract(unifiedContract);
+    } catch (error) {
+      console.error('Error creating accounting entries for new contract:', error);
+    }
+
+    // คำนวณค่าคอมมิชชั่นสำหรับพนักงานขาย
+    try {
+      const commissionData = calculateCommission(
+        contract.createdBy || 'unknown',
+        contract.totalAmount,
+        'installment'
+      );
+      
+      if (commissionData) {
+        console.log('Installment commission calculated:', commissionData);
+        // TODO: บันทึกค่าคอมมิชชั่นลงฐานข้อมูล
+      }
+    } catch (commissionError) {
+      console.warn('Warning: Failed to calculate commission for installment contract:', commissionError);
+    }
+  }, [createAccountingEntriesFromContract, calculateCommission]);
 
   // อัพเดทสัญญา
   const updateContract = useCallback((updatedContract: InstallmentContract) => {
@@ -51,21 +85,25 @@ export function useInstallments() {
   }, []);
 
   // บันทึกการชำระเงิน
-  const recordPayment = useCallback((contractId: string, paymentId: string, amount: number) => {
+  const recordPayment = useCallback(async (contractId: string, paymentId: string, amount: number, paymentMethod: string = 'cash') => {
+    let updatedPayment: any = null;
+    let updatedContract: InstallmentContract | null = null;
+    
     setContracts(prev => prev.map(contract => {
       if (contract.id !== contractId) return contract;
 
       const updatedPayments = contract.payments.map(payment => {
         if (payment.id !== paymentId) return payment;
 
-        return {
+        updatedPayment = {
           ...payment,
           status: 'paid' as const,
           paidDate: new Date().toISOString().split('T')[0],
           paidAmount: amount,
-          paymentMethod: 'cash', // TODO: เลือกวิธีชำระ
+          paymentMethod,
           receiptNumber: `R${Date.now().toString().slice(-6)}`
         };
+        return updatedPayment;
       });
 
       // คำนวณสถานะใหม่
@@ -83,7 +121,7 @@ export function useInstallments() {
         contractStatus = 'active';
       }
 
-      return {
+      updatedContract = {
         ...contract,
         payments: updatedPayments,
         totalPaid,
@@ -93,8 +131,21 @@ export function useInstallments() {
         status: contractStatus,
         updatedAt: new Date().toISOString()
       };
+      
+      return updatedContract;
     }));
-  }, []);
+    
+    // สร้างรายการบัญชีสำหรับการชำระเงิน
+    if (updatedPayment && updatedContract) {
+      try {
+        const unifiedPayment = updatedPayment as unknown as InstallmentPayment;
+        const unifiedContract = updatedContract as unknown as UnifiedInstallmentContract;
+        await createAccountingEntriesFromPayment(unifiedPayment, unifiedContract);
+      } catch (error) {
+        console.error('Error creating accounting entries for payment:', error);
+      }
+    }
+  }, [createAccountingEntriesFromPayment]);
 
   // ยกเลิกสัญญา
   const cancelContract = useCallback((contractId: string, reason?: string) => {
@@ -186,6 +237,8 @@ export function useInstallments() {
   return {
     contracts: updatedContracts,
     summary,
+    isAccountingProcessing,
+    accountingError,
     actions: {
       addContract,
       updateContract,

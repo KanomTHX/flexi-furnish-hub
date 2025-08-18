@@ -9,20 +9,27 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AdminSidebar />
-        <div className="flex-1 flex flex-col">
-          <AdminHeader />
-          <main className="flex-1 p-6 bg-gradient-surface">
-            {children}
-          </main>
-          {/* Connection Status Footer */}
-          <div className="fixed bottom-4 left-4 z-50">
-            <ConnectionStatus showText={false} />
+    <div className="min-h-screen bg-background animate-fade-in">
+      <SidebarProvider>
+        <div className="flex min-h-screen">
+          <AdminSidebar />
+          <div className="flex-1 flex flex-col">
+            <AdminHeader />
+            <main className="flex-1 p-6 overflow-auto">
+              <div className="max-w-7xl mx-auto space-modern">
+                <div className="animate-slide-up">
+                  {children}
+                </div>
+              </div>
+            </main>
           </div>
         </div>
+      </SidebarProvider>
+      
+      {/* Modern Connection Status */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <ConnectionStatus showText={true} />
       </div>
-    </SidebarProvider>
+    </div>
   );
 }

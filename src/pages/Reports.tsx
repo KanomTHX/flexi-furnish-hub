@@ -9,7 +9,7 @@ import { BranchSelector } from '../components/branch/BranchSelector';
 import { ReportsOverview } from '@/components/reports/ReportsOverview';
 import { SalesReports } from '@/components/reports/SalesReports';
 import { InventoryReports } from '@/components/reports/InventoryReports';
-import { FinancialReports } from '@/components/reports/FinancialReports';
+import FinancialReports from '@/components/reports/FinancialReports';
 import { 
   exportSalesReportToCSV, 
   exportInventoryReportToCSV, 
@@ -286,12 +286,7 @@ const Reports: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="financial">
-          <FinancialReports
-            financialReports={financialReports}
-            onGenerateReport={() => handleGenerateReport('financial')}
-            onExportReport={handleExportFinancialReport}
-            loading={loading}
-          />
+          <FinancialReports />
         </TabsContent>
 
         <TabsContent value="custom">

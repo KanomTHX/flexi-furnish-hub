@@ -128,47 +128,47 @@ export function AdminSidebar() {
   };
 
   const getNavClass = (path: string) => {
-    const baseClass = "w-full justify-start transition-colors duration-fast";
+    const baseClass = "w-full justify-start transition-all duration-300 rounded-xl";
     return isActive(path) 
-      ? `${baseClass} bg-primary text-primary-foreground shadow-sm` 
-      : `${baseClass} hover:bg-accent hover:text-accent-foreground`;
+      ? `${baseClass} bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25` 
+      : `${baseClass} hover:bg-accent/50 hover:text-accent-foreground hover:shadow-md`;
   };
 
   return (
-    <Sidebar className={`border-r border-border ${collapsed ? "w-16" : "w-64"}`} collapsible="icon">
-      <SidebarContent className="bg-sidebar">
-        {/* Brand Header */}
-        <div className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Store className="w-4 h-4 text-white" />
+    <Sidebar className={`sidebar-modern ${collapsed ? "w-16" : "w-64"}`} collapsible="icon">
+      <SidebarContent className="bg-sidebar/95">
+        {/* Modern Brand Header */}
+        <div className="p-6 border-b border-sidebar-border/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+              <Store className="w-5 h-5 text-white" />
             </div>
             {!collapsed && (
-              <div>
-                <h2 className="text-lg font-bold text-sidebar-foreground">FurniStore</h2>
-                <p className="text-xs text-sidebar-foreground/60">ระบบจัดการ</p>
+              <div className="animate-fade-in">
+                <h2 className="text-xl font-bold text-sidebar-foreground bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/80 bg-clip-text">FurniStore</h2>
+                <p className="text-xs text-sidebar-foreground/60 font-medium">ระบบจัดการโมเดิร์น</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Main Navigation */}
+        {/* Modern Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-wide text-xs font-semibold">
+          <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-wider text-xs font-bold px-3">
             {!collapsed && "เมนูหลัก"}
           </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
+          <SidebarGroupContent className="px-3">
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavClass(item.url)}>
-                      <item.icon className="w-4 h-4 shrink-0" />
+                      <item.icon className="w-5 h-5 shrink-0" />
                       {!collapsed && (
-                        <div className="flex items-center justify-between w-full">
-                          <span>{item.title}</span>
+                        <div className="flex items-center justify-between w-full ml-3">
+                          <span className="font-medium">{item.title}</span>
                           {item.badge && (
-                            <span className="bg-warning text-warning-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
+                            <span className="bg-warning/90 text-warning-foreground text-xs px-2 py-1 rounded-lg font-semibold animate-bounce-in">
                               {item.badge}
                             </span>
                           )}
@@ -194,20 +194,20 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Status Bar */}
-        <div className="mt-auto p-4 border-t border-sidebar-border">
+        {/* Modern Status Bar */}
+        <div className="mt-auto p-4 border-t border-sidebar-border/50">
           {!collapsed && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
-                <span>สถานะระบบ</span>
-                <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+            <div className="space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-sidebar-foreground/70 font-medium">สถานะระบบ</span>
+                <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
               </div>
-              <div className="text-xs text-sidebar-foreground/80">
-                สาขาหลัก • ออนไลน์
+              <div className="text-sm text-sidebar-foreground font-medium">
+                สาขาหลัก • <span className="text-success">ออนไลน์</span>
               </div>
-              <div className="flex items-center gap-1 text-xs text-sidebar-foreground/60 mt-1">
-                <Clock className="w-3 h-3" />
-                <span>อัปเดตล่าสุด: {new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
+              <div className="flex items-center gap-2 text-xs text-sidebar-foreground/60">
+                <Clock className="w-3.5 h-3.5" />
+                <span>อัปเดต: {new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
           )}

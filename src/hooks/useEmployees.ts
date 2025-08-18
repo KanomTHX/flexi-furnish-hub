@@ -8,6 +8,10 @@ import {
   Leave, 
   Payroll, 
   Training,
+  Commission,
+  AttendanceRecord,
+  LeaveRequest,
+  PredefinedPosition,
   EmployeeAnalytics,
   EmployeeFilters,
   AttendanceFilters,
@@ -18,7 +22,8 @@ import {
   AttendanceFormData,
   LeaveFormData,
   PayrollFormData,
-  TrainingFormData
+  TrainingFormData,
+  CommissionStatus
 } from '@/types/employees';
 import { 
   mockEmployees, 
@@ -40,6 +45,38 @@ export const useEmployees = () => {
   const [leaves] = useState<Leave[]>(mockLeaves);
   const [payrolls] = useState<Payroll[]>(mockPayrolls);
   const [trainings] = useState<Training[]>(mockTrainings);
+  const [commissions] = useState<Commission[]>([]);
+  const [attendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [leaveRequests] = useState<LeaveRequest[]>([]);
+  const [predefinedPositions] = useState<PredefinedPosition[]>([
+    {
+      id: '1',
+      name: 'manager',
+      displayName: 'ผู้จัดการ',
+      description: 'ดูแลภาพรวม มีค่าคอมมิชชั่น',
+      hasCommission: true,
+      defaultCommissionRate: 1.00,
+      responsibilities: ['ดูแลทีม', 'วางแผนการขาย', 'ติดตามผลงาน']
+    },
+    {
+      id: '2',
+      name: 'sales',
+      displayName: 'ฝ่ายขาย',
+      description: 'ได้ค่าคอมมิชชั่นจากการขาย POS / เช่าซื้อ',
+      hasCommission: true,
+      defaultCommissionRate: 2.00,
+      responsibilities: ['ขายสินค้า', 'ดูแลลูกค้า', 'ปิดการขาย']
+    },
+    {
+      id: '3',
+      name: 'stock',
+      displayName: 'ฝ่ายสต็อก',
+      description: 'จัดการสินค้า ไม่มีค่าคอมมิชชั่น',
+      hasCommission: false,
+      defaultCommissionRate: 0.00,
+      responsibilities: ['จัดการสต็อก', 'ตรวจนับสินค้า', 'จัดส่งสินค้า']
+    }
+  ]);
   const [loading] = useState(false);
   const [error] = useState<string | null>(null);
 
@@ -221,6 +258,95 @@ export const useEmployees = () => {
     return getFilteredLeaves(filters);
   }, [getFilteredLeaves]);
 
+  // Commission functions
+  const getEmployeeCommissions = useCallback((employeeId: string) => {
+    return commissions.filter(commission => commission.employeeId === employeeId);
+  }, [commissions]);
+
+  const calculateCommission = useCallback((employeeId: string, saleAmount: number, transactionType: 'pos' | 'installment' | 'manual') => {
+    const employee = employees.find(emp => emp.id === employeeId);
+    if (!employee) return null;
+    
+    const commissionAmount = saleAmount * (employee.commissionRate / 100);
+    
+    toast({
+      title: "คำนวณค่าคอมมิชชั่นสำเร็จ",
+      description: `ค่าคอมมิชชั่น: ${commissionAmount.toLocaleString()} บาท (${employee.commissionRate}% จาก ${saleAmount.toLocaleString()} บาท)`,
+    });
+    
+    return {
+      employeeId,
+      saleAmount,
+      commissionRate: employee.commissionRate,
+      commissionAmount,
+      transactionType
+    };
+  }, [employees, toast]);
+
+  const updateCommissionStatus = useCallback((commissionId: string, status: CommissionStatus) => {
+    toast({
+      title: "ฟีเจอร์นี้อยู่ระหว่างการพัฒนา",
+      description: "ระบบอัปเดตสถานะค่าคอมมิชชั่นกำลังอยู่ในขั้นตอนการพัฒนา",
+    });
+  }, [toast]);
+
+  // Attendance Record functions
+  const checkIn = useCallback((employeeId: string) => {
+    const now = new Date();
+    toast({
+      title: "เข้างานสำเร็จ",
+      description: `เวลาเข้างาน: ${now.toLocaleTimeString('th-TH')}`,
+    });
+  }, [toast]);
+
+  const checkOut = useCallback((employeeId: string) => {
+    const now = new Date();
+    toast({
+      title: "ออกงานสำเร็จ",
+      description: `เวลาออกงาน: ${now.toLocaleTimeString('th-TH')}`,
+    });
+  }, [toast]);
+
+  const getAttendanceByEmployee = useCallback((employeeId: string, startDate?: string, endDate?: string) => {
+    return attendanceRecords.filter(record => {
+      if (record.employeeId !== employeeId) return false;
+      if (startDate && record.date < startDate) return false;
+      if (endDate && record.date > endDate) return false;
+      return true;
+    });
+  }, [attendanceRecords]);
+
+  // Leave Request functions
+  const submitLeaveRequest = useCallback((leaveData: Omit<LeaveRequest, 'id' | 'status' | 'appliedAt' | 'createdAt'>) => {
+    toast({
+      title: "ส่งคำขอลาสำเร็จ",
+      description: "คำขอลาของคุณได้ถูกส่งไปยังผู้บังคับบัญชาแล้ว",
+    });
+  }, [toast]);
+
+  const approveLeaveRequest = useCallback((leaveId: string, approverId: string) => {
+    toast({
+      title: "อนุมัติการลาสำเร็จ",
+      description: "คำขอลาได้รับการอนุมัติแล้ว",
+    });
+  }, [toast]);
+
+  const rejectLeaveRequest = useCallback((leaveId: string, reason: string, approverId: string) => {
+    toast({
+      title: "ปฏิเสธการลา",
+      description: `เหตุผล: ${reason}`,
+    });
+  }, [toast]);
+
+  // Position functions
+  const getPositionByName = useCallback((positionName: string) => {
+    return predefinedPositions.find(pos => pos.name === positionName);
+  }, [predefinedPositions]);
+
+  const getPositionsWithCommission = useCallback(() => {
+    return predefinedPositions.filter(pos => pos.hasCommission);
+  }, [predefinedPositions]);
+
   return {
     // Data
     employees,
@@ -230,6 +356,10 @@ export const useEmployees = () => {
     leaves,
     payrolls,
     trainings,
+    commissions,
+    attendanceRecords,
+    leaveRequests,
+    predefinedPositions,
     analytics,
     loading,
     error,
@@ -266,6 +396,25 @@ export const useEmployees = () => {
     // Filter functions
     filterEmployees,
     filterAttendance,
-    filterLeaves
+    filterLeaves,
+
+    // Commission functions
+    getEmployeeCommissions,
+    calculateCommission,
+    updateCommissionStatus,
+
+    // Attendance Record functions
+    checkIn,
+    checkOut,
+    getAttendanceByEmployee,
+
+    // Leave Request functions
+    submitLeaveRequest,
+    approveLeaveRequest,
+    rejectLeaveRequest,
+
+    // Position functions
+    getPositionByName,
+    getPositionsWithCommission
   };
 };

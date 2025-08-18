@@ -3,6 +3,8 @@ import { CartItem, Customer, PaymentMethod, POSState, Product, Sale } from '@/ty
 import { usePersistentCart } from './useLocalStorage';
 import { useSupabasePOS } from './useSupabasePOS';
 import { useBranchData } from './useBranchData';
+import { usePOSAccountingIntegration } from './usePOSAccountingIntegration';
+import { useEmployees } from './useEmployees';
 
 const TAX_RATE = 0.07; // 7% VAT
 
@@ -19,6 +21,8 @@ export function usePOS() {
 
   const { currentBranch } = useBranchData();
   const { createSalesTransaction, loading: supabaseLoading } = useSupabasePOS();
+  const { handlePOSSaleCompletion } = usePOSAccountingIntegration();
+  const { calculateCommission } = useEmployees();
 
   const [cart, setCart] = useState<CartItem[]>(persistedCart || []);
   const [customer, setCustomer] = useState<Customer | undefined>(persistedCustomer);
@@ -166,6 +170,31 @@ export function usePOS() {
 
       setSales(prev => [...prev, sale]);
       clearCart();
+
+      // เชื่อมต่อกับระบบบัญชี
+      try {
+        await handlePOSSaleCompletion(savedTransaction);
+      } catch (accountingError) {
+        console.warn('Warning: Failed to create accounting entries for sale:', accountingError);
+        // ไม่ throw error เพราะการขายสำเร็จแล้ว แค่การบันทึกบัญชีล้มเหลว
+      }
+
+      // คำนวณค่าคอมมิชชั่นสำหรับพนักงานขาย
+      try {
+        const commissionData = calculateCommission(
+          savedTransaction.employee_id,
+          total,
+          'pos'
+        );
+        
+        if (commissionData) {
+          console.log('Commission calculated:', commissionData);
+          // TODO: บันทึกค่าคอมมิชชั่นลงฐานข้อมูล
+        }
+      } catch (commissionError) {
+        console.warn('Warning: Failed to calculate commission for sale:', commissionError);
+        // ไม่ throw error เพราะการขายสำเร็จแล้ว แค่การคำนวณคอมมิชชั่นล้มเหลว
+      }
 
       return sale;
     } catch (error) {

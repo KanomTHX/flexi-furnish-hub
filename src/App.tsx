@@ -22,6 +22,7 @@ const Warehouses = lazy(() => import("./pages/Warehouses"));
 const Transfer = lazy(() => import("./pages/Transfer"));
 const BranchManagement = lazy(() => import("./pages/BranchManagement"));
 const Accounting = lazy(() => import("./pages/Accounting"));
+
 const Claims = lazy(() => import("./pages/Claims"));
 const Audit = lazy(() => import("./pages/Audit"));
 const Reports = lazy(() => import("./pages/Reports"));
@@ -29,10 +30,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Employees = lazy(() => import("./pages/Employees"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const DatabaseSetup = lazy(() => import("./pages/DatabaseSetup"));
-const DatabaseInstaller = lazy(() => import("./pages/DatabaseInstaller"));
-const DatabaseQuickStart = lazy(() => import("./pages/DatabaseQuickStart"));
-const ManualDatabaseSetup = lazy(() => import("./pages/ManualDatabaseSetup"));
+
 const LogAnalysis = lazy(() => import("./pages/LogAnalysis"));
 
 // Testing components would go here if needed
@@ -136,6 +134,7 @@ const App = () => {
                 </AdminLayout>
               </ProtectedRoute>
             } />
+
             <Route path="/claims" element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -172,43 +171,7 @@ const App = () => {
                 </AdminLayout>
               </ProtectedRoute>
             } />
-            <Route path="/database" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบฐานข้อมูล..." />}>
-                    <DatabaseSetup />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/database-installer" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดตัวติดตั้งฐานข้อมูล..." />}>
-                    <DatabaseInstaller />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/database-quickstart" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดคู่มือเริ่มต้น..." />}>
-                    <DatabaseQuickStart />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
 
-            <Route path="/manual-database-setup" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการติดตั้งฐานข้อมูลแบบ Manual..." />}>
-                    <ManualDatabaseSetup />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
             <Route path="/log-analysis" element={
               <ProtectedRoute>
                 <AdminLayout>

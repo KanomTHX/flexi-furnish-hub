@@ -1,5 +1,7 @@
-// Placeholder hooks and mock data exports for compatibility
-import { useState } from 'react';
+// Real database hooks and mock data exports for compatibility
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 // Mock data exports for compatibility
 export const mockEmployees = [];
@@ -41,14 +43,85 @@ export const mockWarehouseAlerts = [];
 export const calculateWarehouseSummary = () => ({});
 
 export function useEmployees() {
+  const { toast } = useToast();
   const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
+  // Fetch employees from database
+  const fetchEmployees = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .select(`
+          *,
+          department:departments(id, name),
+          position:positions(id, name)
+        `);
+      
+      if (error) throw error;
+      setEmployees(data || []);
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถดึงข้อมูลพนักงานได้",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  // Fetch departments
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      setDepartments(data || []);
+    } catch (err: any) {
+      console.error('Error fetching departments:', err.message);
+    }
+  }, []);
+
+  // Fetch positions
+  const fetchPositions = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('positions')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      setPositions(data || []);
+    } catch (err: any) {
+      console.error('Error fetching positions:', err.message);
+    }
+  }, []);
+
+  // Load data on mount
+  useEffect(() => {
+    fetchEmployees();
+    fetchDepartments();
+    fetchPositions();
+  }, [fetchEmployees, fetchDepartments, fetchPositions]);
+  
   return {
     employees,
+    departments,
+    positions,
     loading,
     error,
+    fetchEmployees,
+    fetchDepartments,
+    fetchPositions,
     addEmployee: () => {},
     updateEmployee: () => {},
     deleteEmployee: () => {},

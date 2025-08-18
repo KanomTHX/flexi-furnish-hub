@@ -190,7 +190,7 @@ export const JournalEntryList: React.FC<JournalEntryListProps> = ({
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
@@ -209,7 +209,7 @@ export const JournalEntryList: React.FC<JournalEntryListProps> = ({
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   <SelectItem value="manual">Manual</SelectItem>
                   <SelectItem value="supplier_invoice">Supplier Invoice</SelectItem>
                   <SelectItem value="supplier_payment">Supplier Payment</SelectItem>

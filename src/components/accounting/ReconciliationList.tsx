@@ -36,7 +36,7 @@ import {
   Filter
 } from 'lucide-react';
 import { ReconciliationService, type ReconciliationFilter } from '@/services/reconciliationService';
-import { ChartOfAccountsService } from '@/services/chartOfAccountsService';
+import { chartOfAccountsService } from '@/services/chartOfAccountsService';
 import type { ReconciliationReport, Account } from '@/types/accounting';
 import { ReconciliationForm } from './ReconciliationForm';
 import { ReconciliationDetails } from './ReconciliationDetails';
@@ -51,7 +51,7 @@ export function ReconciliationList({ onReconciliationSelect }: ReconciliationLis
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'in_progress' | 'completed' | 'reviewed'>('all');
   const [accountFilter, setAccountFilter] = useState<string>('');
   const [selectedReconciliation, setSelectedReconciliation] = useState<ReconciliationReport | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -72,7 +72,7 @@ export function ReconciliationList({ onReconciliationSelect }: ReconciliationLis
       setLoading(true);
       const filter: ReconciliationFilter = {
         search: searchTerm || undefined,
-        status: statusFilter || undefined,
+        status: statusFilter === 'all' ? undefined : statusFilter,
         accountId: accountFilter || undefined,
         limit: pageSize,
         offset: (currentPage - 1) * pageSize
@@ -95,8 +95,8 @@ export function ReconciliationList({ onReconciliationSelect }: ReconciliationLis
 
   const loadAccounts = async () => {
     try {
-      const result = await ChartOfAccountsService.getAccounts();
-      setAccounts(result.data);
+      const result = await chartOfAccountsService.getAccounts();
+      setAccounts(result);
     } catch (error) {
       console.error('Failed to load accounts:', error);
     }
@@ -204,12 +204,12 @@ export function ReconciliationList({ onReconciliationSelect }: ReconciliationLis
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value: string) => setStatusFilter(value as 'all' | 'completed' | 'draft' | 'in_progress' | 'reviewed')}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
@@ -221,7 +221,7 @@ export function ReconciliationList({ onReconciliationSelect }: ReconciliationLis
                 <SelectValue placeholder="Filter by account" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Accounts</SelectItem>
+                <SelectItem value="all">All Accounts</SelectItem>
                 {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.code} - {account.name}

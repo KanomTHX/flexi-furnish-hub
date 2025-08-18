@@ -31,6 +31,8 @@ import { TrainingManagement } from '@/components/employees/TrainingManagement';
 import { EmployeeAnalytics } from '@/components/employees/EmployeeAnalytics';
 import { ExportEmployeeDataDialog } from '@/components/employees/ExportEmployeeDataDialog';
 import { AddEmployeeDialog } from '@/components/employees/AddEmployeeDialog';
+import { EmployeeDashboard } from '@/components/employees/EmployeeDashboard';
+import { EmployeeReport } from '@/components/reports/EmployeeReport';
 
 const Employees: React.FC = () => {
   const {
@@ -217,13 +219,15 @@ const Employees: React.FC = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">ภาพรวม</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="employees">พนักงาน</TabsTrigger>
           <TabsTrigger value="attendance">การเข้าทำงาน</TabsTrigger>
           <TabsTrigger value="leaves">การลา</TabsTrigger>
           <TabsTrigger value="payroll">เงินเดือน</TabsTrigger>
           <TabsTrigger value="training">การอบรม</TabsTrigger>
+          <TabsTrigger value="reports">รายงาน</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -308,6 +312,11 @@ const Employees: React.FC = () => {
           <EmployeeAnalytics analytics={currentAnalytics} />
         </TabsContent>
 
+        {/* Dashboard Tab */}
+        <TabsContent value="dashboard">
+          <EmployeeDashboard isManager={true} />
+        </TabsContent>
+
         {/* Employee Management Tab */}
         <TabsContent value="employees">
           <EmployeeManagement />
@@ -331,6 +340,11 @@ const Employees: React.FC = () => {
         {/* Training Management Tab */}
         <TabsContent value="training">
           <TrainingManagement />
+        </TabsContent>
+
+        {/* Reports Tab */}
+        <TabsContent value="reports">
+          <EmployeeReport />
         </TabsContent>
       </Tabs>
 
