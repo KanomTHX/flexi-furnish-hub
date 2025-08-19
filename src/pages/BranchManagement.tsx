@@ -16,6 +16,7 @@ import {
 import { useBranchData } from '../hooks/useBranchData';
 import { BranchSelector } from '../components/branch/BranchSelector';
 import { BranchDashboard } from '../components/branch/BranchDashboard';
+import { AddBranchDialog } from '../components/branch/AddBranchDialog';
 import { Branch } from '../types/branch';
 
 function BranchManagement() {
@@ -34,6 +35,12 @@ function BranchManagement() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'branches' | 'comparison'>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [showAddBranchDialog, setShowAddBranchDialog] = useState(false);
+
+  const handleBranchAdded = () => {
+    // Refresh branch data after adding new branch
+    window.location.reload();
+  };
 
 
   const formatCurrency = (amount: number) => {
@@ -125,7 +132,10 @@ function BranchManagement() {
             <span>ส่งออกข้อมูล</span>
           </button>
           
-          <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <button 
+            onClick={() => setShowAddBranchDialog(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
             <Plus className="h-4 w-4" />
             <span>เพิ่มสาขาใหม่</span>
           </button>
@@ -441,6 +451,13 @@ function BranchManagement() {
             </div>
           )}
         </div>
+        
+        {/* Add Branch Dialog */}
+        <AddBranchDialog
+          open={showAddBranchDialog}
+          onOpenChange={setShowAddBranchDialog}
+          onBranchAdded={handleBranchAdded}
+        />
       </div>
     </div>
   );

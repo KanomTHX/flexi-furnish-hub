@@ -1,5 +1,15 @@
 // Branch Management Types - Multi-Branch Data Separation System
 
+export interface CreateBranchData {
+  name: string;
+  code?: string;
+  address: string;
+  phone?: string;
+  email?: string;
+  manager_name?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
+}
+
 export interface Branch {
   id: string;
   code: string;
