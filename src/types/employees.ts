@@ -8,6 +8,7 @@ export interface Employee {
   address: string;
   dateOfBirth: string;
   hireDate: string;
+  terminationDate?: string; // วันที่ออกจากงาน
   position: Position;
   department: Department;
   salary: number;
@@ -467,6 +468,7 @@ export interface EmployeeFormData {
   hireDate: string;
   positionId: string;
   departmentId: string;
+  branchId: string;
   salary: number;
   emergencyContact: EmergencyContact;
   bankAccount: BankAccount;

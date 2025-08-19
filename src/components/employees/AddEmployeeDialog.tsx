@@ -36,6 +36,7 @@ import {
   Save
 } from 'lucide-react';
 import { useEmployees } from '@/hooks/useEmployees';
+import { useBranchData } from '@/hooks/useBranchData';
 import { useToast } from '@/hooks/use-toast';
 import { EmployeeFormData } from '@/types/employees';
 import { ThaiAddressSelector } from '@/components/common/ThaiAddressSelector';
@@ -56,6 +57,7 @@ export const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
   onOpenChange,
 }) => {
   const { departments, positions, addEmployee } = useEmployees();
+  const { branches } = useBranchData();
   const { toast } = useToast();
 
   const [currentStep, setCurrentStep] = useState<FormStep>('personal');
@@ -72,6 +74,7 @@ export const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
     hireDate: new Date().toISOString().split('T')[0],
     positionId: '',
     departmentId: '',
+    branchId: '',
     salary: 0,
     emergencyContact: {
       name: '',
@@ -179,6 +182,7 @@ export const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       case 'position':
         if (!formData.departmentId) newErrors.departmentId = 'กรุณาเลือกแผนก';
         if (!formData.positionId) newErrors.positionId = 'กรุณาเลือกตำแหน่ง';
+        if (!formData.branchId) newErrors.branchId = 'กรุณาเลือกสาขา';
         if (!formData.salary || formData.salary <= 0) newErrors.salary = 'กรุณากรอกเงินเดือน';
         break;
 
@@ -260,6 +264,7 @@ export const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         hireDate: new Date().toISOString().split('T')[0],
         positionId: '',
         departmentId: '',
+        branchId: '',
         salary: 0,
         emergencyContact: {
           name: '',
@@ -401,7 +406,7 @@ export const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       case 'position':
         return (
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label>แผนก *</Label>
                 <Select 
@@ -451,6 +456,31 @@ export const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
                 </Select>
                 {errors.positionId && (
                   <p className="text-sm text-red-500">{errors.positionId}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>สาขา *</Label>
+                <Select 
+                  value={formData.branchId} 
+                  onValueChange={(value) => updateFormData('branchId', value)}
+                >
+                  <SelectTrigger className={errors.branchId ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="เลือกสาขา" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branches.map(branch => (
+                      <SelectItem key={branch.id} value={branch.id}>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          {branch.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.branchId && (
+                  <p className="text-sm text-red-500">{errors.branchId}</p>
                 )}
               </div>
             </div>

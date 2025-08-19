@@ -73,11 +73,11 @@ export const EmployeeManagement: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { label: 'Active', variant: 'default' as const, color: 'bg-green-100 text-green-800' },
-      inactive: { label: 'Inactive', variant: 'secondary' as const, color: 'bg-gray-100 text-gray-800' },
-      terminated: { label: 'Terminated', variant: 'destructive' as const, color: 'bg-red-100 text-red-800' },
-      'on-leave': { label: 'On Leave', variant: 'outline' as const, color: 'bg-yellow-100 text-yellow-800' },
-      probation: { label: 'Probation', variant: 'secondary' as const, color: 'bg-blue-100 text-blue-800' }
+      active: { label: 'ทำงาน', variant: 'default' as const, color: 'bg-green-100 text-green-800' },
+      inactive: { label: 'ไม่ทำงาน', variant: 'secondary' as const, color: 'bg-gray-100 text-gray-800' },
+      terminated: { label: 'ออกจากงาน', variant: 'destructive' as const, color: 'bg-red-100 text-red-800' },
+      'on-leave': { label: 'ลาพัก', variant: 'outline' as const, color: 'bg-yellow-100 text-yellow-800' },
+      probation: { label: 'ทดลองงาน', variant: 'secondary' as const, color: 'bg-blue-100 text-blue-800' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
@@ -100,7 +100,7 @@ export const EmployeeManagement: React.FC = () => {
   };
 
   const handleDeleteEmployee = (employeeId: string) => {
-    if (confirm('Are you sure you want to delete this employee?')) {
+    if (confirm('คุณแน่ใจหรือไม่ที่จะลบพนักงานคนนี้?')) {
       deleteEmployee(employeeId);
     }
   };
@@ -137,14 +137,14 @@ export const EmployeeManagement: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Employee Management</h2>
+          <h2 className="text-3xl font-bold tracking-tight">จัดการพนักงาน</h2>
           <p className="text-muted-foreground">
-            Manage employee information and records
+            จัดการข้อมูลและบันทึกของพนักงาน
           </p>
         </div>
         <Button onClick={handleAddEmployee}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Employee
+          เพิ่มพนักงาน
         </Button>
       </div>
 
@@ -152,7 +152,7 @@ export const EmployeeManagement: React.FC = () => {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
+            <CardTitle className="text-sm font-medium">พนักงานทั้งหมด</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -160,7 +160,7 @@ export const EmployeeManagement: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-sm font-medium">ทำงาน</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
@@ -168,7 +168,7 @@ export const EmployeeManagement: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
+            <CardTitle className="text-sm font-medium">ไม่ทำงาน</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-600">{stats.inactive}</div>
@@ -176,7 +176,7 @@ export const EmployeeManagement: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">On Leave</CardTitle>
+            <CardTitle className="text-sm font-medium">ลาพัก</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{stats.onLeave}</div>
@@ -189,7 +189,7 @@ export const EmployeeManagement: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Filter className="h-5 w-5 mr-2" />
-            Filters
+            ตัวกรอง
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -198,7 +198,7 @@ export const EmployeeManagement: React.FC = () => {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search employees..."
+                  placeholder="ค้นหาพนักงาน..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
@@ -208,10 +208,10 @@ export const EmployeeManagement: React.FC = () => {
             
             <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Departments" />
+                <SelectValue placeholder="แผนกทั้งหมด" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
+                <SelectItem value="all">แผนกทั้งหมด</SelectItem>
                 {departments.map((dept) => (
                   <SelectItem key={dept.id} value={dept.id}>
                     {dept.name}
@@ -222,15 +222,15 @@ export const EmployeeManagement: React.FC = () => {
 
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="All Status" />
+                <SelectValue placeholder="สถานะทั้งหมด" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="on-leave">On Leave</SelectItem>
-                <SelectItem value="terminated">Terminated</SelectItem>
-                <SelectItem value="probation">Probation</SelectItem>
+                <SelectItem value="all">สถานะทั้งหมด</SelectItem>
+                <SelectItem value="active">ทำงาน</SelectItem>
+                <SelectItem value="inactive">ไม่ทำงาน</SelectItem>
+                <SelectItem value="on-leave">ลาพัก</SelectItem>
+                <SelectItem value="terminated">ออกจากงาน</SelectItem>
+                <SelectItem value="probation">ทดลองงาน</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -244,14 +244,14 @@ export const EmployeeManagement: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Salary</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Hire Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>พนักงาน</TableHead>
+                  <TableHead>รหัสพนักงาน</TableHead>
+                  <TableHead>แผนก</TableHead>
+                  <TableHead>ตำแหน่ง</TableHead>
+                  <TableHead>เงินเดือน</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead>วันที่เริ่มงาน</TableHead>
+                  <TableHead className="text-right">การดำเนินการ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -295,22 +295,22 @@ export const EmployeeManagement: React.FC = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleViewEmployee(employee)}>
                             <Eye className="mr-2 h-4 w-4" />
-                            View
+                            ดู
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEditEmployee(employee)}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            แก้ไข
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleToggleStatus(employee)}>
                             {employee.status === 'active' ? (
                               <>
                                 <UserX className="mr-2 h-4 w-4" />
-                                Deactivate
+                                ปิดใช้งาน
                               </>
                             ) : (
                               <>
                                 <UserCheck className="mr-2 h-4 w-4" />
-                                Activate
+                                เปิดใช้งาน
                               </>
                             )}
                           </DropdownMenuItem>
@@ -319,7 +319,7 @@ export const EmployeeManagement: React.FC = () => {
                             className="text-red-600"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            ลบ
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -337,12 +337,12 @@ export const EmployeeManagement: React.FC = () => {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedEmployee ? 'Edit Employee' : 'Add New Employee'}
+              {selectedEmployee ? 'แก้ไขข้อมูลพนักงาน' : 'เพิ่มพนักงานใหม่'}
             </DialogTitle>
             <DialogDescription>
               {selectedEmployee 
-                ? 'Update employee information below.' 
-                : 'Fill in the details to add a new employee.'
+                ? 'อัปเดตข้อมูลพนักงานด้านล่าง' 
+                : 'กรอกรายละเอียดเพื่อเพิ่มพนักงานใหม่'
               }
             </DialogDescription>
           </DialogHeader>
@@ -358,7 +358,7 @@ export const EmployeeManagement: React.FC = () => {
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Employee Details</DialogTitle>
+            <DialogTitle>รายละเอียดพนักงาน</DialogTitle>
           </DialogHeader>
           {selectedEmployee && (
             <EmployeeDetail

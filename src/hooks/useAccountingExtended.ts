@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useToast } from './use-toast';
+import { useAuth } from './useAuth';
 import type {
   APInvoice,
   ARInvoice,
@@ -23,14 +24,15 @@ import type {
 } from '../types/accountingExtended';
 
 export function useAccountingExtended() {
-  const [loading, setLoading] = useState(false);
   const [apInvoices, setAPInvoices] = useState<APInvoice[]>([]);
   const [arInvoices, setARInvoices] = useState<ARInvoice[]>([]);
   const [expenses, setExpenses] = useState<AccountingExpense[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
   const [taxTransactions, setTaxTransactions] = useState<TaxTransaction[]>([]);
   const [financialReports, setFinancialReports] = useState<FinancialReport[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // ========================================
   // AP INVOICE MANAGEMENT
@@ -496,7 +498,7 @@ export function useAccountingExtended() {
           branch_id: branchId,
           data: reportData,
           status: 'completed',
-          generated_by: 'current_user' // TODO: ใช้ user ID จริง
+          generated_by: user?.id || 'system'
         })
         .select()
         .single();

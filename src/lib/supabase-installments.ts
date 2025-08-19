@@ -44,7 +44,9 @@ export async function createInstallmentContract(
     collateral?: string;
     terms?: string;
     notes?: string;
-  }
+  },
+  branchId: string,
+  userId?: string
 ): Promise<InstallmentContract> {
   try {
     const contractNumber = `CONTRACT-${Date.now()}`;
@@ -84,7 +86,7 @@ export async function createInstallmentContract(
         collateral: contractData.collateral,
         terms: contractData.terms,
         notes: contractData.notes,
-        created_by: 'current_user' // TODO: ใช้ user ID จริง
+        created_by: userId || 'system'
       })
       .select()
       .single();
@@ -233,7 +235,8 @@ export async function recordPayment(
   paymentId: string,
   paidAmount: number,
   paymentMethod: string,
-  receiptNumber?: string
+  receiptNumber?: string,
+  userId?: string
 ): Promise<InstallmentPayment> {
   try {
     const { data, error } = await supabase
@@ -244,7 +247,7 @@ export async function recordPayment(
         payment_method: paymentMethod,
         receipt_number: receiptNumber,
         status: paidAmount >= 0 ? 'paid' : 'partial',
-        processed_by: 'current_user' // TODO: ใช้ user ID จริง
+        processed_by: userId || 'system'
       })
       .eq('id', paymentId)
       .select()

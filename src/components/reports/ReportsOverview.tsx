@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ReportStats } from '@/types/reports';
 import { formatCurrency, formatNumber } from '@/utils/reportHelpers';
+import { useDashboardData } from '@/hooks/useDashboardData';
 
 interface ReportsOverviewProps {
   stats: ReportStats | null;
@@ -26,36 +27,38 @@ export const ReportsOverview: React.FC<ReportsOverviewProps> = ({
   onRefresh,
   onGenerateReport
 }) => {
+  const dashboardData = useDashboardData();
+  
   const quickStats = [
     {
       title: 'ยอดขายวันนี้',
-      value: formatCurrency(125000),
-      change: '+12.5%',
-      trend: 'up',
+      value: formatCurrency(dashboardData.stats?.todaySales?.revenue || 0),
+      change: `${dashboardData.stats?.todaySales?.growth >= 0 ? '+' : ''}${dashboardData.stats?.todaySales?.growth?.toFixed(1) || '0'}%`,
+      trend: (dashboardData.stats?.todaySales?.growth || 0) >= 0 ? 'up' : 'down',
       icon: DollarSign,
       color: 'text-green-600'
     },
     {
       title: 'จำนวนออเดอร์',
-      value: '45',
-      change: '+8.2%',
-      trend: 'up',
+      value: formatNumber(dashboardData.stats?.todaySales?.count || 0),
+      change: `${dashboardData.stats?.todaySales?.growth >= 0 ? '+' : ''}${dashboardData.stats?.todaySales?.growth?.toFixed(1) || '0'}%`,
+      trend: (dashboardData.stats?.todaySales?.growth || 0) >= 0 ? 'up' : 'down',
       icon: FileText,
       color: 'text-blue-600'
     },
     {
       title: 'สินค้าในสต็อก',
-      value: formatNumber(1250),
-      change: '-2.1%',
-      trend: 'down',
+      value: formatNumber(dashboardData.stats?.products?.total || 0),
+      change: `${dashboardData.stats?.products?.lowStock || 0} รายการใกล้หมด`,
+      trend: (dashboardData.stats?.products?.lowStock || 0) > 0 ? 'down' : 'up',
       icon: Package,
       color: 'text-orange-600'
     },
     {
-      title: 'ลูกค้าใหม่',
-      value: '23',
-      change: '+15.3%',
-      trend: 'up',
+      title: 'ลูกค้าใหม่วันนี้',
+      value: formatNumber(dashboardData.stats?.customers?.newToday || 0),
+      change: `${dashboardData.stats?.customers?.growth >= 0 ? '+' : ''}${dashboardData.stats?.customers?.growth?.toFixed(1) || '0'}%`,
+      trend: (dashboardData.stats?.customers?.growth || 0) >= 0 ? 'up' : 'down',
       icon: Users,
       color: 'text-purple-600'
     }
@@ -92,6 +95,41 @@ export const ReportsOverview: React.FC<ReportsOverviewProps> = ({
     }
   ];
 
+  if (dashboardData.loading && !dashboardData.stats) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-center items-center py-12">
+          <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">กำลังโหลดข้อมูล...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (dashboardData.error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-red-600">
+              <p className="font-medium">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+              <p className="text-sm text-muted-foreground mt-1">{dashboardData.error}</p>
+              <Button 
+                onClick={() => dashboardData.refresh()} 
+                variant="outline" 
+                size="sm" 
+                className="mt-4"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                ลองใหม่
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -100,11 +138,24 @@ export const ReportsOverview: React.FC<ReportsOverviewProps> = ({
           <h2 className="text-2xl font-bold">ภาพรวมรายงาน</h2>
           <p className="text-muted-foreground">
             สรุปข้อมูลสำคัญและรายงานต่างๆ
+            {dashboardData.lastUpdated && (
+              <span className="block text-xs mt-1">
+                อัปเดตล่าสุด: {dashboardData.lastUpdated.toLocaleTimeString('th-TH')}
+              </span>
+            )}
           </p>
         </div>
-        <Button onClick={onRefresh} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          รีเฟรช
+        <Button 
+          onClick={() => {
+            dashboardData.refresh();
+            onRefresh();
+          }} 
+          variant="outline" 
+          size="sm"
+          disabled={dashboardData.loading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${dashboardData.loading ? 'animate-spin' : ''}`} />
+          {dashboardData.loading ? 'กำลังโหลด...' : 'รีเฟรช'}
         </Button>
       </div>
 
@@ -144,6 +195,41 @@ export const ReportsOverview: React.FC<ReportsOverviewProps> = ({
         })}
       </div>
 
+      {/* Dashboard Statistics */}
+      <Card>
+        <CardHeader>
+          <CardTitle>สถิติระบบ</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-blue-600">
+                {formatNumber(dashboardData.stats?.customers?.total || 0)}
+              </p>
+              <p className="text-sm text-muted-foreground">ลูกค้าทั้งหมด</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">
+                {formatNumber(dashboardData.stats?.employees?.total || 0)}
+              </p>
+              <p className="text-sm text-muted-foreground">พนักงานทั้งหมด</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-orange-600">
+                {formatNumber(dashboardData.stats?.products?.lowStock || 0)}
+              </p>
+              <p className="text-sm text-muted-foreground">สินค้าใกล้หมด</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-purple-600">
+                {formatCurrency(dashboardData.stats?.inventory?.totalValue || 0)}
+              </p>
+              <p className="text-sm text-muted-foreground">มูลค่าสต็อกรวม</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
       {/* Report Statistics */}
       {stats && (
         <Card>

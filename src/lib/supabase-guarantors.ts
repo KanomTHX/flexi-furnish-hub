@@ -329,7 +329,8 @@ export async function uploadGuarantorDocument(
   guarantorId: string,
   file: File,
   documentType: ContractDocument['documentType'],
-  description?: string
+  description?: string,
+  userId?: string
 ): Promise<ContractDocument> {
   try {
     // อัปโหลดไฟล์ไป Supabase Storage
@@ -354,7 +355,7 @@ export async function uploadGuarantorDocument(
         file_size: file.size,
         mime_type: file.type,
         description: description,
-        uploaded_by: 'current_user' // TODO: ใช้ user ID จริง
+        uploaded_by: userId || 'system'
       }])
       .select()
       .single();

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Employee, 
@@ -25,26 +25,18 @@ import {
   TrainingFormData,
   CommissionStatus
 } from '@/types/employees';
-import { 
-  mockEmployees, 
-  mockDepartments, 
-  mockPositions, 
-  mockAttendance, 
-  mockLeaves, 
-  mockPayrolls, 
-  mockTrainings 
-} from '@/hooks/useSupabaseHooks';
+import { supabase } from '@/lib/supabase';
 
 export const useEmployees = () => {
   const { toast } = useToast();
   
-  const [employees] = useState<Employee[]>(mockEmployees);
-  const [departments] = useState<Department[]>(mockDepartments);
-  const [positions] = useState<Position[]>(mockPositions);
-  const [attendance] = useState<Attendance[]>(mockAttendance);
-  const [leaves] = useState<Leave[]>(mockLeaves);
-  const [payrolls] = useState<Payroll[]>(mockPayrolls);
-  const [trainings] = useState<Training[]>(mockTrainings);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [payrolls, setPayrolls] = useState<Payroll[]>([]);
+  const [trainings, setTrainings] = useState<Training[]>([]);
   const [commissions] = useState<Commission[]>([]);
   const [attendanceRecords] = useState<AttendanceRecord[]>([]);
   const [leaveRequests] = useState<LeaveRequest[]>([]);
@@ -77,39 +69,266 @@ export const useEmployees = () => {
       responsibilities: ['จัดการสต็อก', 'ตรวจนับสินค้า', 'จัดส่งสินค้า']
     }
   ]);
-  const [loading] = useState(false);
-  const [error] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch employees from database
+  const fetchEmployees = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .select(`
+          *,
+          department:departments(id, name),
+          position:positions(id, name)
+        `);
+      
+      if (error) throw error;
+      setEmployees(data || []);
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถดึงข้อมูลพนักงานได้",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  // Fetch departments
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      setDepartments(data || []);
+    } catch (err: any) {
+      console.error('Error fetching departments:', err.message);
+    }
+  }, []);
+
+  // Fetch positions
+  const fetchPositions = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('positions')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      setPositions(data || []);
+    } catch (err: any) {
+      console.error('Error fetching positions:', err.message);
+    }
+  }, []);
+
+  // Fetch attendance records
+  const fetchAttendance = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('attendance_records')
+        .select(`
+          *,
+          employee:employees(id, first_name, last_name)
+        `);
+      
+      if (error) throw error;
+      setAttendance(data || []);
+    } catch (err: any) {
+      console.error('Error fetching attendance:', err.message);
+    }
+  }, []);
+
+  // Fetch leave requests
+  const fetchLeaves = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select(`
+          *,
+          employee:employees(id, first_name, last_name)
+        `);
+      
+      if (error) throw error;
+      setLeaves(data || []);
+    } catch (err: any) {
+      console.error('Error fetching leaves:', err.message);
+    }
+  }, []);
+
+  // Load data on mount
+  useEffect(() => {
+    fetchEmployees();
+    fetchDepartments();
+    fetchPositions();
+    fetchAttendance();
+    fetchLeaves();
+  }, [fetchEmployees, fetchDepartments, fetchPositions, fetchAttendance, fetchLeaves]);
 
   // Calculate analytics
   const analytics = useMemo((): EmployeeAnalytics => {
     const totalEmployees = employees.length;
     const activeEmployees = employees.filter(e => e.status === 'active').length;
     
+    // Calculate new hires (employees hired in last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const newHires = employees.filter(e => 
+      e.hireDate && new Date(e.hireDate) >= thirtyDaysAgo
+    ).length;
+    
+    // Calculate terminations (employees terminated in last 30 days)
+    const terminations = employees.filter(e => 
+      e.terminationDate && new Date(e.terminationDate) >= thirtyDaysAgo
+    ).length;
+    
+    // Calculate average salary from actual employee data
+    const salaries = employees.filter(e => e.salary && e.salary > 0).map(e => e.salary || 0);
+    const averageSalary = salaries.length > 0 
+      ? Math.round(salaries.reduce((sum, salary) => sum + salary, 0) / salaries.length)
+      : 0;
+    
+    // Calculate total payroll
+    const totalPayroll = salaries.reduce((sum, salary) => sum + salary, 0);
+    
+    // Calculate attendance rate from attendance records
+    const recentAttendance = attendance.filter(record => {
+      const recordDate = new Date(record.date);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      return recordDate >= sevenDaysAgo;
+    });
+    
+    const attendanceRate = recentAttendance.length > 0 
+      ? Math.round((recentAttendance.filter(r => r.status === 'present').length / recentAttendance.length) * 100)
+      : 0;
+    
+    // Calculate turnover rate (terminations / total employees * 100)
+    const turnoverRate = totalEmployees > 0 
+      ? Math.round((terminations / totalEmployees) * 100)
+      : 0;
+    
+    // Calculate department breakdown
+    const departmentBreakdown = departments.map(dept => {
+      const deptEmployees = employees.filter(emp => emp.department?.id === dept.id);
+      const deptSalaries = deptEmployees.filter(e => e.salary && e.salary > 0).map(e => e.salary || 0);
+      const avgSalary = deptSalaries.length > 0 ? Math.round(deptSalaries.reduce((sum, sal) => sum + sal, 0) / deptSalaries.length) : 0;
+      const totalSalaries = deptSalaries.reduce((sum, sal) => sum + sal, 0);
+      const estimatedBudget = totalSalaries * 1.2; // Estimate budget as 120% of total salaries
+      
+      return {
+        departmentId: dept.id,
+        departmentName: dept.name,
+        employeeCount: deptEmployees.length,
+        averageSalary: avgSalary,
+        percentage: totalEmployees > 0 ? Math.round((deptEmployees.length / totalEmployees) * 100) : 0,
+        activeEmployees: deptEmployees.filter(e => e.status === 'active').length,
+        totalBudget: estimatedBudget,
+        utilizationRate: estimatedBudget > 0 ? Math.round((totalSalaries / estimatedBudget) * 100) : 0
+      };
+    });
+    
+    // Calculate position breakdown
+    const positionBreakdown = positions.map(pos => {
+      const posEmployees = employees.filter(emp => emp.position?.id === pos.id);
+      const posSalaries = posEmployees.filter(e => e.salary && e.salary > 0).map(e => e.salary || 0);
+      const avgSalary = posSalaries.length > 0 ? Math.round(posSalaries.reduce((sum, sal) => sum + sal, 0) / posSalaries.length) : 0;
+      const totalSalaries = posSalaries.reduce((sum, sal) => sum + sal, 0);
+      const estimatedBudget = totalSalaries * 1.2; // Estimate budget as 120% of total salaries
+      
+      return {
+        positionId: pos.id,
+        positionName: pos.name,
+        employeeCount: posEmployees.length,
+        averageSalary: avgSalary,
+        vacancies: 0,
+        totalBudget: estimatedBudget,
+        utilizationRate: estimatedBudget > 0 ? Math.round((totalSalaries / estimatedBudget) * 100) : 0
+      };
+    });
+    
     return {
       totalEmployees,
       activeEmployees,
-      newHires: 3,
-      terminations: 0,
-      averageSalary: 35000,
-      totalPayroll: totalEmployees * 35000,
-      attendanceRate: 95,
-      turnoverRate: 5,
-      departmentBreakdown: [],
-      positionBreakdown: [],
+      newHires,
+      terminations,
+      averageSalary,
+      totalPayroll,
+      attendanceRate,
+      turnoverRate,
+      departmentBreakdown,
+      positionBreakdown,
       ageDistribution: [],
       tenureDistribution: [],
       performanceDistribution: []
     };
-  }, [employees]);
+  }, [employees, departments, positions, attendance]);
 
-  // Placeholder functions to prevent build errors
-  const addEmployee = useCallback((employeeData: EmployeeFormData) => {
-    toast({
-      title: "ฟีเจอร์นี้อยู่ระหว่างการพัฒนา",
-      description: "ระบบจัดการพนักงานกำลังอยู่ในขั้นตอนการพัฒนา",
-    });
-    return null;
-  }, [toast]);
+  // Add employee to database
+  const addEmployee = useCallback(async (employeeData: EmployeeFormData) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Prepare employee data for database
+      const employeeRecord = {
+        employee_code: `EMP${Date.now()}`, // Generate unique employee code
+        first_name: employeeData.firstName,
+        last_name: employeeData.lastName,
+        email: employeeData.email,
+        phone: employeeData.phone,
+        address: employeeData.address,
+        date_of_birth: employeeData.dateOfBirth,
+        hire_date: employeeData.hireDate,
+        position_id: employeeData.positionId,
+        department_id: employeeData.departmentId,
+        branch_id: employeeData.branchId,
+        salary: employeeData.salary,
+        status: 'active',
+        emergency_contact: employeeData.emergencyContact,
+        bank_account: employeeData.bankAccount,
+        work_schedule: employeeData.workSchedule
+      };
+
+      const { data, error } = await supabase
+        .from('employees')
+        .insert([employeeRecord])
+        .select(`
+          *,
+          department:departments(id, name),
+          position:positions(id, name)
+        `);
+      
+      if (error) throw error;
+      
+      // Update local state
+      if (data && data[0]) {
+        setEmployees(prev => [...prev, data[0]]);
+      }
+      
+      // Refresh employees list
+      await fetchEmployees();
+      
+      return data?.[0] || null;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: `ไม่สามารถเพิ่มพนักงานได้: ${err.message}`,
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast, fetchEmployees]);
 
   const updateEmployee = useCallback((id: string, updates: Partial<Employee>) => {
     toast({

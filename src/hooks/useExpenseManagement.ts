@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useToast } from './use-toast';
+import { useAuth } from './useAuth';
 import type {
   AccountingExpense,
   ExpenseCategory,
@@ -38,6 +39,7 @@ export function useExpenseManagement() {
   const [expenses, setExpenses] = useState<AccountingExpense[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // ========================================
   // EXPENSE CATEGORY MANAGEMENT
@@ -329,7 +331,7 @@ export function useExpenseManagement() {
           employee_id: data.employeeId,
           attachments: data.attachments || [],
           status: 'pending',
-          created_by: 'current_user' // TODO: ใช้ user ID จริง
+          created_by: user?.id || 'system'
         })
         .select()
         .single();

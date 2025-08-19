@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { useInstallmentPayments, PaymentTrackingData } from '@/hooks/useInstallmentPayments';
 import { InstallmentPayment, Customer } from '@/types/unified';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Calendar, 
   Clock, 
@@ -58,6 +59,7 @@ export function PaymentTracker({ contractId, showOverdueOnly = false }: PaymentT
   } = useInstallmentPayments();
   
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // โหลดข้อมูลเมื่อ component mount
   useEffect(() => {
@@ -105,7 +107,7 @@ export function PaymentTracker({ contractId, showOverdueOnly = false }: PaymentT
       paymentMethod: paymentForm.paymentMethod as any,
       receiptNumber: paymentForm.receiptNumber,
       notes: paymentForm.notes,
-      processedBy: 'current_user' // TODO: ใช้ user ID จริง
+      processedBy: user?.id || 'system'
     };
 
     const result = await recordPayment(paymentData);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,15 @@ import {
 } from 'lucide-react';
 import { InventoryReport } from '@/types/reports';
 import { formatCurrency, formatNumber } from '@/utils/reportHelpers';
+import { 
+  InventoryReportService, 
+  InventorySummary, 
+  LowStockItem, 
+  SlowMovingItem, 
+  StockMovement, 
+  CategoryBreakdown 
+} from '@/services/inventoryReportService';
+import { useToast } from '@/hooks/use-toast';
 
 interface InventoryReportsProps {
   inventoryReports: InventoryReport[];
@@ -41,47 +50,97 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [dataLoading, setDataLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Mock inventory data
-  const inventorySummary = {
-    totalProducts: 1250,
-    totalValue: 2850000,
-    lowStockItems: 45,
-    outOfStockItems: 12,
-    slowMovingItems: 28,
-    fastMovingItems: 156
+  // Real inventory data from database
+  const [inventorySummary, setInventorySummary] = useState<InventorySummary>({
+    totalProducts: 0,
+    totalValue: 0,
+    lowStockItems: 0,
+    outOfStockItems: 0,
+    slowMovingItems: 0,
+    fastMovingItems: 0
+  });
+  const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
+  const [slowMovingItems, setSlowMovingItems] = useState<SlowMovingItem[]>([]);
+  const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
+  const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
+
+  // Load inventory data from database
+  useEffect(() => {
+    loadInventoryData();
+  }, []);
+
+  const loadInventoryData = async () => {
+    try {
+      setDataLoading(true);
+      const [
+        summary,
+        lowStock,
+        slowMoving,
+        movements,
+        categories
+      ] = await Promise.all([
+        InventoryReportService.getInventorySummary(),
+        InventoryReportService.getLowStockItems(),
+        InventoryReportService.getSlowMovingItems(),
+        InventoryReportService.getRecentStockMovements(),
+        InventoryReportService.getCategoryBreakdown()
+      ]);
+
+      setInventorySummary(summary);
+      setLowStockItems(lowStock);
+      setSlowMovingItems(slowMoving);
+      setStockMovements(movements);
+      setCategoryBreakdown(categories);
+    } catch (error) {
+      console.error('Error loading inventory data:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถโหลดข้อมูลรายงานสต็อกได้',
+        variant: 'destructive'
+      });
+    } finally {
+      setDataLoading(false);
+    }
   };
 
-  const lowStockItems = [
-    { name: 'โซฟา 2 ที่นั่ง Classic', currentStock: 2, minStock: 5, reorderLevel: 10, value: 45000 },
-    { name: 'เตียงนอน Queen Size', currentStock: 1, minStock: 3, reorderLevel: 8, value: 28000 },
-    { name: 'ตู้เสื้อผ้า 3 บาน', currentStock: 3, minStock: 5, reorderLevel: 12, value: 36000 },
-    { name: 'โต๊ะกาแฟ Glass Top', currentStock: 4, minStock: 8, reorderLevel: 15, value: 18000 },
-    { name: 'เก้าอี้ผู้บริหาร', currentStock: 2, minStock: 6, reorderLevel: 10, value: 25000 }
-  ];
+  // Handle report generation
+  const handleGenerateReport = async () => {
+    try {
+      await loadInventoryData();
+      onGenerateReport();
+      toast({
+        title: 'สำเร็จ',
+        description: 'สร้างรายงานสต็อกสินค้าเรียบร้อยแล้ว'
+      });
+    } catch (error) {
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถสร้างรายงานได้',
+        variant: 'destructive'
+      });
+    }
+  };
 
-  const slowMovingItems = [
-    { name: 'ตู้โชว์ไม้สัก', lastSaleDate: '2024-01-15', daysWithoutSale: 45, currentStock: 8, value: 120000 },
-    { name: 'โซฟาหนัง 3 ที่นั่ง', lastSaleDate: '2024-01-20', daysWithoutSale: 40, currentStock: 5, value: 85000 },
-    { name: 'เตียงไม้แท้ King Size', lastSaleDate: '2024-01-25', daysWithoutSale: 35, currentStock: 3, value: 95000 },
-    { name: 'โต๊ะทำงานไม้โอ๊ค', lastSaleDate: '2024-02-01', daysWithoutSale: 28, currentStock: 6, value: 45000 }
-  ];
-
-  const stockMovements = [
-    { product: 'โซฟา Modern 3 ที่นั่ง', type: 'IN', quantity: 10, date: '2024-02-28', reason: 'รับสินค้าจากผู้จัดจำหน่าย' },
-    { product: 'เตียงนอน King Size', type: 'OUT', quantity: 2, date: '2024-02-28', reason: 'ขายให้ลูกค้า' },
-    { product: 'ตู้เสื้อผ้า 4 บาน', type: 'OUT', quantity: 1, date: '2024-02-27', reason: 'ขายให้ลูกค้า' },
-    { product: 'โต๊ะกาแฟ Marble', type: 'ADJUSTMENT', quantity: -1, date: '2024-02-27', reason: 'สินค้าชำรุด' },
-    { product: 'เก้าอี้ทำงาน Ergonomic', type: 'IN', quantity: 15, date: '2024-02-26', reason: 'รับสินค้าจากผู้จัดจำหน่าย' }
-  ];
-
-  const categoryBreakdown = [
-    { category: 'โซฟา', products: 45, value: 850000, percentage: 30, trend: 5.2 },
-    { category: 'เตียง', products: 32, value: 720000, percentage: 25, trend: 8.1 },
-    { category: 'ตู้', products: 28, value: 680000, percentage: 24, trend: -2.3 },
-    { category: 'โต๊ะ', products: 38, value: 420000, percentage: 15, trend: 12.5 },
-    { category: 'เก้าอี้', products: 25, value: 180000, percentage: 6, trend: 3.8 }
-  ];
+  // Handle report export
+  const handleExportReport = async () => {
+    try {
+      await InventoryReportService.exportInventoryReport();
+      onExportReport();
+      toast({
+        title: 'สำเร็จ',
+        description: 'ส่งออกรายงานสต็อกสินค้าเรียบร้อยแล้ว'
+      });
+    } catch (error) {
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถส่งออกรายงานได้',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const getMovementIcon = (type: string) => {
     switch (type) {
@@ -120,13 +179,13 @@ export const InventoryReports: React.FC<InventoryReportsProps> = ({
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={onExportReport} variant="outline" size="sm">
+          <Button onClick={handleExportReport} variant="outline" size="sm" disabled={dataLoading}>
             <Download className="h-4 w-4 mr-2" />
             ส่งออก
           </Button>
-          <Button onClick={onGenerateReport} size="sm" disabled={loading}>
+          <Button onClick={handleGenerateReport} size="sm" disabled={loading || dataLoading}>
             <Package className="h-4 w-4 mr-2" />
-            {loading ? 'กำลังสร้าง...' : 'สร้างรายงาน'}
+            {loading || dataLoading ? 'กำลังสร้าง...' : 'สร้างรายงาน'}
           </Button>
         </div>
       </div>

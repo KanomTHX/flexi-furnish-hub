@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useToast } from './use-toast';
+import { useAuth } from './useAuth';
 import { exportService } from '../services/exportService';
 import type {
   ProfitLossReport,
@@ -39,6 +40,7 @@ export function useFinancialReports() {
   const [reports, setReports] = useState<FinancialReport[]>([]);
   const [currentReport, setCurrentReport] = useState<FinancialReport | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // ========================================
   // REPORT MANAGEMENT
@@ -162,7 +164,7 @@ export function useFinancialReports() {
         ],
         netIncome: netIncome,
         generatedAt: new Date().toISOString(),
-        generatedBy: 'current_user'
+        generatedBy: user?.id || 'system'
       };
 
       // บันทึกรายงานลงฐานข้อมูล
@@ -176,7 +178,7 @@ export function useFinancialReports() {
           branch_id: branchId,
           data: report,
           status: 'completed',
-          generated_by: 'current_user' // TODO: ใช้ user ID จริง
+          generated_by: user?.id || 'system'
         })
         .select()
         .single();
@@ -265,7 +267,7 @@ export function useFinancialReports() {
           totalEquity: equityData.totalEquity
         },
         generatedAt: new Date().toISOString(),
-        generatedBy: 'current_user'
+        generatedBy: user?.id || 'system'
       };
 
       // บันทึกรายงานลงฐานข้อมูล
@@ -279,7 +281,7 @@ export function useFinancialReports() {
           branch_id: branchId,
           data: report,
           status: 'completed',
-          generated_by: 'current_user' // TODO: ใช้ user ID จริง
+          generated_by: user?.id || 'system'
         })
         .select()
         .single();
@@ -369,7 +371,7 @@ export function useFinancialReports() {
         beginningCash: operatingData.beginningCashBalance,
         endingCash: operatingData.beginningCashBalance + netCashFlow,
         generatedAt: new Date().toISOString(),
-        generatedBy: 'current_user'
+        generatedBy: user?.id || 'system'
       };
 
       // บันทึกรายงานลงฐานข้อมูล
@@ -383,7 +385,7 @@ export function useFinancialReports() {
           branch_id: branchId,
           data: report,
           status: 'completed',
-          generated_by: 'current_user' // TODO: ใช้ user ID จริง
+          generated_by: user?.id || 'system'
         })
         .select()
         .single();
@@ -476,7 +478,7 @@ export function useFinancialReports() {
         },
         netVATPayable: vatSummary.net_vat,
         generatedAt: new Date().toISOString(),
-        generatedBy: 'current_user'
+        generatedBy: user?.id || 'system'
       };
 
       // บันทึกรายงานลงฐานข้อมูล
@@ -490,7 +492,7 @@ export function useFinancialReports() {
           branch_id: branchId,
           data: report,
           status: 'completed',
-          generated_by: 'current_user' // TODO: ใช้ user ID จริง
+          generated_by: user?.id || 'system'
         })
         .select()
         .single();
@@ -582,102 +584,432 @@ export function useFinancialReports() {
 
   // Helper functions สำหรับคำนวณข้อมูลรายงาน
   const calculateRevenue = async (periodStart: string, periodEnd: string, branchId?: string) => {
-    // TODO: Implement revenue calculation from POS and AR invoices
-    return {
-      salesRevenue: 0,
-      installmentRevenue: 0,
-      otherRevenue: 0,
-      totalRevenue: 0,
-      costOfGoodsSold: 0
-    };
+    try {
+      // ดึงข้อมูลรายได้จาก sales_transactions
+      let salesQuery = supabase
+        .from('sales_transactions')
+        .select('total_amount, net_amount, tax_amount')
+        .gte('transaction_date', periodStart)
+        .lte('transaction_date', periodEnd)
+        .eq('status', 'completed');
+
+      if (branchId) {
+        salesQuery = salesQuery.eq('branch_id', branchId);
+      }
+
+      const { data: salesData, error: salesError } = await salesQuery;
+      if (salesError) throw salesError;
+
+      // ดึงข้อมูลรายได้จาก installment_payments
+      let installmentQuery = supabase
+        .from('installment_payments')
+        .select('payment_amount')
+        .gte('payment_date', periodStart)
+        .lte('payment_date', periodEnd);
+
+      const { data: installmentData, error: installmentError } = await installmentQuery;
+      if (installmentError) throw installmentError;
+
+      // คำนวณรายได้
+      const salesRevenue = salesData?.reduce((sum, sale) => sum + (sale.net_amount || 0), 0) || 0;
+      const installmentRevenue = installmentData?.reduce((sum, payment) => sum + (payment.payment_amount || 0), 0) || 0;
+      
+      // ดึงข้อมูลต้นทุนขายจาก sales_transaction_items
+      let costQuery = supabase
+        .from('sales_transaction_items')
+        .select(`
+          quantity,
+          unit_cost,
+          sales_transactions!inner(
+            transaction_date,
+            status
+          )
+        `)
+        .gte('sales_transactions.transaction_date', periodStart)
+        .lte('sales_transactions.transaction_date', periodEnd)
+        .eq('sales_transactions.status', 'completed');
+
+      if (branchId) {
+        costQuery = costQuery.eq('sales_transactions.branch_id', branchId);
+      }
+
+      const { data: costData, error: costError } = await costQuery;
+      if (costError) throw costError;
+
+      const costOfGoodsSold = costData?.reduce((sum, item) => sum + ((item.quantity || 0) * (item.unit_cost || 0)), 0) || 0;
+
+      return {
+        salesRevenue,
+        installmentRevenue,
+        otherRevenue: 0, // TODO: เพิ่มรายได้อื่นๆ ถ้ามี
+        totalRevenue: salesRevenue + installmentRevenue,
+        costOfGoodsSold
+      };
+    } catch (error) {
+      console.error('Error calculating revenue:', error);
+      return {
+        salesRevenue: 0,
+        installmentRevenue: 0,
+        otherRevenue: 0,
+        totalRevenue: 0,
+        costOfGoodsSold: 0
+      };
+    }
   };
 
   const calculateExpenses = async (periodStart: string, periodEnd: string, branchId?: string) => {
-    // TODO: Implement expense calculation from expenses and AP invoices
-    return {
-      sellingExpenses: 0,
-      administrativeExpenses: 0,
-      operatingExpenses: 0,
-      interestIncome: 0,
-      interestExpense: 0,
-      otherIncome: 0,
-      otherExpenses: 0,
-      taxExpense: 0
-    };
+    try {
+      // ดึงข้อมูลค่าใช้จ่ายจาก accounting_expenses
+      let expenseQuery = supabase
+        .from('accounting_expenses')
+        .select('category, amount, total_amount')
+        .gte('expense_date', periodStart)
+        .lte('expense_date', periodEnd);
+
+      if (branchId) {
+        expenseQuery = expenseQuery.eq('branch_id', branchId);
+      }
+
+      const { data: expenseData, error: expenseError } = await expenseQuery;
+      if (expenseError) throw expenseError;
+
+      // จัดกลุ่มค่าใช้จ่ายตามประเภท
+      const expenses = expenseData?.reduce((acc, expense) => {
+        const amount = expense.total_amount || 0;
+        switch (expense.category) {
+          case 'selling':
+            acc.sellingExpenses += amount;
+            break;
+          case 'administrative':
+            acc.administrativeExpenses += amount;
+            break;
+          case 'interest':
+            acc.interestExpense += amount;
+            break;
+          default:
+            acc.otherExpenses += amount;
+        }
+        return acc;
+      }, {
+        sellingExpenses: 0,
+        administrativeExpenses: 0,
+        interestExpense: 0,
+        otherExpenses: 0
+      }) || {
+        sellingExpenses: 0,
+        administrativeExpenses: 0,
+        interestExpense: 0,
+        otherExpenses: 0
+      };
+
+      const operatingExpenses = expenses.sellingExpenses + expenses.administrativeExpenses;
+
+      return {
+        sellingExpenses: expenses.sellingExpenses,
+        administrativeExpenses: expenses.administrativeExpenses,
+        operatingExpenses,
+        interestIncome: 0, // TODO: เพิ่มรายได้ดอกเบี้ยถ้ามี
+        interestExpense: expenses.interestExpense,
+        otherIncome: 0, // TODO: เพิ่มรายได้อื่นๆ ถ้ามี
+        otherExpenses: expenses.otherExpenses,
+        taxExpense: 0 // TODO: เพิ่มค่าใช้จ่ายภาษีถ้ามี
+      };
+    } catch (error) {
+      console.error('Error calculating expenses:', error);
+      return {
+        sellingExpenses: 0,
+        administrativeExpenses: 0,
+        operatingExpenses: 0,
+        interestIncome: 0,
+        interestExpense: 0,
+        otherIncome: 0,
+        otherExpenses: 0,
+        taxExpense: 0
+      };
+    }
   };
 
   const calculateAssets = async (asOfDate: string, branchId?: string) => {
-    // TODO: Implement asset calculation
-    return {
-      cashAndEquivalents: 0,
-      accountsReceivable: 0,
-      inventory: 0,
-      prepaidExpenses: 0,
-      totalCurrentAssets: 0,
-      propertyPlantEquipment: 0,
-      accumulatedDepreciation: 0,
-      intangibleAssets: 0,
-      totalNonCurrentAssets: 0,
-      totalAssets: 0
-    };
+    try {
+      // ดึงข้อมูลเงินสดจาก accounting_transactions
+      let cashQuery = supabase
+        .from('accounting_transactions')
+        .select('debit_amount, credit_amount')
+        .in('account_id', ['1100', '1110', '1120']) // เงินสด, เงินฝากธนาคาร, เงินโอน
+        .lte('created_at', asOfDate);
+
+      if (branchId) {
+        cashQuery = cashQuery.eq('branch_id', branchId);
+      }
+
+      const { data: cashData, error: cashError } = await cashQuery;
+      if (cashError) throw cashError;
+
+      const cashAndEquivalents = cashData?.reduce((sum, transaction) => {
+        return sum + (transaction.debit_amount || 0) - (transaction.credit_amount || 0);
+      }, 0) || 0;
+
+      // ดึงข้อมูลลูกหนี้การค้าจาก sales_transactions ที่ยังไม่ได้รับชำระ
+      let arQuery = supabase
+        .from('sales_transactions')
+        .select('net_amount')
+        .eq('payment_method', 'credit')
+        .eq('status', 'completed')
+        .lte('transaction_date', asOfDate);
+
+      if (branchId) {
+        arQuery = arQuery.eq('branch_id', branchId);
+      }
+
+      const { data: arData, error: arError } = await arQuery;
+      if (arError) throw arError;
+
+      const accountsReceivable = arData?.reduce((sum, sale) => sum + (sale.net_amount || 0), 0) || 0;
+
+      // ดึงข้อมูลสินค้าคงเหลือจาก product_inventory
+      let inventoryQuery = supabase
+        .from('product_inventory')
+        .select(`
+          quantity,
+          products!inner(
+            cost_price
+          )
+        `);
+
+      if (branchId) {
+        inventoryQuery = inventoryQuery.eq('branch_id', branchId);
+      }
+
+      const { data: inventoryData, error: inventoryError } = await inventoryQuery;
+      if (inventoryError) throw inventoryError;
+
+      const inventory = inventoryData?.reduce((sum, item: any) => {
+         return sum + ((item.quantity || 0) * (item.products?.cost_price || 0));
+       }, 0) || 0;
+
+      const totalCurrentAssets = cashAndEquivalents + accountsReceivable + inventory;
+
+      return {
+        cashAndEquivalents,
+        accountsReceivable,
+        inventory,
+        prepaidExpenses: 0, // TODO: เพิ่มค่าใช้จ่ายจ่ายล่วงหน้าถ้ามี
+        totalCurrentAssets,
+        propertyPlantEquipment: 0, // TODO: เพิ่มสินทรัพย์ถาวรถ้ามี
+        accumulatedDepreciation: 0, // TODO: เพิ่มค่าเสื่อมราคาสะสมถ้ามี
+        intangibleAssets: 0, // TODO: เพิ่มสินทรัพย์ไม่มีตัวตนถ้ามี
+        totalNonCurrentAssets: 0,
+        totalAssets: totalCurrentAssets
+      };
+    } catch (error) {
+      console.error('Error calculating assets:', error);
+      return {
+        cashAndEquivalents: 0,
+        accountsReceivable: 0,
+        inventory: 0,
+        prepaidExpenses: 0,
+        totalCurrentAssets: 0,
+        propertyPlantEquipment: 0,
+        accumulatedDepreciation: 0,
+        intangibleAssets: 0,
+        totalNonCurrentAssets: 0,
+        totalAssets: 0
+      };
+    }
   };
 
   const calculateLiabilities = async (asOfDate: string, branchId?: string) => {
-    // TODO: Implement liability calculation
-    return {
-      accountsPayable: 0,
-      shortTermDebt: 0,
-      accruedExpenses: 0,
-      totalCurrentLiabilities: 0,
-      longTermDebt: 0,
-      deferredTax: 0,
-      totalNonCurrentLiabilities: 0,
-      totalLiabilities: 0
-    };
+    try {
+      // ดึงข้อมูลเจ้าหนี้การค้าจาก accounting_expenses ที่ยังไม่ได้จ่าย
+      let apQuery = supabase
+        .from('accounting_expenses')
+        .select('total_amount')
+        .lte('expense_date', asOfDate)
+        .is('approved_at', null); // ยังไม่ได้อนุมัติการจ่าย
+
+      if (branchId) {
+        apQuery = apQuery.eq('branch_id', branchId);
+      }
+
+      const { data: apData, error: apError } = await apQuery;
+      if (apError) throw apError;
+
+      const accountsPayable = apData?.reduce((sum, expense) => sum + (expense.total_amount || 0), 0) || 0;
+
+      // ดึงข้อมูลภาษีค้างจ่ายจาก tax_transactions
+      let taxQuery = supabase
+        .from('tax_transactions')
+        .select('tax_amount')
+        .eq('tax_direction', 'output')
+        .lte('transaction_date', asOfDate);
+
+      if (branchId) {
+        taxQuery = taxQuery.eq('branch_id', branchId);
+      }
+
+      const { data: taxData, error: taxError } = await taxQuery;
+      if (taxError) throw taxError;
+
+      const accruedTax = taxData?.reduce((sum, tax) => sum + (tax.tax_amount || 0), 0) || 0;
+
+      const totalCurrentLiabilities = accountsPayable + accruedTax;
+
+      return {
+        accountsPayable,
+        shortTermDebt: 0, // TODO: เพิ่มหนี้ระยะสั้นถ้ามี
+        accruedExpenses: accruedTax,
+        totalCurrentLiabilities,
+        longTermDebt: 0, // TODO: เพิ่มหนี้ระยะยาวถ้ามี
+        deferredTax: 0, // TODO: เพิ่มภาษีรอการตัดบัญชีถ้ามี
+        totalNonCurrentLiabilities: 0,
+        totalLiabilities: totalCurrentLiabilities
+      };
+    } catch (error) {
+      console.error('Error calculating liabilities:', error);
+      return {
+        accountsPayable: 0,
+        shortTermDebt: 0,
+        accruedExpenses: 0,
+        totalCurrentLiabilities: 0,
+        longTermDebt: 0,
+        deferredTax: 0,
+        totalNonCurrentLiabilities: 0,
+        totalLiabilities: 0
+      };
+    }
   };
 
   const calculateEquity = async (asOfDate: string, branchId?: string) => {
-    // TODO: Implement equity calculation
-    return {
-      shareCapital: 0,
-      retainedEarnings: 0,
-      otherEquity: 0,
-      totalEquity: 0
-    };
+    try {
+      // คำนวณกำไรสะสมจากรายได้และค่าใช้จ่ายตั้งแต่เริ่มต้นจนถึงวันที่กำหนด
+      const revenueData = await calculateRevenue('2024-01-01', asOfDate, branchId);
+      const expenseData = await calculateExpenses('2024-01-01', asOfDate, branchId);
+      
+      const retainedEarnings = revenueData.totalRevenue - revenueData.costOfGoodsSold - expenseData.operatingExpenses;
+      
+      // ทุนจดทะเบียน (ค่าคงที่สำหรับตอนนี้)
+      const shareCapital = 1000000; // 1 ล้านบาท
+      
+      const totalEquity = shareCapital + retainedEarnings;
+
+      return {
+        shareCapital,
+        retainedEarnings,
+        otherEquity: 0, // TODO: เพิ่มส่วนของเจ้าของอื่นๆ ถ้ามี
+        totalEquity
+      };
+    } catch (error) {
+      console.error('Error calculating equity:', error);
+      return {
+        shareCapital: 0,
+        retainedEarnings: 0,
+        otherEquity: 0,
+        totalEquity: 0
+      };
+    }
   };
 
   const calculateOperatingCashFlow = async (periodStart: string, periodEnd: string, branchId?: string) => {
-    // TODO: Implement operating cash flow calculation
-    return {
-      netIncome: 0,
-      depreciation: 0,
-      changesInWorkingCapital: 0,
-      otherOperatingActivities: 0,
-      netOperatingCashFlow: 0,
-      beginningCashBalance: 0
-    };
+    try {
+      // คำนวณกำไรสุทธิ
+      const revenueData = await calculateRevenue(periodStart, periodEnd, branchId);
+      const expenseData = await calculateExpenses(periodStart, periodEnd, branchId);
+      const netIncome = revenueData.totalRevenue - revenueData.costOfGoodsSold - expenseData.operatingExpenses;
+
+      // ดึงข้อมูลเงินสดต้นงวด
+      const beginningDate = new Date(periodStart);
+      beginningDate.setDate(beginningDate.getDate() - 1);
+      const beginningDateStr = beginningDate.toISOString().split('T')[0];
+      
+      let beginningCashQuery = supabase
+        .from('accounting_transactions')
+        .select('debit_amount, credit_amount')
+        .in('account_id', ['1100', '1110', '1120'])
+        .lte('created_at', beginningDateStr);
+
+      if (branchId) {
+        beginningCashQuery = beginningCashQuery.eq('branch_id', branchId);
+      }
+
+      const { data: beginningCashData, error: beginningCashError } = await beginningCashQuery;
+      if (beginningCashError) throw beginningCashError;
+
+      const beginningCashBalance = beginningCashData?.reduce((sum, transaction) => {
+        return sum + (transaction.debit_amount || 0) - (transaction.credit_amount || 0);
+      }, 0) || 0;
+
+      // คำนวณการเปลี่ยนแปลงในทุนหมุนเวียน (ประมาณการ)
+      const changesInWorkingCapital = 0; // TODO: คำนวณจากการเปลี่ยนแปลงของลูกหนี้และเจ้าหนี้
+
+      const netOperatingCashFlow = netIncome + changesInWorkingCapital;
+
+      return {
+        netIncome,
+        depreciation: 0, // TODO: เพิ่มค่าเสื่อมราคาถ้ามี
+        changesInWorkingCapital,
+        otherOperatingActivities: 0,
+        netOperatingCashFlow,
+        beginningCashBalance
+      };
+    } catch (error) {
+      console.error('Error calculating operating cash flow:', error);
+      return {
+        netIncome: 0,
+        depreciation: 0,
+        changesInWorkingCapital: 0,
+        otherOperatingActivities: 0,
+        netOperatingCashFlow: 0,
+        beginningCashBalance: 0
+      };
+    }
   };
 
   const calculateInvestingCashFlow = async (periodStart: string, periodEnd: string, branchId?: string) => {
-    // TODO: Implement investing cash flow calculation
-    return {
-      capitalExpenditures: 0,
-      assetSales: 0,
-      otherInvestingActivities: 0,
-      netInvestingCashFlow: 0
-    };
+    try {
+      // ดึงข้อมูลการลงทุนในสินทรัพย์ถาวร (ถ้ามี)
+      // TODO: เพิ่มการคำนวณจากตารางสินทรัพย์ถาวรเมื่อมีการใช้งาน
+      
+      return {
+        capitalExpenditures: 0, // TODO: เพิ่มค่าใช้จ่ายในการลงทุนถ้ามี
+        assetSales: 0, // TODO: เพิ่มรายได้จากการขายสินทรัพย์ถ้ามี
+        otherInvestingActivities: 0,
+        netInvestingCashFlow: 0
+      };
+    } catch (error) {
+      console.error('Error calculating investing cash flow:', error);
+      return {
+        capitalExpenditures: 0,
+        assetSales: 0,
+        otherInvestingActivities: 0,
+        netInvestingCashFlow: 0
+      };
+    }
   };
 
   const calculateFinancingCashFlow = async (periodStart: string, periodEnd: string, branchId?: string) => {
-    // TODO: Implement financing cash flow calculation
-    return {
-      debtProceeds: 0,
-      debtPayments: 0,
-      equityProceeds: 0,
-      dividendPayments: 0,
-      otherFinancingActivities: 0,
-      netFinancingCashFlow: 0
-    };
+    try {
+      // ดึงข้อมูลการจัดหาเงินทุนและการจ่ายหนี้ (ถ้ามี)
+      // TODO: เพิ่มการคำนวณจากตารางหนี้สินและทุนเมื่อมีการใช้งาน
+      
+      return {
+        debtProceeds: 0, // TODO: เพิ่มเงินกู้ใหม่ถ้ามี
+        debtPayments: 0, // TODO: เพิ่มการจ่ายคืนหนี้ถ้ามี
+        equityProceeds: 0, // TODO: เพิ่มการระดมทุนถ้ามี
+        dividendPayments: 0, // TODO: เพิ่มการจ่ายเงินปันผลถ้ามี
+        otherFinancingActivities: 0,
+        netFinancingCashFlow: 0
+      };
+    } catch (error) {
+      console.error('Error calculating financing cash flow:', error);
+      return {
+        debtProceeds: 0,
+        debtPayments: 0,
+        equityProceeds: 0,
+        dividendPayments: 0,
+        otherFinancingActivities: 0,
+        netFinancingCashFlow: 0
+      };
+    }
   };
 
   return {

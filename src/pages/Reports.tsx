@@ -16,6 +16,9 @@ import { TransactionReports } from '@/components/accounting/TransactionReports';
 import { SerialNumberReports } from '@/components/warehouses/SerialNumberReports';
 import { WarehouseAnalytics } from '@/components/warehouses/WarehouseAnalytics';
 import { ComplianceReportDialog } from '@/components/audit/ComplianceReportDialog';
+import { ClaimsReport } from '@/components/reports/ClaimsReport';
+import { WarehouseReport } from '@/components/reports/WarehouseReport';
+import { AuditReport } from '@/components/reports/AuditReport';
 import { 
   FileText, 
   Download, 
@@ -360,7 +363,7 @@ const Reports: React.FC = () => {
       {/* Reports Tabs */}
       <div id="comprehensive-report-content">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               ภาพรวม
@@ -384,6 +387,10 @@ const Reports: React.FC = () => {
             <TabsTrigger value="warehouse" className="flex items-center gap-2">
               <Truck className="h-4 w-4" />
               คลังสินค้า
+            </TabsTrigger>
+            <TabsTrigger value="claims" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              เคลม
             </TabsTrigger>
             <TabsTrigger value="transaction" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -441,12 +448,7 @@ const Reports: React.FC = () => {
                   </Button>
                 </div>
               </div>
-              <SalesReports
-                salesReports={salesReports}
-                onGenerateReport={() => handleGenerateReport('sales')}
-                onExportReport={handleExportSalesReport}
-                loading={loading}
-              />
+              <SalesReports />
             </div>
           </TabsContent>
 
@@ -550,6 +552,42 @@ const Reports: React.FC = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="warehouse" className="space-y-4">
+            <div id="warehouse-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานคลังสินค้า</h2>
+                <Button 
+                  onClick={() => handleExportToPDF('warehouse')} 
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  ส่งออก PDF
+                </Button>
+              </div>
+              <WarehouseReport />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="claims" className="space-y-4">
+            <div id="claims-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานเคลม</h2>
+                <Button 
+                  onClick={() => handleExportToPDF('claims')} 
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  ส่งออก PDF
+                </Button>
+              </div>
+              <ClaimsReport />
+            </div>
+          </TabsContent>
+
           <TabsContent value="transaction" className="space-y-4">
             <div id="transaction-report-content">
               <div className="flex justify-between items-center mb-4">
@@ -592,51 +630,7 @@ const Reports: React.FC = () => {
                   </Button>
                 </div>
               </div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    รายงานการตรวจสอบและการปฏิบัติตาม
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">การปฏิบัติตามกฎระเบียบ</p>
-                            <p className="text-2xl font-bold text-green-600">98.5%</p>
-                          </div>
-                          <CheckCircle className="h-8 w-8 text-green-600" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">ข้อผิดพลาดที่พบ</p>
-                            <p className="text-2xl font-bold text-orange-600">12</p>
-                          </div>
-                          <AlertTriangle className="h-8 w-8 text-orange-600" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">การตรวจสอบล่าสุด</p>
-                            <p className="text-lg font-semibold">3 วันที่แล้ว</p>
-                          </div>
-                          <Calendar className="h-8 w-8 text-blue-600" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CardContent>
-              </Card>
+              <AuditReport />
             </div>
           </TabsContent>
         </Tabs>

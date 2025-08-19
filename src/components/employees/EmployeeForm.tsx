@@ -39,6 +39,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
     hireDate: employee?.hireDate || new Date().toISOString().split('T')[0],
     positionId: employee?.position.id || '',
     departmentId: employee?.department.id || '',
+    branchId: employee?.branchId || '',
     salary: employee?.salary || 0,
     emergencyContact: employee?.emergencyContact || {
       name: '',
@@ -77,41 +78,41 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
+      newErrors.firstName = 'กรุณากรอกชื่อ';
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+      newErrors.lastName = 'กรุณากรอกนามสกุล';
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'กรุณากรอกอีเมล';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = 'รูปแบบอีเมลไม่ถูกต้อง';
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
+      newErrors.phone = 'กรุณากรอกเบอร์โทรศัพท์';
     }
 
     if (!formData.positionId) {
-      newErrors.positionId = 'Position is required';
+      newErrors.positionId = 'กรุณาเลือกตำแหน่ง';
     }
 
     if (!formData.departmentId) {
-      newErrors.departmentId = 'Department is required';
+      newErrors.departmentId = 'กรุณาเลือกแผนก';
     }
 
     if (formData.salary <= 0) {
-      newErrors.salary = 'Valid salary is required';
+      newErrors.salary = 'กรุณากรอกเงินเดือนที่ถูกต้อง';
     }
 
     if (!formData.emergencyContact.name.trim()) {
-      newErrors.emergencyContactName = 'Emergency contact name is required';
+      newErrors.emergencyContactName = 'กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน';
     }
 
     if (!formData.emergencyContact.phone.trim()) {
-      newErrors.emergencyContactPhone = 'Emergency contact phone is required';
+      newErrors.emergencyContactPhone = 'กรุณากรอกเบอร์โทรผู้ติดต่อฉุกเฉิน';
     }
 
     setErrors(newErrors);
@@ -167,35 +168,35 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
   };
 
   const dayNames = {
-    monday: 'Monday',
-    tuesday: 'Tuesday',
-    wednesday: 'Wednesday',
-    thursday: 'Thursday',
-    friday: 'Friday',
-    saturday: 'Saturday',
-    sunday: 'Sunday'
+    monday: 'จันทร์',
+    tuesday: 'อังคาร',
+    wednesday: 'พุธ',
+    thursday: 'พฤหัสบดี',
+    friday: 'ศุกร์',
+    saturday: 'เสาร์',
+    sunday: 'อาทิตย์'
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs defaultValue="personal" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="personal">Personal</TabsTrigger>
-          <TabsTrigger value="work">Work</TabsTrigger>
-          <TabsTrigger value="emergency">Emergency</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          <TabsTrigger value="personal">ข้อมูลส่วนตัว</TabsTrigger>
+          <TabsTrigger value="work">ข้อมูลงาน</TabsTrigger>
+          <TabsTrigger value="emergency">ผู้ติดต่อฉุกเฉิน</TabsTrigger>
+          <TabsTrigger value="schedule">ตารางงาน</TabsTrigger>
         </TabsList>
 
         {/* Personal Information */}
         <TabsContent value="personal" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
+              <CardTitle>ข้อมูลส่วนตัว</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="firstName">ชื่อ *</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
@@ -208,7 +209,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Label htmlFor="lastName">นามสกุล *</Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
@@ -223,7 +224,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">อีเมล *</Label>
                   <Input
                     id="email"
                     type="email"
@@ -237,7 +238,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone *</Label>
+                  <Label htmlFor="phone">เบอร์โทรศัพท์ *</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -251,7 +252,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">ที่อยู่</Label>
                 <Textarea
                   id="address"
                   value={formData.address}
@@ -261,7 +262,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Label htmlFor="dateOfBirth">วันเกิด</Label>
                 <Input
                   id="dateOfBirth"
                   type="date"
@@ -277,18 +278,18 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         <TabsContent value="work" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Work Information</CardTitle>
+              <CardTitle>ข้อมูลการทำงาน</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="departmentId">Department *</Label>
+                  <Label htmlFor="departmentId">แผนก *</Label>
                   <Select
                     value={formData.departmentId}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, departmentId: value }))}
                   >
                     <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
-                      <SelectValue placeholder="Select Department" />
+                      <SelectValue placeholder="เลือกแผนก" />
                     </SelectTrigger>
                     <SelectContent>
                       {departments.map((dept) => (
@@ -304,13 +305,13 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="positionId">Position *</Label>
+                  <Label htmlFor="positionId">ตำแหน่ง *</Label>
                   <Select
                     value={formData.positionId}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, positionId: value }))}
                   >
                     <SelectTrigger className={errors.positionId ? 'border-red-500' : ''}>
-                      <SelectValue placeholder="Select Position" />
+                      <SelectValue placeholder="เลือกตำแหน่ง" />
                     </SelectTrigger>
                     <SelectContent>
                       {positions.map((pos) => (
@@ -328,7 +329,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="salary">Salary (฿) *</Label>
+                  <Label htmlFor="salary">เงินเดือน (฿) *</Label>
                   <Input
                     id="salary"
                     type="number"
@@ -342,7 +343,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="hireDate">Hire Date</Label>
+                  <Label htmlFor="hireDate">วันเริ่มงาน</Label>
                   <Input
                     id="hireDate"
                     type="date"
@@ -354,11 +355,11 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
               {/* Bank Account */}
               <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-medium">Bank Account Information</h4>
+                <h4 className="font-medium">ข้อมูลบัญชีธนาคาร</h4>
                 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="bankName">Bank</Label>
+                    <Label htmlFor="bankName">ธนาคาร</Label>
                     <Input
                       id="bankName"
                       value={formData.bankAccount.bankName}
@@ -370,7 +371,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="accountNumber">Account Number</Label>
+                    <Label htmlFor="accountNumber">เลขบัญชี</Label>
                     <Input
                       id="accountNumber"
                       value={formData.bankAccount.accountNumber}
@@ -384,7 +385,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="accountName">Account Name</Label>
+                    <Label htmlFor="accountName">ชื่อบัญชี</Label>
                     <Input
                       id="accountName"
                       value={formData.bankAccount.accountName}
@@ -396,7 +397,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="branchName">Branch</Label>
+                    <Label htmlFor="branchName">สาขา</Label>
                     <Input
                       id="branchName"
                       value={formData.bankAccount.branchName}
@@ -416,12 +417,12 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         <TabsContent value="emergency" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Emergency Contact</CardTitle>
+              <CardTitle>ผู้ติดต่อฉุกเฉิน</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyName">Name *</Label>
+                  <Label htmlFor="emergencyName">ชื่อ-นามสกุล *</Label>
                   <Input
                     id="emergencyName"
                     value={formData.emergencyContact.name}
@@ -437,7 +438,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyRelationship">Relationship</Label>
+                  <Label htmlFor="emergencyRelationship">ความสัมพันธ์</Label>
                   <Input
                     id="emergencyRelationship"
                     value={formData.emergencyContact.relationship}
@@ -451,7 +452,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyPhone">Phone *</Label>
+                  <Label htmlFor="emergencyPhone">เบอร์โทรศัพท์ *</Label>
                   <Input
                     id="emergencyPhone"
                     value={formData.emergencyContact.phone}
@@ -467,7 +468,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyEmail">Email</Label>
+                  <Label htmlFor="emergencyEmail">อีเมล</Label>
                   <Input
                     id="emergencyEmail"
                     type="email"
@@ -487,12 +488,12 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         <TabsContent value="schedule" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Work Schedule</CardTitle>
+              <CardTitle>ตารางการทำงาน</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="workType">Work Type</Label>
+                  <Label htmlFor="workType">ประเภทการจ้าง</Label>
                   <Select
                     value={formData.workSchedule.type}
                     onValueChange={(value: any) => setFormData(prev => ({
@@ -504,16 +505,16 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="full-time">Full-time</SelectItem>
-                      <SelectItem value="part-time">Part-time</SelectItem>
-                      <SelectItem value="contract">Contract</SelectItem>
-                      <SelectItem value="intern">Intern</SelectItem>
+                      <SelectItem value="full-time">เต็มเวลา</SelectItem>
+                      <SelectItem value="part-time">ไม่เต็มเวลา</SelectItem>
+                      <SelectItem value="contract">สัญญาจ้าง</SelectItem>
+                      <SelectItem value="intern">ฝึกงาน</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="overtimeRate">Overtime Rate</Label>
+                  <Label htmlFor="overtimeRate">อัตราค่าล่วงเวลา</Label>
                   <Input
                     id="overtimeRate"
                     type="number"
@@ -527,7 +528,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="vacationDays">Vacation Days (days/year)</Label>
+                  <Label htmlFor="vacationDays">วันลาพักร้อน (วัน/ปี)</Label>
                   <Input
                     id="vacationDays"
                     type="number"
@@ -541,7 +542,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
               </div>
 
               <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-medium">Work Days & Hours</h4>
+                <h4 className="font-medium">วันและเวลาทำงาน</h4>
                 
                 <div className="space-y-3">
                   {formData.workSchedule.workDays.map((day, index) => (
@@ -562,7 +563,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                       {day.isWorkingDay && (
                         <>
                           <div className="flex items-center space-x-2">
-                            <Label className="text-sm">Start:</Label>
+                            <Label className="text-sm">เริ่ม:</Label>
                             <Input
                               type="time"
                               value={day.startTime}
@@ -572,7 +573,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                           </div>
                           
                           <div className="flex items-center space-x-2">
-                            <Label className="text-sm">End:</Label>
+                            <Label className="text-sm">สิ้นสุด:</Label>
                             <Input
                               type="time"
                               value={day.endTime}
@@ -582,7 +583,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                           </div>
                           
                           <div className="flex items-center space-x-2">
-                            <Label className="text-sm">Break (min):</Label>
+                            <Label className="text-sm">พักเบรก (นาที):</Label>
                             <Input
                               type="number"
                               value={day.breakTime}
@@ -604,10 +605,10 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
       {/* Form Actions */}
       <div className="flex items-center justify-end space-x-2 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          ยกเลิก
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Saving...' : employee ? 'Update Employee' : 'Add Employee'}
+          {loading ? 'กำลังบันทึก...' : employee ? 'อัปเดตพนักงาน' : 'เพิ่มพนักงาน'}
         </Button>
       </div>
     </form>

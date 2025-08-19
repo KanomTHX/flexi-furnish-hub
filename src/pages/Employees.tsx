@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -92,37 +92,94 @@ const Employees: React.FC = () => {
     }
   ];
 
-  // Recent Activities
-  const recentActivities = [
-    {
-      type: 'new_hire',
-      message: 'พนักงานใหม่เข้าทำงาน: สมศักดิ์ ขยันทำงาน',
-      time: '2 ชั่วโมงที่แล้ว',
-      icon: UserPlus,
-      color: 'text-green-600'
-    },
-    {
-      type: 'leave_request',
-      message: 'คำขอลาพักร้อน: สมหญิง รักงาน (3 วัน)',
-      time: '4 ชั่วโมงที่แล้ว',
-      icon: Calendar,
-      color: 'text-blue-600'
-    },
-    {
-      type: 'training',
-      message: 'การอบรม POS เริ่มต้น 15 ก.พ. 2025',
-      time: '1 วันที่แล้ว',
-      icon: GraduationCap,
-      color: 'text-purple-600'
-    },
-    {
-      type: 'payroll',
-      message: 'จ่ายเงินเดือนเดือน ม.ค. 2025 เสร็จสิ้น',
-      time: '2 วันที่แล้ว',
-      icon: DollarSign,
-      color: 'text-orange-600'
+  // Recent Activities - Generate from real data
+  const recentActivities = useMemo(() => {
+    const activities = [];
+    
+    // Add recent new hires (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentHires = employees.filter(emp => 
+      emp.hireDate && new Date(emp.hireDate) >= sevenDaysAgo
+    ).slice(0, 2);
+    
+    recentHires.forEach(emp => {
+      const hireDate = new Date(emp.hireDate!);
+      const daysAgo = Math.floor((Date.now() - hireDate.getTime()) / (1000 * 60 * 60 * 24));
+      const timeText = daysAgo === 0 ? 'วันนี้' : daysAgo === 1 ? 'เมื่อวาน' : `${daysAgo} วันที่แล้ว`;
+      
+      activities.push({
+        type: 'new_hire',
+        message: `พนักงานใหม่เข้าทำงาน: ${emp.firstName} ${emp.lastName}`,
+        time: timeText,
+        icon: UserPlus,
+        color: 'text-green-600'
+      });
+    });
+    
+    // Add recent leave requests (last 7 days)
+    const recentLeaves = leaves.filter(leave => {
+      const requestDate = new Date(leave.appliedAt || leave.startDate);
+      return requestDate >= sevenDaysAgo;
+    }).slice(0, 2);
+    
+    recentLeaves.forEach(leave => {
+      const requestDate = new Date(leave.appliedAt || leave.startDate);
+      const daysAgo = Math.floor((Date.now() - requestDate.getTime()) / (1000 * 60 * 60 * 24));
+      const timeText = daysAgo === 0 ? 'วันนี้' : daysAgo === 1 ? 'เมื่อวาน' : `${daysAgo} วันที่แล้ว`;
+      
+      const startDate = new Date(leave.startDate);
+      const endDate = new Date(leave.endDate);
+      const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      
+      // Find employee by ID
+      const employee = employees.find(emp => emp.id === leave.employeeId);
+      
+      activities.push({
+        type: 'leave_request',
+        message: `คำขอลา${leave.type}: ${employee?.firstName || 'ไม่ระบุ'} ${employee?.lastName || ''} (${duration} วัน)`,
+        time: timeText,
+        icon: Calendar,
+        color: 'text-blue-600'
+      });
+    });
+    
+    // Add recent attendance records (today)
+    const today = new Date().toISOString().split('T')[0];
+    const todayAttendance = attendance.filter(record => 
+      record.date === today && record.status === 'present'
+    ).slice(0, 2);
+    
+    todayAttendance.forEach(record => {
+      // Find employee by ID
+      const employee = employees.find(emp => emp.id === record.employeeId);
+      
+      activities.push({
+        type: 'attendance',
+        message: `เข้าทำงาน: ${employee?.firstName || 'ไม่ระบุ'} ${employee?.lastName || ''}`,
+        time: record.checkIn ? `เวลา ${record.checkIn}` : 'วันนี้',
+        icon: Clock,
+        color: 'text-green-600'
+      });
+    });
+    
+    // If no real activities, show placeholder
+    if (activities.length === 0) {
+      activities.push(
+        {
+          type: 'info',
+          message: 'ไม่มีกิจกรรมล่าสุด',
+          time: 'วันนี้',
+          icon: BarChart3,
+          color: 'text-gray-600'
+        }
+      );
     }
-  ];
+    
+    // Sort by most recent and limit to 4 items
+    return activities.slice(0, 4);
+  }, [employees, leaves, attendance]);
 
   if (loading) {
     return (

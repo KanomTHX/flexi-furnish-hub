@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useToast } from './use-toast';
+import { useAuth } from './useAuth';
 import type {
   APInvoice,
   ARInvoice,
@@ -75,6 +76,7 @@ export function useInvoiceManagement() {
   const [apInvoices, setAPInvoices] = useState<APInvoice[]>([]);
   const [arInvoices, setARInvoices] = useState<ARInvoice[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // ========================================
   // AP INVOICE MANAGEMENT
@@ -229,7 +231,7 @@ export function useInvoiceManagement() {
           payment_terms: data.paymentTerms,
           description: data.description,
           status: 'pending',
-          created_by: 'current_user' // TODO: ใช้ user ID จริง
+          created_by: user?.id || 'system'
         })
         .select()
         .single();
@@ -500,7 +502,7 @@ export function useInvoiceManagement() {
           description: data.description,
           installment_contract_id: data.installmentContractId,
           status: 'draft',
-          created_by: 'current_user' // TODO: ใช้ user ID จริง
+          created_by: user?.id || 'system'
         })
         .select()
         .single();
@@ -643,7 +645,7 @@ export function useInvoiceManagement() {
           reference_number: data.referenceNumber,
           bank_account: data.bankAccount,
           notes: data.notes,
-          created_by: 'current_user' // TODO: ใช้ user ID จริง
+          created_by: user?.id || 'system'
         })
         .select()
         .single();
