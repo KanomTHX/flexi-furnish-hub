@@ -17,8 +17,6 @@ import {
 } from 'lucide-react';
 import { InstallmentManagement } from '@/components/installments/InstallmentManagement';
 import { InstallmentDialog } from '@/components/installments/InstallmentDialog';
-import { CustomerManagement } from '@/components/installments/CustomerManagement';
-import { CustomerDetail } from '@/components/installments/CustomerDetail';
 import { CustomerAnalytics } from '@/components/installments/CustomerAnalytics';
 import { useSupabaseInstallments } from '@/hooks/useSupabaseInstallments';
 import { useSupabaseCustomers } from '@/hooks/useSupabaseCustomers';
@@ -28,14 +26,12 @@ import { Customer, InstallmentContract } from '@/types/pos';
 
 export default function Installments() {
   const { contracts, summary, loading: contractsLoading, actions } = useSupabaseInstallments();
-  const { customers, loading: customersLoading, actions: customerActions } = useSupabaseCustomers();
+  const { customers, loading: customersLoading } = useSupabaseCustomers();
   const { currentBranch, currentBranchCustomers } = useBranchData();
   const { toast } = useToast();
   const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [selectedCustomerForDetail, setSelectedCustomerForDetail] = useState<any>(null);
   const [totalAmount, setTotalAmount] = useState(0);
 
   const handleCreateContract = async (contract: InstallmentContract) => {
@@ -91,45 +87,7 @@ export default function Installments() {
     }
   };
 
-  const handleViewCustomer = (customerId: string) => {
-    const customer = customerActions.getCustomerById(customerId);
-    if (customer) {
-      setSelectedCustomerForDetail(customer);
-      setCustomerDetailOpen(true);
-    }
-  };
 
-  const handleCreateCustomer = async (customerData: any) => {
-    try {
-      await customerActions.createCustomer(customerData);
-      toast({
-        title: "สำเร็จ",
-        description: "สร้างลูกค้าใหม่เรียบร้อยแล้ว",
-      });
-    } catch (error) {
-      toast({
-        title: "ข้อผิดพลาด",
-        description: "ไม่สามารถสร้างลูกค้าได้",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateCustomer = async (customerId: string, customerData: any) => {
-    try {
-      await customerActions.updateCustomer(customerId, customerData);
-      toast({
-        title: "สำเร็จ",
-        description: "อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว",
-      });
-    } catch (error) {
-      toast({
-        title: "ข้อผิดพลาด",
-        description: "ไม่สามารถอัปเดตข้อมูลลูกค้าได้",
-        variant: "destructive",
-      });
-    }
-  };
 
   // ฟังก์ชันสำหรับสร้างสัญญาใหม่
   const handleQuickCreate = () => {
@@ -272,7 +230,7 @@ export default function Installments() {
 
       {/* เนื้อหาหลัก */}
       <Tabs defaultValue="contracts" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="contracts" className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
             จัดการสัญญา
@@ -280,10 +238,6 @@ export default function Installments() {
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             รายงาน
-          </TabsTrigger>
-          <TabsTrigger value="customers" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            ลูกค้า
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
@@ -378,16 +332,6 @@ export default function Installments() {
           </div>
         </TabsContent>
 
-        <TabsContent value="customers" className="space-y-6">
-          <CustomerManagement
-            customers={customers}
-            onCreateCustomer={handleCreateCustomer}
-            onUpdateCustomer={handleUpdateCustomer}
-            onViewCustomer={handleViewCustomer}
-            loading={customersLoading}
-          />
-        </TabsContent>
-
         <TabsContent value="analytics" className="space-y-6">
           <CustomerAnalytics customers={customers} />
         </TabsContent>
@@ -404,13 +348,7 @@ export default function Installments() {
         />
       )}
 
-      {/* Dialog รายละเอียดลูกค้า */}
-      <CustomerDetail
-        open={customerDetailOpen}
-        onOpenChange={setCustomerDetailOpen}
-        customer={selectedCustomerForDetail}
-        contracts={contracts}
-      />
+
     </div>
   );
 }

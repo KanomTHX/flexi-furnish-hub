@@ -34,7 +34,7 @@ export const UserMenu = () => {
   const avatarUrl = profile?.avatar_url;
   const initials = displayName
     .split(' ')
-    .map(name => name.charAt(0))
+    .map(name => name?.charAt(0) || '')
     .join('')
     .toUpperCase()
     .slice(0, 2);

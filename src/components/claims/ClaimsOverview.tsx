@@ -265,26 +265,21 @@ export function ClaimsOverview({ statistics }: ClaimsOverviewProps) {
           {statistics.monthlyTrends.length > 0 ? (
             <div className="space-y-4">
               {statistics.monthlyTrends.map((trend, index) => (
-                <div key={index} className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border rounded-lg">
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-blue-600">{trend.totalClaims}</div>
-                    <div className="text-xs text-muted-foreground">เคลมทั้งหมด</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-green-600">{trend.completedClaims}</div>
-                    <div className="text-xs text-muted-foreground">เสร็จสิ้น</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-orange-600">
-                      {formatCurrency(trend.averageCost)}
+                <div key={index} className="flex justify-between items-center p-4 border rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      {trend.month}
                     </div>
-                    <div className="text-xs text-muted-foreground">ค่าใช้จ่ายเฉลี่ย</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-yellow-600">
-                      {trend.satisfactionRating.toFixed(1)}
+                  <div className="flex items-center gap-6">
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-blue-600">{trend.totalClaims}</div>
+                      <div className="text-xs text-muted-foreground">เคลมทั้งหมด</div>
                     </div>
-                    <div className="text-xs text-muted-foreground">ความพึงพอใจ</div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-green-600">{trend.completedClaims}</div>
+                      <div className="text-xs text-muted-foreground">เสร็จสิ้น</div>
+                    </div>
                   </div>
                 </div>
               ))}

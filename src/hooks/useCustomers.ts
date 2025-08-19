@@ -1,123 +1,18 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Customer, InstallmentContract } from '@/types/pos';
+import { 
+  Customer, 
+  CustomerData, 
+  CustomerFilterOptions,
+  CreateCustomerData,
+  UpdateCustomerData,
+  CustomerMetrics,
+  CustomerAnalytics
+} from '@/types/customer';
+import { InstallmentContract } from '@/types/pos';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
-interface CustomerData extends Customer {
-  creditScore: number;
-  totalContracts: number;
-  activeContracts: number;
-  totalFinanced: number;
-  totalPaid: number;
-  overdueAmount: number;
-  lastPaymentDate: Date;
-  riskLevel: 'low' | 'medium' | 'high';
-  customerSince: Date;
-  notes: string;
-}
-
-// Fallback data สำหรับกรณีที่ไม่มีข้อมูลในฐานข้อมูล
-const fallbackCustomers: CustomerData[] = [
-  {
-    id: 'customer-001',
-    name: 'สมชาย ใจดี',
-    phone: '081-234-5678',
-    email: 'somchai@example.com',
-    address: '123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองตัน กรุงเทพฯ 10110',
-    idCard: '1-2345-67890-12-3',
-    occupation: 'พนักงานบริษัท',
-    monthlyIncome: 35000,
-    creditScore: 720,
-    totalContracts: 2,
-    activeContracts: 1,
-    totalFinanced: 150000,
-    totalPaid: 75000,
-    overdueAmount: 0,
-    lastPaymentDate: new Date('2024-01-15'),
-    riskLevel: 'low',
-    customerSince: new Date('2023-06-15'),
-    notes: 'ลูกค้าดี ชำระตรงเวลา'
-  },
-  {
-    id: 'customer-002',
-    name: 'สมหญิง รักงาน',
-    phone: '082-345-6789',
-    email: 'somying@example.com',
-    address: '456 ถนนพหลโยธิน แขวงลาดยาว เขตจตุจักร กรุงเทพฯ 10900',
-    idCard: '2-3456-78901-23-4',
-    occupation: 'ข้าราชการ',
-    monthlyIncome: 45000,
-    creditScore: 780,
-    totalContracts: 1,
-    activeContracts: 1,
-    totalFinanced: 80000,
-    totalPaid: 40000,
-    overdueAmount: 0,
-    lastPaymentDate: new Date('2024-01-10'),
-    riskLevel: 'low',
-    customerSince: new Date('2023-08-20'),
-    notes: 'ข้าราชการ เสถียร'
-  },
-  {
-    id: 'customer-003',
-    name: 'วิชัย ขยัน',
-    phone: '083-456-7890',
-    email: 'wichai@example.com',
-    address: '789 ถนนรัชดาภิเษก แขวงดินแดง เขตดินแดง กรุงเทพฯ 10400',
-    idCard: '3-4567-89012-34-5',
-    occupation: 'ค้าขาย',
-    monthlyIncome: 25000,
-    creditScore: 650,
-    totalContracts: 3,
-    activeContracts: 2,
-    totalFinanced: 200000,
-    totalPaid: 120000,
-    overdueAmount: 15000,
-    lastPaymentDate: new Date('2023-12-20'),
-    riskLevel: 'medium',
-    customerSince: new Date('2023-03-10'),
-    notes: 'ค้าขาย รายได้ไม่แน่นอน'
-  },
-  {
-    id: 'customer-004',
-    name: 'มาลี ขยัน',
-    phone: '084-567-8901',
-    email: 'malee@example.com',
-    address: '321 ถนนเพชรบุรี แขวงมักกะสัน เขตราชเทวี กรุงเทพฯ 10400',
-    idCard: '4-5678-90123-45-6',
-    occupation: 'พนักงานบริษัท',
-    monthlyIncome: 30000,
-    creditScore: 680,
-    totalContracts: 1,
-    activeContracts: 1,
-    totalFinanced: 60000,
-    totalPaid: 30000,
-    overdueAmount: 0,
-    lastPaymentDate: new Date('2024-01-05'),
-    riskLevel: 'low',
-    customerSince: new Date('2023-09-15'),
-    notes: ''
-  },
-  {
-    id: 'customer-005',
-    name: 'สุชาติ ลำบาก',
-    phone: '085-678-9012',
-    email: 'suchart@example.com',
-    address: '654 ถนนลาดพร้าว แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพฯ 10230',
-    idCard: '5-6789-01234-56-7',
-    occupation: 'อิสระ',
-    monthlyIncome: 20000,
-    creditScore: 580,
-    totalContracts: 2,
-    activeContracts: 1,
-    totalFinanced: 100000,
-    totalPaid: 45000,
-    overdueAmount: 25000,
-    lastPaymentDate: new Date('2023-11-30'),
-    riskLevel: 'high',
-    customerSince: new Date('2023-01-20'),
-    notes: 'ความเสี่ยงสูง ต้องติดตามใกล้ชิด'
-  }
-];
+// ข้อมูลลูกค้าจะโหลดจากฐานข้อมูล Supabase
 
 export function useCustomers() {
   const [customers, setCustomers] = useState<CustomerData[]>([]);
@@ -137,12 +32,12 @@ export function useCustomers() {
 
       if (customersError) {
         console.warn('ไม่สามารถโหลดข้อมูลลูกค้าจากฐานข้อมูล:', customersError);
-        setCustomers(fallbackCustomers);
+        setCustomers([]);
         return;
       }
 
       if (!customersData || customersData.length === 0) {
-        setCustomers(fallbackCustomers);
+        setCustomers([]);
         return;
       }
 
@@ -172,7 +67,7 @@ export function useCustomers() {
     } catch (err) {
       console.error('เกิดข้อผิดพลาดในการโหลดข้อมูลลูกค้า:', err);
       setError('ไม่สามารถโหลดข้อมูลลูกค้าได้');
-      setCustomers(fallbackCustomers);
+      setCustomers([]);
     } finally {
       setLoading(false);
     }
@@ -460,6 +355,215 @@ export function useCustomers() {
     updateCustomer(customerId, { creditScore: finalScore });
   }, [customers, updateCustomer]);
 
+  // จัดการผู้ค้ำประกัน
+  const addGuarantor = useCallback(async (customerId: string, guarantorData: any) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase
+        .from('guarantors')
+        .insert({
+          customer_id: customerId,
+          name: guarantorData.name,
+          phone: guarantorData.phone,
+          email: guarantorData.email,
+          address: guarantorData.address,
+          id_card: guarantorData.idCard,
+          relationship: guarantorData.relationship,
+          occupation: guarantorData.occupation,
+          monthly_income: guarantorData.monthlyIncome
+        });
+
+      if (error) {
+        console.error('เกิดข้อผิดพลาดในการเพิ่มผู้ค้ำประกัน:', error);
+        throw new Error('ไม่สามารถเพิ่มผู้ค้ำประกันได้');
+      }
+      
+      toast.success('เพิ่มผู้ค้ำประกันสำเร็จ');
+    } catch (err) {
+      setError('เกิดข้อผิดพลาดในการเพิ่มผู้ค้ำประกัน');
+      toast.error('ไม่สามารถเพิ่มผู้ค้ำประกันได้');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ดึงข้อมูลผู้ค้ำประกัน
+  const getGuarantors = useCallback(async (customerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('guarantors')
+        .select('*')
+        .eq('customer_id', customerId);
+
+      if (error) {
+        console.error('เกิดข้อผิดพลาดในการดึงข้อมูลผู้ค้ำประกัน:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (err) {
+      console.error('เกิดข้อผิดพลาดในการดึงข้อมูลผู้ค้ำประกัน:', err);
+      return [];
+    }
+  }, []);
+
+  // คำนวณ Customer Metrics
+  const calculateCustomerMetrics = useCallback((customerId: string): CustomerMetrics => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer) {
+      return {
+        totalContracts: 0,
+        activeContracts: 0,
+        completedContracts: 0,
+        totalFinanced: 0,
+        totalPaid: 0,
+        remainingBalance: 0,
+        overdueAmount: 0,
+        onTimePaymentRate: 0,
+        averageContractValue: 0,
+        creditUtilization: 0,
+        daysSinceLastPayment: 0,
+        totalInterestPaid: 0
+      };
+    }
+
+    const completedContracts = customer.totalContracts - customer.activeContracts;
+    const remainingBalance = customer.totalFinanced - customer.totalPaid;
+    const averageContractValue = customer.totalContracts > 0 ? customer.totalFinanced / customer.totalContracts : 0;
+    const creditUtilization = customer.monthlyIncome > 0 ? (customer.totalFinanced / (customer.monthlyIncome * 12)) * 100 : 0;
+    const daysSinceLastPayment = customer.lastPaymentDate ? 
+      Math.floor((new Date().getTime() - customer.lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+    return {
+      totalContracts: customer.totalContracts,
+      activeContracts: customer.activeContracts,
+      completedContracts,
+      totalFinanced: customer.totalFinanced,
+      totalPaid: customer.totalPaid,
+      remainingBalance,
+      overdueAmount: customer.overdueAmount,
+      onTimePaymentRate: 85, // จะคำนวณจากข้อมูลจริงในอนาคต
+      averageContractValue,
+      creditUtilization,
+      daysSinceLastPayment,
+      totalInterestPaid: customer.totalPaid * 0.15 // ประมาณการดอกเบี้ย
+    };
+  }, [customers]);
+
+  // คำนวณ Customer Analytics
+  const calculateCustomerAnalytics = useCallback((): CustomerAnalytics => {
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    
+    const activeCustomers = customers.filter(c => c.activeContracts > 0);
+    const newThisMonth = customers.filter(c => new Date(c.customerSince) >= thisMonth);
+    const newLastMonth = customers.filter(c => {
+      const customerSince = new Date(c.customerSince);
+      return customerSince >= lastMonth && customerSince < thisMonth;
+    });
+    
+    const riskDistribution = customers.reduce((acc, customer) => {
+      acc[customer.riskLevel]++;
+      return acc;
+    }, { low: 0, medium: 0, high: 0, critical: 0 } as Record<string, number>);
+    
+    const totalValue = customers.reduce((sum, c) => sum + c.totalFinanced, 0);
+    const totalOutstanding = customers.reduce((sum, c) => sum + (c.totalFinanced - c.totalPaid), 0);
+    const totalOverdue = customers.reduce((sum, c) => sum + c.overdueAmount, 0);
+    
+    const totalPayments = customers.reduce((sum, c) => sum + c.totalPaid, 0);
+    const onTimePayments = customers.filter(c => c.overdueAmount === 0).length;
+    const onTimeRate = customers.length > 0 ? (onTimePayments / customers.length) * 100 : 0;
+    
+    const topCustomersByValue = [...customers]
+      .sort((a, b) => b.totalFinanced - a.totalFinanced)
+      .slice(0, 10);
+    
+    const topCustomersByPayments = [...customers]
+      .sort((a, b) => b.totalPaid - a.totalPaid)
+      .slice(0, 10);
+    
+    const riskCustomers = customers
+      .filter(c => c.riskLevel === 'high' || c.riskLevel === 'critical')
+      .sort((a, b) => b.overdueAmount - a.overdueAmount)
+      .slice(0, 10);
+    
+    return {
+      totalCustomers: customers.length,
+      activeCustomers: activeCustomers.length,
+      newCustomersThisMonth: newThisMonth.length,
+      newCustomersLastMonth: newLastMonth.length,
+      
+      lowRiskCustomers: riskDistribution.low,
+      mediumRiskCustomers: riskDistribution.medium,
+      highRiskCustomers: riskDistribution.high,
+      criticalRiskCustomers: riskDistribution.critical,
+      
+      totalCustomerValue: totalValue,
+      averageCustomerValue: customers.length > 0 ? totalValue / customers.length : 0,
+      totalOutstandingAmount: totalOutstanding,
+      totalOverdueAmount: totalOverdue,
+      
+      onTimePaymentRate: onTimeRate,
+      averagePaymentDelay: 0, // TODO: Calculate from payment history
+      defaultRate: 0, // TODO: Calculate from contract data
+      
+      customerGrowthRate: newLastMonth.length > 0 ? ((newThisMonth.length - newLastMonth.length) / newLastMonth.length) * 100 : 0,
+      customerRetentionRate: 95, // TODO: Calculate from actual data
+      customerChurnRate: 5, // TODO: Calculate from actual data
+      
+      topCustomersByValue,
+      topCustomersByPayments,
+      riskCustomers
+    };
+  }, [customers]);
+
+  // กรองลูกค้าขั้นสูง
+  const filterCustomers = useCallback((options: CustomerFilterOptions) => {
+    let filtered = [...customers];
+
+    if (options.riskLevel) {
+      filtered = filtered.filter(c => c.riskLevel === options.riskLevel);
+    }
+
+    if (options.creditScoreRange) {
+      const { min, max } = options.creditScoreRange;
+      filtered = filtered.filter(c => c.creditScore >= min && c.creditScore <= max);
+    }
+
+    if (options.incomeRange) {
+      const { min, max } = options.incomeRange;
+      filtered = filtered.filter(c => c.monthlyIncome >= min && c.monthlyIncome <= max);
+    }
+
+    if (options.hasActiveContracts !== undefined) {
+      filtered = filtered.filter(c => 
+        options.hasActiveContracts ? c.activeContracts > 0 : c.activeContracts === 0
+      );
+    }
+
+    if (options.hasOverdue !== undefined) {
+      filtered = filtered.filter(c => 
+        options.hasOverdue ? c.overdueAmount > 0 : c.overdueAmount === 0
+      );
+    }
+
+    if (options.occupation) {
+      filtered = filtered.filter(c => c.occupation === options.occupation);
+    }
+
+    if (options.customerSinceRange) {
+      const { start, end } = options.customerSinceRange;
+      filtered = filtered.filter(c => c.customerSince >= start && c.customerSince <= end);
+    }
+
+    return filtered;
+  }, [customers]);
+
   return {
     customers,
     loading,
@@ -476,7 +580,12 @@ export function useCustomers() {
       updateCustomerFromContracts,
       getCustomerById,
       recalculateCreditScore,
-      loadCustomers
+      loadCustomers,
+      addGuarantor,
+      getGuarantors,
+      calculateCustomerMetrics,
+      calculateCustomerAnalytics,
+      filterCustomers
     }
   };
 }

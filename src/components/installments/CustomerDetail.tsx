@@ -119,7 +119,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                 <div className="flex items-center gap-3">
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-blue-600 font-bold text-xl">
-                      {customer.name.charAt(0)}
+                      {customer.name?.charAt(0) || ''}
                     </span>
                   </div>
                   <div>

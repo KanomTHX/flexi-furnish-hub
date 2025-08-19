@@ -17,7 +17,7 @@ export default function Dashboard() {
 
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container-responsive">
       <DashboardErrorBoundary>
         <EnhancedDashboard onNavigate={handleNavigate} />
       </DashboardErrorBoundary>

@@ -8,9 +8,15 @@ import {
   Clock,
   TrendingUp,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Zap,
+  ArrowRight,
+  Activity,
+  DollarSign
 } from 'lucide-react';
 import { EmployeeCheckDialog } from '@/components/dashboard/EmployeeCheckDialog';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface QuickAction {
   id: string;
@@ -45,16 +51,16 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
       id: 'new-sale',
       title: 'ขายใหม่',
       icon: Receipt,
-      color: 'text-green-600',
-      bgColor: 'hover:bg-green-50',
+      color: 'text-emerald-600',
+      bgColor: 'hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50',
       badge: stats.todaySales.toString(),
-      badgeColor: 'bg-green-100 text-green-800',
+      badgeColor: 'bg-emerald-500 text-white',
       description: 'สร้างธุรกรรมขายใหม่',
       priority: 'high',
       action: () => {
         navigate('/pos');
         toast({
-          title: "เปิดระบบ POS",
+          title: "🛒 เปิดระบบ POS",
           description: "กำลังเปิดหน้าขายสินค้า",
         });
       }
@@ -63,16 +69,16 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
       id: 'add-stock',
       title: 'เพิ่มสต็อก',
       icon: Plus,
-      color: 'text-orange-600',
-      bgColor: 'hover:bg-orange-50',
+      color: 'text-amber-600',
+      bgColor: 'hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50',
       badge: stats.lowStockItems.toString(),
-      badgeColor: 'bg-orange-100 text-orange-800',
+      badgeColor: 'bg-amber-500 text-white',
       description: 'จัดการสินค้าคงคลัง',
       priority: 'high',
       action: () => {
-        navigate('/stock');
+        navigate('/warehouses');
         toast({
-          title: "เปิดระบบสต็อก",
+          title: "📦 เปิดระบบสต็อก",
           description: "กำลังเปิดหน้าจัดการสต็อกสินค้า",
         });
       }
@@ -82,17 +88,17 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
       title: 'ตรวจสอบพนักงาน',
       icon: UserCheck,
       color: 'text-blue-600',
-      bgColor: 'hover:bg-blue-50',
+      bgColor: 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50',
       badge: `${stats.employeesPresent}/${stats.totalEmployees}`,
       badgeColor: stats.employeesPresent === stats.totalEmployees 
-        ? 'bg-green-100 text-green-800' 
-        : 'bg-blue-100 text-blue-800',
+        ? 'bg-green-500 text-white' 
+        : 'bg-blue-500 text-white',
       description: 'ตรวจสอบการเข้างาน',
       priority: 'high',
       action: () => {
         setEmployeeCheckOpen(true);
         toast({
-          title: "เปิดระบบตรวจสอบพนักงาน",
+          title: "👥 เปิดระบบตรวจสอบพนักงาน",
           description: "กำลังเปิดหน้าตรวจสอบการเข้างาน",
         });
       }
@@ -102,21 +108,36 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
   if (collapsed) {
     return (
       <>
-        {/* Collapsed view - show only icons with tooltips */}
-        <div className="space-y-2 px-2">
+        {/* Collapsed view - show only icons with tooltips - Responsive */}
+        <div className="space-y-1.5 sm:space-y-2">
           {quickActions.map((action) => (
-            <button
-              key={action.id}
-              onClick={action.action}
-              className={`w-full p-2 rounded-md transition-colors duration-200 ${action.bgColor} hover:shadow-sm relative group`}
-              title={`${action.title} (${action.badge})`}
-            >
-              <action.icon className={`w-4 h-4 ${action.color} mx-auto`} />
-              {/* Badge for collapsed view */}
-              <div className={`absolute -top-1 -right-1 text-xs px-1 py-0.5 rounded-full font-medium ${action.badgeColor} min-w-[16px] text-center`}>
-                {action.badge.length > 3 ? '9+' : action.badge}
-              </div>
-            </button>
+            <TooltipProvider key={action.id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={action.action}
+                    className={`w-full p-2 sm:p-3 rounded-xl transition-all duration-300 ${action.bgColor} hover:shadow-lg hover:scale-105 relative group border border-transparent hover:border-white/20`}
+                  >
+                    <div className="flex justify-center">
+                      <div className={`p-1 sm:p-1.5 rounded-lg bg-white/10 group-hover:bg-white/20 transition-all duration-200`}>
+                        <action.icon className={`w-3 h-3 sm:w-4 sm:h-4 ${action.color}`} />
+                      </div>
+                    </div>
+                    {/* Enhanced Badge for collapsed view - Responsive */}
+                    <Badge 
+                      className={`absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 text-xs px-1 py-0.5 sm:px-1.5 ${action.badgeColor} border-2 border-white shadow-lg`}
+                    >
+                      {action.badge.length > 3 ? '9+' : action.badge}
+                    </Badge>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="ml-2">
+                  <div className="text-sm font-medium">{action.title}</div>
+                  <div className="text-xs opacity-70">{action.description}</div>
+                  <div className="text-xs mt-1 text-primary">คลิกเพื่อเปิด</div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ))}
         </div>
         
@@ -130,29 +151,35 @@ export function SidebarQuickActions({ collapsed }: { collapsed: boolean }) {
 
   return (
     <>
-      {/* Expanded view */}
-      <div className="space-y-2">
+      {/* Expanded view - Responsive */}
+      <div className="space-y-2 sm:space-y-3">
         {quickActions.map((action) => (
           <button
             key={action.id}
             onClick={action.action}
-            className={`w-full p-3 rounded-lg transition-all duration-200 ${action.bgColor} hover:shadow-md border border-transparent hover:border-gray-200 group`}
+            className={`w-full p-3 sm:p-4 rounded-xl transition-all duration-300 ${action.bgColor} hover:shadow-lg hover:scale-[1.02] border border-white/10 hover:border-white/20 group relative overflow-hidden`}
           >
-            <div className="flex items-center gap-3">
-              <div className={`p-1.5 rounded-md bg-white/50 group-hover:bg-white/80 transition-colors`}>
-                <action.icon className={`w-4 h-4 ${action.color}`} />
+            {/* Background gradient effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            
+            <div className="relative flex items-center gap-2 sm:gap-3">
+              <div className={`p-1.5 sm:p-2 rounded-xl bg-white/10 group-hover:bg-white/20 transition-all duration-200 group-hover:scale-110`}>
+                <action.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${action.color}`} />
               </div>
               
-              <div className="flex-1 text-left">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm text-sidebar-foreground">
+              <div className="flex-1 text-left min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold text-xs sm:text-sm text-sidebar-foreground truncate">
                     {action.title}
                   </span>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${action.badgeColor}`}>
-                    {action.badge}
-                  </span>
+                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    <Badge className={`text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 ${action.badgeColor} shadow-sm`}>
+                      {action.badge}
+                    </Badge>
+                    <ArrowRight className="w-3 h-3 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70 group-hover:translate-x-1 transition-all duration-200" />
+                  </div>
                 </div>
-                <p className="text-xs text-sidebar-foreground/60 mt-0.5">
+                <p className="text-xs text-sidebar-foreground/60 truncate">
                   {action.description}
                 </p>
               </div>

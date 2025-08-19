@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -79,8 +81,8 @@
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     /* Modern Typography */
-    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-heading: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
     /* Light Sidebar */
@@ -207,48 +209,320 @@
     @apply bg-card/95 border-b border-border/50 backdrop-blur-md;
   }
   
-  /* Modern Sidebar */
+  /* Enhanced Modern Sidebar - Responsive Design */
   .sidebar-modern {
-    @apply bg-sidebar/95 border-r border-sidebar-border/50 backdrop-blur-md;
+    @apply bg-sidebar/95 border-r border-sidebar-border/30 backdrop-blur-xl;
+    --sidebar-width: clamp(14rem, 15vw, 18rem);
+    --sidebar-width-icon: clamp(3.5rem, 4vw, 5rem);
+    will-change: transform, width;
   }
   
-  /* Animations */
+  /* Responsive sidebar adjustments */
+  @media (min-width: 1024px) {
+    .sidebar-modern {
+      --sidebar-width: clamp(15rem, 16vw, 20rem);
+      --sidebar-width-icon: clamp(4rem, 4.5vw, 5.5rem);
+    }
+  }
+  
+  @media (min-width: 1440px) {
+    .sidebar-modern {
+      --sidebar-width: clamp(16rem, 17vw, 22rem);
+      --sidebar-width-icon: clamp(4.5rem, 5vw, 6rem);
+    }
+  }
+  
+  @media (min-width: 1920px) {
+    .sidebar-modern {
+      --sidebar-width: clamp(18rem, 18vw, 24rem);
+      --sidebar-width-icon: clamp(5rem, 5.5vw, 6.5rem);
+    }
+  }
+  
+  /* Optimized Sidebar positioning */
+  [data-sidebar="sidebar"] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    height: 100vh;
+    width: var(--sidebar-width);
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    contain: layout style paint;
+  }
+  
+  [data-sidebar="sidebar"][data-state="collapsed"] {
+    width: var(--sidebar-width-icon);
+  }
+  
+  /* Enhanced Main content adjustment - Responsive */
+  .sidebar-modern + * {
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
+    width: calc(100vw - var(--sidebar-width));
+  }
+  
+  [data-state="collapsed"] ~ * {
+    margin-left: var(--sidebar-width-icon);
+    width: calc(100vw - var(--sidebar-width-icon));
+  }
+  
+  /* Responsive content padding */
+  @media (min-width: 1024px) {
+    .sidebar-modern + * {
+      padding: clamp(1rem, 2vw, 2rem);
+    }
+  }
+  
+  @media (min-width: 1440px) {
+    .sidebar-modern + * {
+      padding: clamp(1.5rem, 2.5vw, 2.5rem);
+    }
+  }
+  
+  @media (min-width: 1920px) {
+    .sidebar-modern + * {
+      padding: clamp(2rem, 3vw, 3rem);
+    }
+  }
+  
+  /* Desktop Only - Mobile and Tablet support removed */
+  
+  /* Performance optimizations */
+  [data-sidebar="sidebar"] * {
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  /* Responsive Typography & Spacing */
+  .responsive-text-sm {
+    font-size: clamp(0.75rem, 1.2vw, 0.875rem);
+  }
+  
+  .responsive-text-base {
+    font-size: clamp(0.875rem, 1.4vw, 1rem);
+  }
+  
+  .responsive-text-lg {
+    font-size: clamp(1rem, 1.6vw, 1.125rem);
+  }
+  
+  .responsive-text-xl {
+    font-size: clamp(1.125rem, 1.8vw, 1.25rem);
+  }
+  
+  .responsive-text-2xl {
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
+  }
+  
+  .responsive-spacing {
+    padding: clamp(0.5rem, 1vw, 1rem);
+    margin: 0;
+  }
+  
+  /* Auto-scaling container */
+  .auto-scale-container {
+    width: 100%;
+    max-width: min(95vw, 1400px);
+    margin: 0 auto;
+    padding: clamp(0.5rem, 1vw, 1rem);
+  }
+  
+  /* Responsive grid system */
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(250px, 25vw, 350px), 1fr));
+    gap: clamp(1rem, 2vw, 2rem);
+  }
+  
+  /* Viewport-based spacing utilities */
+  .space-modern {
+    padding: clamp(0.5rem, 1vw, 1rem);
+    margin: 0;
+  }
+  
+  /* Enhanced Animations with Performance */
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-out;
+    animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity;
   }
   
   .animate-slide-up {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
   }
   
   .animate-scale-in {
-    animation: scaleIn 0.2s ease-out;
+    animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
   }
   
   .animate-bounce-in {
-    animation: bounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: bounceIn 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    will-change: transform;
+  }
+  
+  /* New Performance-focused Animations */
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+  
+  .animate-pulse-soft {
+    animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    will-change: opacity;
+  }
+  
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-scale-in,
+    .animate-bounce-in,
+    .animate-slide-in-left,
+    .animate-pulse-soft {
+      animation: none;
+    }
+    
+    [data-sidebar="sidebar"] {
+      transition: none;
+    }
+  }
+}
+
+/* Additional Keyframes for New Animations */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 
 @layer utilities {
-  /* Modern Spacing */
+  /* Enhanced Responsive Spacing */
   .space-modern > * + * {
-    @apply mt-6;
+    @apply mt-4 sm:mt-5 lg:mt-6;
   }
   
-  /* Modern Grid */
+  .space-tight > * + * {
+    @apply mt-2 sm:mt-3 lg:mt-4;
+  }
+  
+  .space-loose > * + * {
+    @apply mt-6 sm:mt-8 lg:mt-10;
+  }
+  
+  /* Enhanced Responsive Grid */
   .grid-modern {
-    @apply grid gap-6;
+    @apply grid gap-4 sm:gap-5 lg:gap-6;
   }
   
-  /* Modern Flex */
+  .grid-tight {
+    @apply grid gap-2 sm:gap-3 lg:gap-4;
+  }
+  
+  .grid-loose {
+    @apply grid gap-6 sm:gap-8 lg:gap-10;
+  }
+  
+  /* Enhanced Responsive Flex */
   .flex-modern {
-    @apply flex gap-4;
+    @apply flex gap-3 sm:gap-4 lg:gap-5;
+  }
+  
+  .flex-tight {
+    @apply flex gap-2 sm:gap-2.5 lg:gap-3;
+  }
+  
+  .flex-loose {
+    @apply flex gap-4 sm:gap-6 lg:gap-8;
+  }
+  
+  /* Responsive Padding Utilities */
+  .p-responsive {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+  
+  .px-responsive {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .py-responsive {
+    @apply py-4 sm:py-6 lg:py-8;
+  }
+  
+  .p-responsive-tight {
+    @apply p-2 sm:p-3 lg:p-4;
+  }
+  
+  .p-responsive-loose {
+    @apply p-6 sm:p-8 lg:p-12;
+  }
+  
+  /* Responsive Margin Utilities */
+  .m-responsive {
+    @apply m-4 sm:m-6 lg:m-8;
+  }
+  
+  .mx-responsive {
+    @apply mx-4 sm:mx-6 lg:mx-8;
+  }
+  
+  .my-responsive {
+    @apply my-4 sm:my-6 lg:my-8;
+  }
+  
+  /* Container Responsive Utilities */
+  .container-responsive {
+    @apply max-w-sm sm:max-w-2xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .container-tight {
+    @apply max-w-xs sm:max-w-lg lg:max-w-4xl mx-auto px-3 sm:px-4 lg:px-6;
+  }
+  
+  .container-loose {
+    @apply max-w-lg sm:max-w-4xl lg:max-w-full xl:max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-12;
   }
   
   /* Modern Text */
   .text-gradient {
     @apply bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent;
+  }
+  
+  /* Enhanced Responsive Text Sizes */
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm lg:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-base sm:text-lg lg:text-xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-xl sm:text-2xl lg:text-3xl;
   }
   
   /* Modern Shadows */
@@ -258,6 +532,36 @@
   
   .shadow-glow {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  
+  .shadow-responsive {
+    @apply shadow-sm sm:shadow-md lg:shadow-lg;
+  }
+  
+  /* Card Responsive Utilities */
+  .card-responsive {
+    @apply bg-card rounded-lg shadow-responsive p-responsive border border-border/50;
+  }
+  
+  .card-tight {
+    @apply bg-card rounded-md shadow-sm p-responsive-tight border border-border/30;
+  }
+  
+  .card-loose {
+    @apply bg-card rounded-xl shadow-lg p-responsive-loose border border-border/70;
+  }
+  
+  /* Button Responsive Utilities */
+  .btn-responsive {
+    @apply px-4 py-2 sm:px-6 sm:py-2.5 lg:px-8 lg:py-3 text-responsive-base;
+  }
+  
+  .btn-responsive-sm {
+    @apply px-3 py-1.5 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5 text-responsive-sm;
+  }
+  
+  .btn-responsive-lg {
+    @apply px-6 py-3 sm:px-8 sm:py-4 lg:px-10 lg:py-5 text-responsive-lg;
   }
 }
 

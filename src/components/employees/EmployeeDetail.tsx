@@ -65,7 +65,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onClos
           <Avatar className="h-16 w-16">
             <AvatarImage src={employee.avatar} />
             <AvatarFallback className="text-lg">
-              {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
+              {employee.firstName?.charAt(0) || ''}{employee.lastName?.charAt(0) || ''}
             </AvatarFallback>
           </Avatar>
           <div>

@@ -24,8 +24,27 @@ import {
   MapPin,
   CreditCard,
   Save,
-  X
+  X,
+  Shield
 } from 'lucide-react';
+
+interface GuarantorData {
+  name: string;
+  phone: string;
+  email?: string;
+  address: string;
+  idCard: string;
+  occupation: string;
+  monthlyIncome: number;
+  relationship: string;
+  workplace?: string;
+  workAddress?: string;
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
+}
 
 interface Customer {
   id: string;
@@ -42,6 +61,7 @@ interface Customer {
     zipCode: string;
     fullAddress: string;
   };
+  guarantor?: GuarantorData;
   notes?: string;
   createdAt: string;
 }
@@ -67,6 +87,35 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
     notes: ''
   });
 
+  // Guarantor form state
+  const [guarantorData, setGuarantorData] = useState<GuarantorData>({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    idCard: '',
+    occupation: '',
+    monthlyIncome: 0,
+    relationship: '',
+    workplace: '',
+    workAddress: '',
+    emergencyContact: {
+      name: '',
+      phone: '',
+      relationship: ''
+    }
+  });
+
+  const [guarantorAddressData, setGuarantorAddressData] = useState<{
+    province: string;
+    amphure: string;
+    tambon: string;
+    zipCode: string;
+    fullAddress: string;
+  } | null>(null);
+
+  const [hasGuarantor, setHasGuarantor] = useState(false);
+
   const [addressData, setAddressData] = useState<{
     province: string;
     amphure: string;
@@ -79,6 +128,27 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleGuarantorChange = (field: string, value: string | number) => {
+    setGuarantorData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleGuarantorAddressChange = (address: typeof guarantorAddressData) => {
+    setGuarantorAddressData(address);
+  };
+
+  const handleGuarantorEmergencyContactChange = (field: string, value: string) => {
+    setGuarantorData(prev => ({
+      ...prev,
+      emergencyContact: {
+        ...prev.emergencyContact!,
+        [field]: value
+      }
     }));
   };
 
@@ -113,6 +183,37 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
 
     if (!formData.street.trim()) {
       errors.push('กรุณากรอกที่อยู่ (บ้านเลขที่/ถนน)');
+    }
+
+    // Validate guarantor data if provided
+    if (hasGuarantor) {
+      if (!guarantorData.name.trim()) {
+        errors.push('กรุณากรอกชื่อผู้ค้ำประกัน');
+      }
+      if (!guarantorData.phone.trim()) {
+        errors.push('กรุณากรอกเบอร์โทรศัพท์ผู้ค้ำประกัน');
+      }
+      if (!guarantorData.idCard.trim()) {
+        errors.push('กรุณากรอกเลขบัตรประชาชนผู้ค้ำประกัน');
+      }
+      if (!guarantorData.address.trim()) {
+        errors.push('กรุณากรอกที่อยู่ผู้ค้ำประกัน');
+      }
+      if (!guarantorAddressData || !guarantorAddressData.province || !guarantorAddressData.amphure || !guarantorAddressData.tambon) {
+        errors.push('กรุณาเลือกจังหวัด อำเภอ และตำบลของผู้ค้ำประกัน');
+      }
+      if (!guarantorData.occupation.trim()) {
+        errors.push('กรุณากรอกอาชีพผู้ค้ำประกัน');
+      }
+      if (!guarantorData.relationship.trim()) {
+        errors.push('กรุณากรอกความสัมพันธ์กับผู้ค้ำประกัน');
+      }
+      if (guarantorData.monthlyIncome <= 0) {
+        errors.push('กรุณากรอกรายได้ต่อเดือนของผู้ค้ำประกัน');
+      }
+      if (guarantorData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guarantorData.email)) {
+        errors.push('รูปแบบอีเมลผู้ค้ำประกันไม่ถูกต้อง');
+      }
     }
 
     return errors;
@@ -151,6 +252,12 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
           zipCode: addressData!.zipCode,
           fullAddress: `${formData.street} ${addressData!.fullAddress}`
         },
+        guarantor: hasGuarantor ? {
+        ...guarantorData,
+        fullAddress: guarantorAddressData ? 
+          `${guarantorData.address} ${guarantorAddressData.fullAddress}` : 
+          guarantorData.address
+      } : undefined,
         notes: formData.notes,
         createdAt: new Date().toISOString()
       };
@@ -177,7 +284,26 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
         street: '',
         notes: ''
       });
+      setGuarantorData({
+        name: '',
+        phone: '',
+        email: '',
+        address: '',
+        idCard: '',
+        occupation: '',
+        monthlyIncome: 0,
+        relationship: '',
+        workplace: '',
+        workAddress: '',
+        emergencyContact: {
+          name: '',
+          phone: '',
+          relationship: ''
+        }
+      });
+      setHasGuarantor(false);
       setAddressData(null);
+      setGuarantorAddressData(null);
       
       onOpenChange(false);
     } catch (error) {
@@ -201,7 +327,26 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
       street: '',
       notes: ''
     });
+    setGuarantorData({
+      name: '',
+      phone: '',
+      email: '',
+      address: '',
+      idCard: '',
+      occupation: '',
+      monthlyIncome: 0,
+      relationship: '',
+      workplace: '',
+      workAddress: '',
+      emergencyContact: {
+        name: '',
+        phone: '',
+        relationship: ''
+      }
+    });
+    setHasGuarantor(false);
     setAddressData(null);
+    setGuarantorAddressData(null);
     onOpenChange(false);
   };
 
@@ -219,7 +364,7 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
         </DialogHeader>
 
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="basic" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               ข้อมูลพื้นฐาน
@@ -227,6 +372,10 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
             <TabsTrigger value="address" className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
               ที่อยู่
+            </TabsTrigger>
+            <TabsTrigger value="guarantor" className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              ผู้ค้ำประกัน
             </TabsTrigger>
             <TabsTrigger value="additional" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
@@ -345,6 +494,219 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
             />
           </TabsContent>
 
+          {/* ผู้ค้ำประกัน */}
+          <TabsContent value="guarantor" className="space-y-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <input
+                type="checkbox"
+                id="hasGuarantor"
+                checked={hasGuarantor}
+                onChange={(e) => setHasGuarantor(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="hasGuarantor" className="text-sm font-medium">
+                มีผู้ค้ำประกัน
+              </Label>
+            </div>
+
+            {hasGuarantor && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorName">
+                      ชื่อ-นามสกุลผู้ค้ำประกัน <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="guarantorName"
+                      value={guarantorData.name}
+                      onChange={(e) => handleGuarantorChange('name', e.target.value)}
+                      placeholder="ชื่อ-นามสกุลผู้ค้ำประกัน"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorPhone">
+                      เบอร์โทรศัพท์ <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="guarantorPhone"
+                        value={guarantorData.phone}
+                        onChange={(e) => handleGuarantorChange('phone', e.target.value)}
+                        placeholder="08X-XXX-XXXX"
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorEmail">อีเมล</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="guarantorEmail"
+                        type="email"
+                        value={guarantorData.email}
+                        onChange={(e) => handleGuarantorChange('email', e.target.value)}
+                        placeholder="example@email.com"
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorIdCard">
+                      เลขบัตรประชาชน <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="guarantorIdCard"
+                      value={guarantorData.idCard}
+                      onChange={(e) => handleGuarantorChange('idCard', e.target.value)}
+                      placeholder="X-XXXX-XXXXX-XX-X"
+                      maxLength={17}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorOccupation">
+                      อาชีพ <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="guarantorOccupation"
+                      value={guarantorData.occupation}
+                      onChange={(e) => handleGuarantorChange('occupation', e.target.value)}
+                      placeholder="อาชีพ"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorIncome">
+                      รายได้ต่อเดือน (บาท) <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="guarantorIncome"
+                      type="number"
+                      value={guarantorData.monthlyIncome}
+                      onChange={(e) => handleGuarantorChange('monthlyIncome', Number(e.target.value))}
+                      placeholder="0"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorRelationship">
+                      ความสัมพันธ์กับลูกค้า <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={guarantorData.relationship}
+                      onValueChange={(value) => handleGuarantorChange('relationship', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="เลือกความสัมพันธ์" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="spouse">คู่สมรส</SelectItem>
+                        <SelectItem value="parent">บิดา/มารดา</SelectItem>
+                        <SelectItem value="child">บุตร</SelectItem>
+                        <SelectItem value="sibling">พี่น้อง</SelectItem>
+                        <SelectItem value="relative">ญาติ</SelectItem>
+                        <SelectItem value="friend">เพื่อน</SelectItem>
+                        <SelectItem value="colleague">เพื่อนร่วมงาน</SelectItem>
+                        <SelectItem value="other">อื่นๆ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorWorkplace">สถานที่ทำงาน</Label>
+                    <Input
+                      id="guarantorWorkplace"
+                      value={guarantorData.workplace}
+                      onChange={(e) => handleGuarantorChange('workplace', e.target.value)}
+                      placeholder="ชื่อบริษัท/หน่วยงาน"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="guarantorStreet">
+                      ที่อยู่ (บ้านเลขที่/ถนน) <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="guarantorStreet"
+                      value={guarantorData.address}
+                      onChange={(e) => handleGuarantorChange('address', e.target.value)}
+                      placeholder="เช่น 123/45 ถนนสุขุมวิท"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">
+                      จังหวัด/อำเภอ/ตำบล <span className="text-red-500">*</span>
+                    </Label>
+                    <ThaiAddressSelector
+                       onAddressChange={handleGuarantorAddressChange}
+                       required={true}
+                     />
+                     {errors.guarantorFullAddress && (
+                       <p className="text-sm text-red-500">{errors.guarantorFullAddress}</p>
+                     )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="guarantorWorkAddress">ที่อยู่ที่ทำงาน</Label>
+                  <Textarea
+                    id="guarantorWorkAddress"
+                    value={guarantorData.workAddress}
+                    onChange={(e) => handleGuarantorChange('workAddress', e.target.value)}
+                    placeholder="ที่อยู่ที่ทำงาน"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Emergency Contact */}
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    ผู้ติดต่อฉุกเฉิน
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyName">ชื่อ-นามสกุล</Label>
+                      <Input
+                        id="emergencyName"
+                        value={guarantorData.emergencyContact?.name || ''}
+                        onChange={(e) => handleGuarantorEmergencyContactChange('name', e.target.value)}
+                        placeholder="ชื่อผู้ติดต่อฉุกเฉิน"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyPhone">เบอร์โทรศัพท์</Label>
+                      <Input
+                        id="emergencyPhone"
+                        value={guarantorData.emergencyContact?.phone || ''}
+                        onChange={(e) => handleGuarantorEmergencyContactChange('phone', e.target.value)}
+                        placeholder="08X-XXX-XXXX"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyRelationship">ความสัมพันธ์</Label>
+                      <Input
+                        id="emergencyRelationship"
+                        value={guarantorData.emergencyContact?.relationship || ''}
+                        onChange={(e) => handleGuarantorEmergencyContactChange('relationship', e.target.value)}
+                        placeholder="ความสัมพันธ์"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
           {/* ข้อมูลเพิ่มเติม */}
           <TabsContent value="additional" className="space-y-4">
             <div className="space-y-2">
@@ -393,3 +755,5 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
     </Dialog>
   );
 }
+
+export default AddCustomerDialog;

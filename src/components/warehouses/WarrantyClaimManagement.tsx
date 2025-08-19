@@ -223,190 +223,25 @@ type ClaimStatus = 'submitted' | 'under_review' | 'investigating' | 'approved' |
 type ClaimPriority = 'low' | 'medium' | 'high' | 'urgent';
 type ResolutionType = 'repair' | 'replace' | 'refund' | 'credit' | 'no_action';
 
-// Mock Data
-const mockWarranties: WarrantyRecord[] = [
-  {
-    id: '1',
-    serialNumber: 'SF001-2024-001',
-    productId: 'P001',
-    productName: 'โซฟา 3 ที่นั่ง รุ่น Comfort Plus',
-    productCode: 'SF-001',
-    customerId: 'C001',
-    customerName: 'สมชาย ใจดี',
-    customerEmail: 'somchai@email.com',
-    customerPhone: '081-234-5678',
-    purchaseDate: new Date('2024-01-15'),
-    warrantyStartDate: new Date('2024-01-15'),
-    warrantyEndDate: new Date('2026-01-15'),
-    warrantyPeriod: 24,
-    warrantyType: 'manufacturer',
-    status: 'active',
-    supplierId: 'S001',
-    supplierName: 'Furniture Pro Co., Ltd.',
-    invoiceNumber: 'INV-2024-001',
-    purchasePrice: 25000,
-    registrationDate: new Date('2024-01-16'),
-    registeredBy: 'พนักงานขาย',
-    notes: 'ลูกค้า VIP - ให้บริการพิเศษ',
-    documents: [
-      {
-        id: '1',
-        name: 'ใบเสร็จรับเงิน',
-        type: 'invoice',
-        url: '/documents/invoice-001.pdf',
-        uploadedBy: 'พนักงานขาย',
-        uploadedDate: new Date('2024-01-16'),
-        size: 245760
-      },
-      {
-        id: '2',
-        name: 'บัตรรับประกัน',
-        type: 'warranty_card',
-        url: '/documents/warranty-card-001.pdf',
-        uploadedBy: 'พนักงานขาย',
-        uploadedDate: new Date('2024-01-16'),
-        size: 156432
-      }
-    ],
-    claims: [],
-    maintenanceRecords: []
-  },
-  {
-    id: '2',
-    serialNumber: 'TB001-2024-002',
-    productId: 'P002',
-    productName: 'โต๊ะกาแฟ รุ่น Modern Style',
-    productCode: 'TB-001',
-    customerId: 'C002',
-    customerName: 'สุดา ขยัน',
-    customerEmail: 'suda@email.com',
-    customerPhone: '082-345-6789',
-    purchaseDate: new Date('2024-01-10'),
-    warrantyStartDate: new Date('2024-01-10'),
-    warrantyEndDate: new Date('2025-01-10'),
-    warrantyPeriod: 12,
-    warrantyType: 'manufacturer',
-    status: 'active',
-    supplierId: 'S002',
-    supplierName: 'Wood Craft Ltd.',
-    invoiceNumber: 'INV-2024-002',
-    purchasePrice: 8000,
-    registrationDate: new Date('2024-01-11'),
-    registeredBy: 'พนักงานขาย',
-    documents: [],
-    claims: [],
-    maintenanceRecords: []
-  }
-];
 
-const mockClaims: ClaimRecord[] = [
-  {
-    id: '1',
-    claimNumber: 'CLM-2024-001',
-    warrantyId: '1',
-    serialNumber: 'SF001-2024-001',
-    customerId: 'C001',
-    customerName: 'สมชาย ใจดี',
-    issueDescription: 'เบาะโซฟาเริ่มยุบและมีเสียงดังเมื่อนั่ง อาจเป็นปัญหาที่สปริงภายใน',
-    issueCategory: 'defect',
-    severity: 'medium',
-    status: 'under_review',
-    priority: 'medium',
-    reportedDate: new Date('2024-01-20'),
-    assignedTo: 'ช่างเทคนิค A',
-    assignedDate: new Date('2024-01-21'),
-    estimatedCost: 2000,
-    actualCost: 0,
-    resolutionType: 'repair',
-    isValidClaim: true,
-    documents: [
-      {
-        id: '1',
-        name: 'รูปถ่ายปัญหา 1',
-        type: 'photo',
-        url: '/images/claim-001-1.jpg',
-        uploadedBy: 'สมชาย ใจดี',
-        uploadedDate: new Date('2024-01-20'),
-        size: 1024000,
-        description: 'รูปแสดงตำแหน่งที่เบาะยุบ'
-      },
-      {
-        id: '2',
-        name: 'รูปถ่ายปัญหา 2',
-        type: 'photo',
-        url: '/images/claim-001-2.jpg',
-        uploadedBy: 'สมชาย ใจดี',
-        uploadedDate: new Date('2024-01-20'),
-        size: 856000,
-        description: 'รูปแสดงมุมมองด้านข้าง'
-      }
-    ],
-    communications: [
-      {
-        id: '1',
-        claimId: '1',
-        type: 'email',
-        direction: 'inbound',
-        subject: 'แจ้งปัญหาโซฟา',
-        message: 'เรียนเจ้าหน้าที่ ขอแจ้งปัญหาโซฟาที่ซื้อไป เบาะเริ่มยุบและมีเสียงดัง',
-        sentBy: 'สมชาย ใจดี',
-        sentTo: 'ฝ่ายบริการลูกค้า',
-        sentDate: new Date('2024-01-20T09:30:00'),
-        attachments: []
-      },
-      {
-        id: '2',
-        claimId: '1',
-        type: 'email',
-        direction: 'outbound',
-        subject: 'Re: แจ้งปัญหาโซฟา',
-        message: 'ขอบคุณสำหรับการแจ้ง เราได้รับเรื่องแล้วและจะมีเจ้าหน้าที่ติดต่อกลับภายใน 24 ชั่วโมง',
-        sentBy: 'ฝ่ายบริการลูกค้า',
-        sentTo: 'สมชาย ใจดี',
-        sentDate: new Date('2024-01-20T10:15:00'),
-        attachments: []
-      }
-    ],
-    timeline: [
-      {
-        id: '1',
-        claimId: '1',
-        eventType: 'created',
-        description: 'สร้างคำขอเคลม',
-        performedBy: 'สมชาย ใจดี',
-        performedDate: new Date('2024-01-20T09:30:00')
-      },
-      {
-        id: '2',
-        claimId: '1',
-        eventType: 'assigned',
-        description: 'มอบหมายให้ช่างเทคนิค A',
-        performedBy: 'ฝ่ายบริการลูกค้า',
-        performedDate: new Date('2024-01-21T08:00:00')
-      }
-    ]
-  }
-];
-
-const mockMetrics: WarrantyMetrics = {
-  totalWarranties: 1250,
-  activeWarranties: 980,
-  expiredWarranties: 270,
-  totalClaims: 45,
-  pendingClaims: 8,
-  approvedClaims: 32,
-  rejectedClaims: 5,
-  averageResolutionTime: 3.2,
-  customerSatisfactionRate: 4.3,
-  claimApprovalRate: 86.4,
-  totalClaimCost: 125000,
-  averageClaimCost: 2777
-};
 
 export function WarrantyClaimManagement() {
-  const [warranties, setWarranties] = useState<WarrantyRecord[]>(mockWarranties);
-  const [claims, setClaims] = useState<ClaimRecord[]>(mockClaims);
-  const [metrics, setMetrics] = useState<WarrantyMetrics>(mockMetrics);
+  const [warranties, setWarranties] = useState<WarrantyRecord[]>([]);
+  const [claims, setClaims] = useState<ClaimRecord[]>([]);
+  const [metrics, setMetrics] = useState<WarrantyMetrics>({
+    totalWarranties: 0,
+    activeWarranties: 0,
+    expiredWarranties: 0,
+    totalClaims: 0,
+    pendingClaims: 0,
+    approvedClaims: 0,
+    rejectedClaims: 0,
+    averageResolutionTime: 0,
+    customerSatisfactionRate: 0,
+    claimApprovalRate: 0,
+    totalClaimCost: 0,
+    averageClaimCost: 0
+  });
   const [selectedWarranty, setSelectedWarranty] = useState<WarrantyRecord | null>(null);
   const [selectedClaim, setSelectedClaim] = useState<ClaimRecord | null>(null);
   const [showWarrantyDialog, setShowWarrantyDialog] = useState(false);

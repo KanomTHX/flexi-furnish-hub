@@ -12,6 +12,7 @@ import { PendingClaimsDialog } from '@/components/claims/PendingClaimsDialog';
 import { OverdueClaimsDialog } from '@/components/claims/OverdueClaimsDialog';
 import { CreateClaimDialog } from '@/components/claims/CreateClaimDialog';
 import { ClearClaimsFiltersDialog } from '@/components/claims/ClearClaimsFiltersDialog';
+import { WarrantyManagement } from '@/components/claims/WarrantyManagement';
 import { exportClaimsToCSV, exportCustomersToCSV, exportProductsToCSV } from '@/utils/claimsHelpers';
 import {
   Shield,
@@ -375,23 +376,7 @@ export default function Claims() {
         </TabsContent>
 
         <TabsContent value="warranty" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                การจัดการรับประกัน
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>ระบบจัดการรับประกันจะพัฒนาในเวอร์ชันถัดไป</p>
-                <p className="text-sm mt-2">
-                  จะรวมถึงการตรวจสอบสถานะรับประกัน การต่ออายุ และการจัดการนโยบาย
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <WarrantyManagement />
         </TabsContent>
 
         <TabsContent value="customers" className="space-y-6">

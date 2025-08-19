@@ -215,10 +215,10 @@ export function useSupabaseCustomers() {
     
     const searchTerm = query.toLowerCase();
     return customers.filter(customer => 
-      customer.name.toLowerCase().includes(searchTerm) ||
-      customer.phone.includes(searchTerm) ||
-      customer.email.toLowerCase().includes(searchTerm) ||
-      customer.idCard.includes(searchTerm)
+      (customer.name || '').toLowerCase().includes(searchTerm) ||
+      (customer.phone || '').includes(searchTerm) ||
+      (customer.email || '').toLowerCase().includes(searchTerm) ||
+      (customer.idCard || '').includes(searchTerm)
     );
   }, [customers]);
 

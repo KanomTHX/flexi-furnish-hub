@@ -646,8 +646,8 @@ export const TrainingManagement: React.FC = () => {
                               <Avatar className="h-8 w-8">
                                 <AvatarImage src={employee?.avatar} />
                                 <AvatarFallback>
-                                  {employee?.firstName.charAt(0)}{employee?.lastName.charAt(0)}
-                                </AvatarFallback>
+                      {employee?.firstName?.charAt(0) || ''}{employee?.lastName?.charAt(0) || ''}
+                    </AvatarFallback>
                               </Avatar>
                               <div>
                                 <div className="font-medium">

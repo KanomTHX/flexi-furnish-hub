@@ -72,10 +72,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   // Filter users
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase());
+      (user.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.lastName || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRole = roleFilter === 'all' || user.role.id === roleFilter;
     const matchesStatus = statusFilter === 'all' || 
@@ -414,7 +414,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                           <span className="text-blue-600 font-medium">
-                            {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                            {user.firstName?.charAt(0) || ''}{user.lastName?.charAt(0) || ''}
                           </span>
                         </div>
                         <div>

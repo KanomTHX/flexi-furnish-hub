@@ -60,12 +60,12 @@ export const EmployeeManagement: React.FC = () => {
 
   const filteredEmployees = employees.filter(employee => {
     const matchesSearch = 
-      employee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (employee.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (employee.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (employee.employeeId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (employee.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesDepartment = selectedDepartment === 'all' || employee.department.id === selectedDepartment;
+    const matchesDepartment = selectedDepartment === 'all' || employee.department?.id === selectedDepartment;
     const matchesStatus = selectedStatus === 'all' || employee.status === selectedStatus;
     
     return matchesSearch && matchesDepartment && matchesStatus;
@@ -262,7 +262,7 @@ export const EmployeeManagement: React.FC = () => {
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={employee.avatar} />
                           <AvatarFallback>
-                            {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
+                            {employee.firstName?.charAt(0) || ''}{employee.lastName?.charAt(0) || ''}
                           </AvatarFallback>
                         </Avatar>
                         <div>

@@ -282,7 +282,7 @@ export function EmployeeCheckDialog({ open, onOpenChange }: EmployeeCheckDialogP
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                           <span className="text-blue-600 font-medium text-lg">
-                            {employee.name.charAt(0)}
+                            {employee.name?.charAt(0) || ''}
                           </span>
                         </div>
                         <div>

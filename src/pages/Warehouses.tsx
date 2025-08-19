@@ -27,7 +27,7 @@ import { ZoneManagement } from '@/components/warehouses/ZoneManagement';
 import { TaskManagement } from '@/components/warehouses/TaskManagement';
 import { WarehouseAlertSystem } from '@/components/warehouses/WarehouseAlertSystem';
 import { TransferManagementEnhanced } from '@/components/warehouses/TransferManagementEnhanced';
-import { WarrantyClaimManagement } from '@/components/warehouses/WarrantyClaimManagement';
+
 import { WarehouseAnalytics } from '@/components/warehouses/WarehouseAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -323,10 +323,7 @@ export default function Warehouses() {
             <ArrowRightLeft className="w-5 h-5" />
             <span className="font-semibold">โอนย้าย</span>
           </TabsTrigger>
-          <TabsTrigger value="warranty" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <Shield className="w-5 h-5" />
-            <span className="font-semibold">การรับประกัน</span>
-          </TabsTrigger>
+
           <TabsTrigger value="analytics" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
             <TrendingUp className="w-5 h-5" />
             <span className="font-semibold">วิเคราะห์</span>
@@ -559,9 +556,7 @@ export default function Warehouses() {
           <TransferManagementEnhanced />
         </TabsContent>
 
-        <TabsContent value="warranty" className="mt-4">
-          <WarrantyClaimManagement />
-        </TabsContent>
+
 
         <TabsContent value="analytics" className="mt-4">
           <WarehouseAnalytics />

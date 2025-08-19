@@ -72,9 +72,9 @@ export const EmployeeReport: React.FC<EmployeeReportProps> = ({ branchId }) => {
     
     if (searchTerm) {
       filtered = filtered.filter(emp => 
-        emp.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (typeof emp.position === 'string' ? emp.position : emp.position.name).toLowerCase().includes(searchTerm.toLowerCase())
+        (emp.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (emp.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (typeof emp.position === 'string' ? emp.position : emp.position?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     

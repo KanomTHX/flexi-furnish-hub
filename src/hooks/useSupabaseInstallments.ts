@@ -415,8 +415,8 @@ export function useSupabaseInstallments() {
     
     const searchTerm = query.toLowerCase();
     return contracts.filter(contract => 
-      contract.contractNumber.toLowerCase().includes(searchTerm) ||
-      contract.customer.name.toLowerCase().includes(searchTerm) ||
+      (contract.contractNumber || '').toLowerCase().includes(searchTerm) ||
+      (contract.customer.name || '').toLowerCase().includes(searchTerm) ||
       contract.customer.phone?.toLowerCase().includes(searchTerm) ||
       contract.customer.idCard?.toLowerCase().includes(searchTerm)
     );

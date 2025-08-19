@@ -397,7 +397,7 @@ export const PayrollManagement: React.FC = () => {
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={employee?.avatar} />
                               <AvatarFallback>
-                                {employee?.firstName.charAt(0)}{employee?.lastName.charAt(0)}
+                                {employee?.firstName?.charAt(0) || ''}{employee?.lastName?.charAt(0) || ''}
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -532,8 +532,8 @@ export const PayrollManagement: React.FC = () => {
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={getEmployeeById(selectedPayroll.employeeId)?.avatar} />
                   <AvatarFallback>
-                    {getEmployeeById(selectedPayroll.employeeId)?.firstName.charAt(0)}
-                    {getEmployeeById(selectedPayroll.employeeId)?.lastName.charAt(0)}
+                    {getEmployeeById(selectedPayroll.employeeId)?.firstName?.charAt(0) || ''}
+                    {getEmployeeById(selectedPayroll.employeeId)?.lastName?.charAt(0) || ''}
                   </AvatarFallback>
                 </Avatar>
                 <div>

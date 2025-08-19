@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { 
   Settings, 
   Users, 
@@ -13,26 +15,80 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  RefreshCw
+  RefreshCw,
+  UserCheck,
+  Database,
+  Wifi,
+  XCircle,
+  AlertCircle,
+  TrendingUp,
+  HardDrive,
+  Lock
 } from 'lucide-react';
 
 interface SettingsOverviewProps {
-  stats: {
+  stats?: {
     totalUsers: number;
     activeUsers: number;
     totalRoles: number;
     totalPermissions: number;
     recentChanges: number;
+    systemStatus: 'healthy' | 'warning' | 'error';
+    systemHealth: {
+      database: 'connected' | 'disconnected' | 'slow';
+      storage: number; // percentage used
+      memory: number; // percentage used
+      uptime: string;
+    };
   };
-  onRefresh: () => void;
-  onNavigateToCategory: (category: string) => void;
+  onRefresh?: () => void;
+  onNavigateToCategory?: (category: string) => void;
+}
+
+interface SystemMetrics {
+  cpu: number;
+  memory: number;
+  storage: number;
+  network: 'good' | 'slow' | 'offline';
+  lastBackup: string;
+  securityScore: number;
 }
 
 export const SettingsOverview: React.FC<SettingsOverviewProps> = ({
-  stats,
-  onRefresh,
-  onNavigateToCategory
+  stats = {
+    totalUsers: 24,
+    activeUsers: 18,
+    totalRoles: 5,
+    totalPermissions: 15,
+    recentChanges: 12,
+    systemStatus: 'healthy',
+    systemHealth: {
+      database: 'connected',
+      storage: 65,
+      memory: 45,
+      uptime: '15 วัน 8 ชั่วโมง'
+    }
+  },
+  onRefresh = () => {},
+  onNavigateToCategory = () => {}
 }) => {
+  const [metrics, setMetrics] = useState<SystemMetrics>({
+    cpu: 35,
+    memory: 45,
+    storage: 65,
+    network: 'good',
+    lastBackup: '2 ชั่วโมงที่แล้ว',
+    securityScore: 85
+  });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsRefreshing(false);
+    onRefresh();
+  };
   const quickStats = [
     {
       title: 'ผู้ใช้งานทั้งหมด',

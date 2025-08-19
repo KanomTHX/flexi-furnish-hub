@@ -17,6 +17,7 @@ import "@/utils/consoleCommands"; // Initialize console commands
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const POS = lazy(() => import("./pages/POS"));
 const Installments = lazy(() => import("./pages/Installments"));
+const Customers = lazy(() => import("./pages/Customers"));
 
 const Warehouses = lazy(() => import("./pages/Warehouses"));
 const Transfer = lazy(() => import("./pages/Transfer"));
@@ -84,6 +85,15 @@ const App = () => {
                 <AdminLayout>
                   <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบผ่อนชำระ..." />}>
                     <Installments />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/customers" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดระบบจัดการลูกค้า..." />}>
+                    <Customers />
                   </SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>

@@ -198,7 +198,7 @@ export function Transfer() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container-responsive">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-2">กำลังโหลดข้อมูล...</span>
@@ -223,7 +223,7 @@ export function Transfer() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container-responsive space-modern">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

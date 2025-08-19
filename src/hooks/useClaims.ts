@@ -38,10 +38,15 @@ export function useClaims() {
       setLoading(true);
       setError(null);
 
-      // Load claims
+      // Load claims with related data
       const { data: claimsData, error: claimsError } = await supabase
         .from('claims')
-        .select('*')
+        .select(`
+          *,
+          customers(id, name, phone, email),
+          products(id, name, cost_price),
+          employees(id, name)
+        `)
         .order('created_at', { ascending: false });
 
       if (claimsError) throw claimsError;
@@ -85,9 +90,50 @@ export function useClaims() {
         warrantyPeriod: 12 // months
       }));
 
+      // Transform claims data
+      const transformedClaims: Claim[] = (claimsData || []).map(claim => ({
+        id: claim.id,
+        claimNumber: claim.claim_number,
+        customerId: claim.customer_id,
+        customerName: claim.customers?.name || 'ไม่ระบุ',
+        productId: claim.product_id,
+        productName: claim.products?.name || 'ไม่ระบุ',
+        claimDate: claim.claim_date,
+        type: claim.claim_type as any,
+        category: 'general' as const,
+        priority: 'medium' as const,
+        status: claim.status as any,
+        issueDescription: claim.description,
+        estimatedCost: claim.compensation_amount || 0,
+        actualCost: claim.compensation_amount || 0,
+        assignedTo: claim.handled_by,
+        assignedToName: claim.employees?.name || '',
+        createdAt: claim.created_at,
+        updatedAt: claim.updated_at,
+        timeline: [],
+        attachments: [],
+        warrantyInfo: {
+          isUnderWarranty: claim.claim_type === 'warranty',
+          warrantyEndDate: '',
+          remainingDays: 0
+        },
+        resolution: claim.resolution ? {
+          type: 'replacement' as const,
+          description: claim.resolution,
+          cost: claim.compensation_amount || 0,
+          completedAt: claim.updated_at,
+          completedBy: claim.handled_by || '',
+          completedByName: claim.employees?.name || ''
+        } : undefined
+      }));
+
       setCustomers(transformedCustomers);
       setProducts(transformedProducts);
-      setClaims([]); // Claims table needs to be set up properly
+      setClaims(transformedClaims);
+      
+      // Load warranty policies and claim templates from database
+      // For now, set empty arrays as these tables don't exist yet
+      // In the future, these could be loaded from warranty_policies and claim_templates tables
       setWarrantyPolicies([]);
       setClaimTemplates([]);
       
@@ -108,18 +154,98 @@ export function useClaims() {
     const totalClaims = claims.length;
     const pendingClaims = claims.filter(c => ['submitted', 'under_review', 'approved', 'in_progress'].includes(c.status)).length;
     const completedClaims = claims.filter(c => c.status === 'completed').length;
-    const averageResolutionTime = 5; // Mock value
+    
+    // Calculate real average resolution time
+    const completedClaimsWithDates = claims.filter(c => 
+      c.status === 'completed' && c.createdAt && c.updatedAt
+    );
+    
+    const averageResolutionTime = completedClaimsWithDates.length > 0 
+      ? completedClaimsWithDates.reduce((acc, claim) => {
+          const created = new Date(claim.createdAt!);
+          const completed = new Date(claim.updatedAt!);
+          const days = Math.ceil((completed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+          return acc + days;
+        }, 0) / completedClaimsWithDates.length
+      : 0;
+    
+    // Calculate overdue rate
+    const now = new Date();
+    const overdueClaims = claims.filter(c => {
+      if (['completed', 'cancelled'].includes(c.status) || !c.createdAt) return false;
+      const created = new Date(c.createdAt);
+      const daysDiff = Math.ceil((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+      const overdueThreshold = {
+        urgent: 1,
+        high: 3,
+        medium: 7,
+        low: 14
+      };
+      return daysDiff > overdueThreshold[c.priority];
+    }).length;
+    
+    const overdueRate = totalClaims > 0 ? Math.round((overdueClaims / totalClaims) * 100) : 0;
+    
+    // Calculate claims by type from actual data
+    const claimsByType = {
+      warranty: claims.filter(c => c.type === 'warranty').length,
+      damage: claims.filter(c => c.type === 'damage').length,
+      defect: claims.filter(c => c.type === 'defect').length,
+      other: claims.filter(c => c.type === 'other').length,
+      missing_parts: claims.filter(c => c.type === 'missing_parts').length,
+      installation: claims.filter(c => c.type === 'installation').length
+    };
+    
+    // Calculate monthly trends from actual data
+    const monthlyTrends = Array.from({ length: 6 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - (5 - i));
+      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+      
+      const monthClaims = claims.filter(c => {
+        if (!c.createdAt) return false;
+        const claimDate = new Date(c.createdAt);
+        return claimDate.getMonth() === date.getMonth() && 
+               claimDate.getFullYear() === date.getFullYear();
+      });
+      
+      const completedInMonth = monthClaims.filter(c => c.status === 'completed').length;
+      const avgCost = monthClaims.length > 0 
+        ? monthClaims.reduce((sum, c) => sum + (c.actualCost || 0), 0) / monthClaims.length
+        : 0;
+      
+      return {
+        month: monthName,
+        totalClaims: monthClaims.length,
+        completedClaims: completedInMonth,
+        averageCost: Math.round(avgCost),
+        satisfactionRating: 0 // Will be calculated when we have feedback data
+      };
+    });
+    
+    // Calculate top issues from actual data
+    const issueCount: Record<string, number> = {};
+    claims.forEach(claim => {
+      if (claim.category) {
+        issueCount[claim.category] = (issueCount[claim.category] || 0) + 1;
+      }
+    });
+    
+    const topIssues = Object.entries(issueCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([issue, count]) => ({ issue, count }));
     
     return {
       totalClaims,
       pendingClaims,
       completedClaims,
       cancelledClaims: claims.filter(c => c.status === 'cancelled').length,
-      averageResolutionTime,
-      customerSatisfactionRate: 85,
-      customerSatisfactionAverage: 4.2,
+      averageResolutionTime: Math.round(averageResolutionTime * 10) / 10,
+      customerSatisfactionRate: 0, // Will be calculated when we have feedback data
+      customerSatisfactionAverage: 0, // Will be calculated when we have feedback data
       warrantyClaimsPercentage: claims.filter(c => c.warrantyInfo?.isUnderWarranty).length / totalClaims * 100 || 0,
-      mostCommonIssue: 'ชำรุด',
+      mostCommonIssue: topIssues[0]?.issue || 'ไม่มีข้อมูล',
       totalCompensation: claims.reduce((sum, c) => sum + (c.actualCost || 0), 0),
       totalClaimsCost: claims.reduce((sum, c) => sum + (c.actualCost || 0), 0),
       claimsThisMonth: claims.filter(c => {
@@ -128,9 +254,9 @@ export function useClaims() {
         return claimDate.getMonth() === now.getMonth() && claimDate.getFullYear() === now.getFullYear();
       }).length,
       urgentClaims: claims.filter(c => c.priority === 'urgent').length,
-      overdueRate: 15, // Mock percentage
+      overdueRate,
       resolutionRate: completedClaims / totalClaims * 100 || 0,
-      claimsByType: { warranty: 50, damage: 30, defect: 20, other: 0, missing_parts: 0, installation: 0 },
+      claimsByType,
       claimsByStatus: { 
         submitted: claims.filter(c => c.status === 'submitted').length,
         under_review: claims.filter(c => c.status === 'under_review').length,
@@ -147,11 +273,8 @@ export function useClaims() {
         medium: claims.filter(c => c.priority === 'medium').length,
         low: claims.filter(c => c.priority === 'low').length
       },
-      monthlyTrends: [
-        { month: 'Jan', totalClaims: 10, completedClaims: 8, averageCost: 2500, satisfactionRating: 4.2 }, 
-        { month: 'Feb', totalClaims: 15, completedClaims: 12, averageCost: 2300, satisfactionRating: 4.5 }
-      ],
-      topIssues: [{ issue: 'ชำรุด', count: 10 }]
+      monthlyTrends,
+      topIssues
     };
   }, [claims]);
 
@@ -186,146 +309,265 @@ export function useClaims() {
   }, [claims, claimFilter]);
 
   // Claim operations
-  const createClaim = useCallback((claimData: CreateClaimForm) => {
-    const customer = customers.find(c => c.id === claimData.customerId);
-    const product = products.find(p => p.id === claimData.productId);
-    
-    if (!customer || !product) {
-      throw new Error('Customer or Product not found');
-    }
-
-    // Calculate warranty info
-    const purchaseDate = new Date(claimData.purchaseDate);
-    const warrantyEndDate = new Date(purchaseDate);
-    warrantyEndDate.setMonth(warrantyEndDate.getMonth() + product.warrantyPeriod);
-    const now = new Date();
-    const isUnderWarranty = now <= warrantyEndDate;
-    const remainingDays = Math.ceil((warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    const newClaim: Claim = {
-      id: `claim-${Date.now()}`,
-      claimNumber: `CLM-${new Date().getFullYear()}-${String(claims.length + 1).padStart(3, '0')}`,
-      type: claimData.type,
-      status: 'submitted',
-      priority: claimData.priority,
-      customerId: claimData.customerId,
-      customer,
-      productId: claimData.productId,
-      product,
-      purchaseDate: claimData.purchaseDate,
-      claimDate: new Date().toISOString().split('T')[0],
-      issueDescription: claimData.issueDescription,
-      category: claimData.category,
-      warrantyInfo: {
-        isUnderWarranty,
-        warrantyStartDate: claimData.purchaseDate,
-        warrantyEndDate: warrantyEndDate.toISOString().split('T')[0],
-        warrantyType: 'manufacturer',
-        coverageDetails: ['ข้อบกพร่องจากการผลิต', 'ชิ้นส่วนที่ชำรุด'],
-        remainingDays: Math.max(0, remainingDays)
-      },
-      attachments: [],
-      timeline: [
-        {
-          id: `tl-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          action: 'created',
-          description: 'สร้างคำขอเคลมใหม่',
-          performedBy: claimData.customerId
-        }
-      ],
-      createdBy: claimData.customerId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    setClaims(prev => [...prev, newClaim]);
-    return newClaim;
-  }, [claims.length, customers, products]);
-
-  const updateClaim = useCallback((claimId: string, updates: UpdateClaimForm) => {
-    setClaims(prev => prev.map(claim => {
-      if (claim.id === claimId) {
-        // Handle resolution update properly
-        const { resolution, ...otherUpdates } = updates;
-        const updatedClaim = { 
-          ...claim, 
-          ...otherUpdates, 
-          updatedAt: new Date().toISOString()
-        };
-        
-        // Only update resolution if it's a complete ClaimResolution
-        if (resolution && resolution.type) {
-          updatedClaim.resolution = resolution as ClaimResolution;
-        }
-        
-        // Add timeline entry for status change
-        if (updates.status && updates.status !== claim.status) {
-          const timelineEntry: ClaimTimelineEntry = {
-            id: `tl-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            action: 'status_changed',
-            description: `เปลี่ยนสถานะเป็น ${updates.status}`,
-            performedBy: 'current-user'
-          };
-          updatedClaim.timeline = [...claim.timeline, timelineEntry];
-        }
-
-        // Add timeline entry for assignment
-        if (updates.assignedTo && updates.assignedTo !== claim.assignedTo) {
-          const timelineEntry: ClaimTimelineEntry = {
-            id: `tl-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            action: 'assigned',
-            description: `มอบหมายให้ ${updates.assignedTo}`,
-            performedBy: 'current-user'
-          };
-          updatedClaim.timeline = [...claim.timeline, timelineEntry];
-          updatedClaim.assignedBy = 'current-user';
-          updatedClaim.assignedAt = new Date().toISOString();
-        }
-
-        return updatedClaim;
+  const createClaim = useCallback(async (claimData: CreateClaimForm) => {
+    try {
+      const customer = customers.find(c => c.id === claimData.customerId);
+      const product = products.find(p => p.id === claimData.productId);
+      
+      if (!customer || !product) {
+        throw new Error('Customer or Product not found');
       }
-      return claim;
-    }));
+
+      // Generate claim number
+      const claimNumber = `CLM-${new Date().getFullYear()}-${String(claims.length + 1).padStart(3, '0')}`;
+      
+      // Insert into database
+      const { data: newClaimData, error } = await supabase
+        .from('claims')
+        .insert({
+          claim_number: claimNumber,
+          customer_id: claimData.customerId,
+          product_id: claimData.productId,
+          claim_date: new Date().toISOString().split('T')[0],
+          claim_type: claimData.type,
+          description: claimData.issueDescription,
+          status: 'pending',
+          compensation_amount: 0
+        })
+        .select(`
+          *,
+          customers(id, name, phone, email),
+          products(id, name, cost_price)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      // Transform the response to match our Claim interface
+      const newClaim: Claim = {
+        id: newClaimData.id,
+        claimNumber: newClaimData.claim_number,
+        customerId: newClaimData.customer_id,
+        customerName: newClaimData.customers?.name || 'ไม่ระบุ',
+        productId: newClaimData.product_id,
+        productName: newClaimData.products?.name || 'ไม่ระบุ',
+        claimDate: newClaimData.claim_date,
+        type: newClaimData.claim_type as any,
+        category: claimData.category,
+        priority: claimData.priority,
+        status: newClaimData.status as any,
+        issueDescription: newClaimData.description,
+        estimatedCost: 0,
+        actualCost: 0,
+        assignedTo: newClaimData.handled_by,
+        assignedToName: '',
+        createdAt: newClaimData.created_at,
+        updatedAt: newClaimData.updated_at,
+        timeline: [],
+        attachments: [],
+        warrantyInfo: {
+          isUnderWarranty: newClaimData.claim_type === 'warranty',
+          warrantyEndDate: '',
+          remainingDays: 0
+        }
+      };
+
+      // Update local state
+      setClaims(prev => [...prev, newClaim]);
+      return newClaim;
+    } catch (error) {
+      console.error('Error creating claim:', error);
+      throw error;
+    }
+  }, [claims.length, customers, products, supabase]);
+
+  const updateClaim = useCallback(async (claimId: string, updates: UpdateClaimForm) => {
+    try {
+      const { error } = await supabase
+        .from('claims')
+        .update({
+          status: updates.status,
+          handled_by: updates.assignedTo,
+          resolution: updates.resolution?.description,
+          compensation_amount: updates.actualCost || 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', claimId);
+
+      if (error) throw error;
+
+      // Update local state
+      setClaims(prev => prev.map(claim => {
+        if (claim.id === claimId) {
+          // Handle resolution update properly
+          const { resolution, ...otherUpdates } = updates;
+          const updatedClaim = { 
+            ...claim, 
+            ...otherUpdates, 
+            updatedAt: new Date().toISOString()
+          };
+          
+          // Only update resolution if it's a complete ClaimResolution
+          if (resolution && resolution.type) {
+            updatedClaim.resolution = resolution as ClaimResolution;
+          }
+          
+          // Add timeline entry for status change
+          if (updates.status && updates.status !== claim.status) {
+            const timelineEntry: ClaimTimelineEntry = {
+              id: `tl-${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              action: 'status_changed',
+              description: `เปลี่ยนสถานะเป็น ${updates.status}`,
+              performedBy: 'current-user'
+            };
+            updatedClaim.timeline = [...claim.timeline, timelineEntry];
+          }
+
+          // Add timeline entry for assignment
+          if (updates.assignedTo && updates.assignedTo !== claim.assignedTo) {
+            const timelineEntry: ClaimTimelineEntry = {
+              id: `tl-${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              action: 'assigned',
+              description: `มอบหมายให้ ${updates.assignedTo}`,
+              performedBy: 'current-user'
+            };
+            updatedClaim.timeline = [...claim.timeline, timelineEntry];
+            updatedClaim.assignedBy = 'current-user';
+            updatedClaim.assignedAt = new Date().toISOString();
+          }
+
+          return updatedClaim;
+        }
+        return claim;
+      }));
+    } catch (error) {
+      console.error('Error updating claim:', error);
+      throw error;
+    }
   }, []);
 
-  const updateClaimStatus = useCallback((claimId: string, status: ClaimStatus) => {
-    updateClaim(claimId, { status });
-  }, [updateClaim]);
+  const updateClaimStatus = useCallback(async (claimId: string, status: ClaimStatus) => {
+    try {
+      const { error } = await supabase
+        .from('claims')
+        .update({
+          status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', claimId);
 
-  const updateClaimPriority = useCallback((claimId: string, priority: ClaimPriority) => {
-    updateClaim(claimId, { priority });
-  }, [updateClaim]);
+      if (error) throw error;
 
-  const assignClaim = useCallback((claimId: string, assignedTo: string) => {
-    updateClaim(claimId, { assignedTo });
-  }, [updateClaim]);
+      // Update local state
+      setClaims(prev => prev.map(claim => {
+        if (claim.id === claimId) {
+          return {
+            ...claim,
+            status,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return claim;
+      }));
+    } catch (error) {
+      console.error('Error updating claim status:', error);
+      throw error;
+    }
+  }, []);
 
-  const resolveClaim = useCallback((claimId: string, resolution: ClaimResolution) => {
-    setClaims(prev => prev.map(claim => {
-      if (claim.id === claimId) {
-        const timelineEntry: ClaimTimelineEntry = {
-          id: `tl-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          action: 'completed',
-          description: `แก้ไขปัญหาเสร็จสิ้น: ${resolution.type}`,
-          performedBy: resolution.resolvedBy
-        };
+  const updateClaimPriority = useCallback(async (claimId: string, priority: ClaimPriority) => {
+    try {
+      // Update local state only since priority is not stored in database
+      setClaims(prev => prev.map(claim => {
+        if (claim.id === claimId) {
+          return {
+            ...claim,
+            priority,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return claim;
+      }));
+    } catch (error) {
+      console.error('Error updating claim priority:', error);
+      throw error;
+    }
+  }, []);
 
-        return {
-          ...claim,
+  const assignClaim = useCallback(async (claimId: string, assignedTo: string) => {
+    try {
+      const { error } = await supabase
+        .from('claims')
+        .update({
+          handled_by: assignedTo,
+          status: 'in_progress',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', claimId);
+
+      if (error) throw error;
+
+      // Update local state
+      setClaims(prev => prev.map(claim => {
+        if (claim.id === claimId) {
+          return {
+            ...claim,
+            assignedTo,
+            status: 'in_progress',
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return claim;
+      }));
+    } catch (error) {
+      console.error('Error assigning claim:', error);
+      throw error;
+    }
+  }, [supabase]);
+
+  const resolveClaim = useCallback(async (claimId: string, resolution: ClaimResolution) => {
+    try {
+      const { error } = await supabase
+        .from('claims')
+        .update({
           status: 'completed',
-          resolution,
-          actualCost: resolution.totalCost,
-          completedAt: resolution.resolvedAt,
-          timeline: [...claim.timeline, timelineEntry],
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return claim;
-    }));
+          resolution: resolution.description,
+          compensation_amount: resolution.cost || 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', claimId);
+
+      if (error) throw error;
+
+      // Update local state
+      setClaims(prev => prev.map(claim => {
+        if (claim.id === claimId) {
+          const timelineEntry: ClaimTimelineEntry = {
+            id: `tl-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            action: 'completed',
+            description: `แก้ไขปัญหาเสร็จสิ้น: ${resolution.type}`,
+            performedBy: resolution.completedBy
+          };
+
+          return {
+            ...claim,
+            status: 'completed',
+            resolution,
+            actualCost: resolution.cost,
+            completedAt: resolution.completedAt,
+            timeline: [...claim.timeline, timelineEntry],
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return claim;
+      }));
+    } catch (error) {
+      console.error('Error resolving claim:', error);
+      throw error;
+    }
   }, []);
 
   const addCustomerSatisfaction = useCallback((claimId: string, satisfaction: CustomerSatisfactionRating) => {

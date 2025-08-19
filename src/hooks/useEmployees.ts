@@ -330,25 +330,135 @@ export const useEmployees = () => {
     }
   }, [toast, fetchEmployees]);
 
-  const updateEmployee = useCallback((id: string, updates: Partial<Employee>) => {
-    toast({
-      title: "ฟีเจอร์นี้อยู่ระหว่างการพัฒนา",
-      description: "ระบบจัดการพนักงานกำลังอยู่ในขั้นตอนการพัฒนา",
-    });
+  const updateEmployee = useCallback(async (id: string, updates: Partial<Employee>) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .update({
+          first_name: updates.firstName,
+          last_name: updates.lastName,
+          email: updates.email,
+          phone: updates.phone,
+          address: updates.address,
+          date_of_birth: updates.dateOfBirth,
+          hire_date: updates.hireDate,
+          position_id: updates.position?.id,
+          department_id: updates.department?.id,
+          salary: updates.salary,
+          status: updates.status,
+          emergency_contact: updates.emergencyContact,
+          bank_account: updates.bankAccount,
+          work_schedule: updates.workSchedule
+        })
+        .eq('id', id)
+        .select(`
+          *,
+          department:departments(id, name),
+          position:positions(id, name)
+        `);
+      
+      if (error) throw error;
+      
+      // Update local state
+      if (data && data[0]) {
+        setEmployees(prev => prev.map(emp => emp.id === id ? data[0] : emp));
+      }
+      
+      toast({
+        title: "สำเร็จ",
+        description: "อัปเดตข้อมูลพนักงานเรียบร้อยแล้ว",
+      });
+      
+      return data?.[0] || null;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: `ไม่สามารถอัปเดตข้อมูลพนักงานได้: ${err.message}`,
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
 
-  const deleteEmployee = useCallback((id: string) => {
-    toast({
-      title: "ฟีเจอร์นี้อยู่ระหว่างการพัฒนา",
-      description: "ระบบจัดการพนักงานกำลังอยู่ในขั้นตอนการพัฒนา",
-    });
+  const deleteEmployee = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setEmployees(prev => prev.filter(emp => emp.id !== id));
+      
+      toast({
+        title: "สำเร็จ",
+        description: "ลบข้อมูลพนักงานเรียบร้อยแล้ว",
+      });
+      
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: `ไม่สามารถลบข้อมูลพนักงานได้: ${err.message}`,
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
 
-  const updateEmployeeStatus = useCallback((id: string, status: string) => {
-    toast({
-      title: "ฟีเจอร์นี้อยู่ระหว่างการพัฒนา",
-      description: "ระบบจัดการพนักงานกำลังอยู่ในขั้นตอนการพัฒนา",
-    });
+  const updateEmployeeStatus = useCallback(async (id: string, status: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .update({ status })
+        .eq('id', id)
+        .select(`
+          *,
+          department:departments(id, name),
+          position:positions(id, name)
+        `);
+      
+      if (error) throw error;
+      
+      // Update local state
+      if (data && data[0]) {
+        setEmployees(prev => prev.map(emp => emp.id === id ? data[0] : emp));
+      }
+      
+      toast({
+        title: "สำเร็จ",
+        description: "อัปเดตสถานะพนักงานเรียบร้อยแล้ว",
+      });
+      
+      return data?.[0] || null;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: `ไม่สามารถอัปเดตสถานะพนักงานได้: ${err.message}`,
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
 
   // Attendance functions
@@ -460,9 +570,9 @@ export const useEmployees = () => {
       if (filters.position && employee.position.id !== filters.position) return false;
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
-        const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase();
+        const fullName = `${employee.firstName || ''} ${employee.lastName || ''}`.toLowerCase();
         if (!fullName.includes(searchTerm) && 
-            !employee.employeeId.toLowerCase().includes(searchTerm) &&
+            !(employee.employeeId || '').toLowerCase().includes(searchTerm) &&
             !employee.email?.toLowerCase().includes(searchTerm)) return false;
       }
       return true;

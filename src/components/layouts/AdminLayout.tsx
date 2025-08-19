@@ -10,15 +10,22 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-background animate-fade-in">
-      <SidebarProvider>
-        <div className="flex min-h-screen">
+      <SidebarProvider defaultOpen={true}>
+        <div className="min-h-screen relative flex">
+          {/* Sidebar - Fixed positioning */}
           <AdminSidebar />
-          <div className="flex-1 flex flex-col">
+          
+          {/* Main Content Area - Responsive Layout */}
+          <div className="flex flex-col min-h-screen flex-1 transition-all duration-300 ml-0 lg:ml-64">
             <AdminHeader />
-            <main className="flex-1 p-6 overflow-auto">
-              <div className="max-w-7xl mx-auto space-modern">
-                <div className="animate-slide-up">
-                  {children}
+            
+            {/* Enhanced Main Content with Better Spacing */}
+            <main className="flex-1 overflow-auto bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+                <div className="max-w-7xl mx-auto">
+                  <div className="animate-slide-up space-y-6">
+                    {children}
+                  </div>
                 </div>
               </div>
             </main>
@@ -26,8 +33,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </SidebarProvider>
       
-      {/* Modern Connection Status */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Modern Connection Status - Responsive Positioning */}
+      <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-50">
         <ConnectionStatus showText={true} />
       </div>
     </div>

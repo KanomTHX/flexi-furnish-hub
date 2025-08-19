@@ -19,28 +19,8 @@ export interface CartItem {
     discount?: number;
 }
 
-export interface Customer {
-    id?: string;
-    name: string;
-    phone?: string;
-    email?: string;
-    address?: string;
-    
-    // ข้อมูลเพิ่มเติมสำหรับสัญญาผ่อน
-    idCard?: string; // เลขบัตรประชาชน
-    occupation?: string; // อาชีพ
-    monthlyIncome?: number; // รายได้ต่อเดือน
-    workplace?: string; // สถานที่ทำงาน
-    workAddress?: string; // ที่อยู่ที่ทำงาน
-    emergencyContact?: {
-        name: string;
-        phone: string;
-        relationship: string;
-    };
-    creditScore?: number; // คะแนนเครดิต
-    blacklisted?: boolean; // บัญชีดำ
-    notes?: string;
-}
+// Import Customer types from dedicated customer types file
+export type { Customer, CustomerData, Guarantor, CustomerMetrics } from './customer';
 
 export interface PaymentMethod {
     id: string;

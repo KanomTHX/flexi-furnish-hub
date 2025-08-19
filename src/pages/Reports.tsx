@@ -19,6 +19,7 @@ import { ComplianceReportDialog } from '@/components/audit/ComplianceReportDialo
 import { ClaimsReport } from '@/components/reports/ClaimsReport';
 import { WarehouseReport } from '@/components/reports/WarehouseReport';
 import { AuditReport } from '@/components/reports/AuditReport';
+import { CustomerReports } from '@/components/reports/CustomerReports';
 import { 
   FileText, 
   Download, 
@@ -107,6 +108,9 @@ const Reports: React.FC = () => {
           break;
         case 'financial':
           await generateFinancialReport('มกราคม 2024');
+          break;
+        case 'customers':
+          // รายงานลูกค้าจะถูกสร้างโดย CustomerReports component
           break;
         default:
           break;
@@ -213,11 +217,12 @@ const Reports: React.FC = () => {
         }),
         generateInventoryReport(),
         generateFinancialReport('มกราคม 2024')
+        // รายงานลูกค้าจะถูกโหลดโดย CustomerReports component อัตโนมัติ
       ]);
       
       toast({
         title: "สร้างรายงานครบถ้วนสำเร็จ",
-        description: "รายงานจากทุกระบบถูกสร้างเรียบร้อยแล้ว",
+        description: "รายงานจากทุกระบบถูกสร้างเรียบร้อยแล้ว (รวมรายงานลูกค้า)",
       });
     } catch (error) {
       toast({
@@ -229,7 +234,7 @@ const Reports: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container-responsive space-modern">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -291,6 +296,7 @@ const Reports: React.FC = () => {
                   <SelectItem value="sales">ยอดขาย</SelectItem>
                   <SelectItem value="inventory">สต็อก</SelectItem>
                   <SelectItem value="financial">การเงิน</SelectItem>
+                  <SelectItem value="customers">ลูกค้า</SelectItem>
                   <SelectItem value="employee">พนักงาน</SelectItem>
                   <SelectItem value="warehouse">คลังสินค้า</SelectItem>
                   <SelectItem value="audit">ตรวจสอบ</SelectItem>
@@ -363,7 +369,7 @@ const Reports: React.FC = () => {
       {/* Reports Tabs */}
       <div id="comprehensive-report-content">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               ภาพรวม
@@ -379,6 +385,10 @@ const Reports: React.FC = () => {
             <TabsTrigger value="financial" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               การเงิน
+            </TabsTrigger>
+            <TabsTrigger value="customers" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              ลูกค้า
             </TabsTrigger>
             <TabsTrigger value="employee" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -510,6 +520,32 @@ const Reports: React.FC = () => {
                 </div>
               </div>
               <FinancialReports />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="customers" className="space-y-4">
+            <div id="customers-report-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">รายงานลูกค้า</h2>
+                <Button 
+                  onClick={() => handleExportToPDF('customers')} 
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  ส่งออก PDF
+                </Button>
+              </div>
+              <CustomerReports 
+                loading={loading}
+                onExportReport={() => {
+                  toast({
+                    title: "ส่งออกสำเร็จ",
+                    description: "รายงานลูกค้าถูกส่งออกเป็น CSV แล้ว",
+                  });
+                }}
+              />
             </div>
           </TabsContent>
 

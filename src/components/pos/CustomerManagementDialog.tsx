@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { useCustomers } from '@/hooks/useCustomers';
 import { CustomerSelector } from './CustomerSelector';
-import { AddCustomerDialog } from './AddCustomerDialog';
+
 
 interface CustomerManagementDialogProps {
   open: boolean;
@@ -38,7 +38,7 @@ export const CustomerManagementDialog: React.FC<CustomerManagementDialogProps> =
   const { customers, customerStats } = useCustomers();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('overview');
-  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
+
 
   // Filter customers based on search
   const filteredCustomers = customers.filter(customer =>
@@ -91,10 +91,9 @@ export const CustomerManagementDialog: React.FC<CustomerManagementDialogProps> =
         </DialogHeader>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">ภาพรวม</TabsTrigger>
             <TabsTrigger value="customers">รายชื่อลูกค้า</TabsTrigger>
-            <TabsTrigger value="add">เพิ่มลูกค้า</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -252,7 +251,7 @@ export const CustomerManagementDialog: React.FC<CustomerManagementDialogProps> =
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                           <span className="text-blue-600 font-medium">
-                            {customer.name.charAt(0)}
+                            {customer.name?.charAt(0) || ''}
                           </span>
                         </div>
                         <div>
@@ -299,26 +298,7 @@ export const CustomerManagementDialog: React.FC<CustomerManagementDialogProps> =
             </div>
           </TabsContent>
 
-          <TabsContent value="add" className="space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <Plus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold mb-2">เพิ่มลูกค้าใหม่</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    คลิกปุ่มด้านล่างเพื่อเพิ่มลูกค้าใหม่เข้าระบบ
-                  </p>
-                  <Button 
-                    onClick={() => setAddCustomerOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    เพิ่มลูกค้าใหม่
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
 
         <div className="flex justify-end pt-4 border-t">
@@ -327,16 +307,7 @@ export const CustomerManagementDialog: React.FC<CustomerManagementDialogProps> =
           </Button>
         </div>
 
-        {/* Add Customer Dialog */}
-        <AddCustomerDialog
-          open={addCustomerOpen}
-          onOpenChange={setAddCustomerOpen}
-          onCustomerAdded={(customer) => {
-            console.log('New customer added:', customer);
-            // In a real app, this would refresh the customer list
-            setAddCustomerOpen(false);
-          }}
-        />
+
       </DialogContent>
     </Dialog>
   );
