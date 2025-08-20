@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { EnhancedDashboard } from "@/components/dashboard/EnhancedDashboard";
+import { ModernDashboard } from "@/components/dashboard/ModernDashboard";
 import { DashboardErrorBoundary } from "@/components/dashboard/DashboardErrorBoundary";
 import { usePerformance, useBundleAnalytics } from "@/hooks/usePerformance";
 
@@ -19,7 +19,7 @@ export default function Dashboard() {
   return (
     <div className="container-responsive">
       <DashboardErrorBoundary>
-        <EnhancedDashboard onNavigate={handleNavigate} />
+        <ModernDashboard onNavigate={handleNavigate} />
       </DashboardErrorBoundary>
     </div>
   );

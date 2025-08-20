@@ -76,7 +76,7 @@ export interface SerialNumber {
   product?: {
     id: string;
     name: string;
-    code: string;
+    product_code: string;
     sku?: string;
     brand?: string;
     model?: string;
@@ -112,7 +112,7 @@ export interface StockMovement {
   product?: {
     id: string;
     name: string;
-    code: string;
+    product_code: string;
     sku?: string;
   };
   serialNumberId?: string;
@@ -172,7 +172,7 @@ export interface StockTransferItem {
   product?: {
     id: string;
     name: string;
-    code: string;
+    product_code: string;
   };
   quantity: number;
   unitCost: number;
@@ -249,7 +249,7 @@ export interface StockAdjustment {
 export interface Product {
   id: string;
   name: string;
-  code: string;
+  product_code: string;
   sku?: string;
   category?: string;
   brand?: string;

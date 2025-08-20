@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 // Import warehouse components - using placeholders
 import { SimpleStockInquiry } from '@/components/warehouses/SimpleStockInquiry';
 import { IntegratedGoodsReceiptBilling } from '@/components/warehouses/IntegratedGoodsReceiptBilling';
-import { IntegrationDashboard } from '@/components/integration/IntegrationDashboard';
+
 import {
   WithdrawDispatch,
   BatchOperations,
@@ -25,7 +25,7 @@ import AuditTrail from '@/components/warehouses/AuditTrail';
 import PrintButton from '@/components/warehouses/PrintButton';
 import { ZoneManagement } from '@/components/warehouses/ZoneManagement';
 import { TaskManagement } from '@/components/warehouses/TaskManagement';
-import { WarehouseAlertSystem } from '@/components/warehouses/WarehouseAlertSystem';
+
 import { TransferManagementEnhanced } from '@/components/warehouses/TransferManagementEnhanced';
 
 import { WarehouseAnalytics } from '@/components/warehouses/WarehouseAnalytics';
@@ -60,7 +60,6 @@ import {
   RefreshCw,
   MapPin,
   CheckSquare,
-  Bell,
   ArrowRightLeft
 } from 'lucide-react';
 import { useBranchData } from '../hooks/useBranchData';
@@ -265,71 +264,61 @@ export default function Warehouses() {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-          <TabsList className="inline-flex h-auto min-h-[4rem] w-max space-x-1 rounded-none bg-transparent p-1">
-          <TabsTrigger value="overview" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <BarChart3 className="w-5 h-5" />
-            <span className="font-semibold">ภาพรวม</span>
+        <div className="w-full rounded-md border bg-background p-2">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-12 gap-2 h-auto bg-transparent p-0">
+          <TabsTrigger value="overview" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <BarChart3 className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">ภาพรวม</span>
           </TabsTrigger>
-          <TabsTrigger value="inquiry" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <Search className="w-5 h-5" />
-            <span className="font-semibold">ตรวจสอบ</span>
+          <TabsTrigger value="inquiry" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <Search className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">ตรวจสอบ</span>
           </TabsTrigger>
-          <TabsTrigger value="integrated-receipt" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <Package className="w-5 h-5" />
-            <span className="font-semibold">รับสินค้า & เรียกเก็บเงิน</span>
+          <TabsTrigger value="integrated-receipt" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <Package className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">รับสินค้า</span>
           </TabsTrigger>
-          <TabsTrigger value="withdraw" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <Upload className="w-5 h-5" />
-            <span className="font-semibold">จ่ายสินค้า</span>
+          <TabsTrigger value="withdraw" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <Upload className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">จ่ายสินค้า</span>
           </TabsTrigger>
-          <TabsTrigger value="transfer" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <ArrowUpDown className="w-5 h-5" />
-            <span className="font-semibold">โอนย้าย</span>
+          <TabsTrigger value="transfers" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <ArrowRightLeft className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">โอนย้าย</span>
           </TabsTrigger>
-          <TabsTrigger value="barcode" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <QrCode className="w-5 h-5" />
-            <span className="font-semibold">บาร์โค้ด</span>
+          <TabsTrigger value="barcode" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <QrCode className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">บาร์โค้ด</span>
           </TabsTrigger>
-          <TabsTrigger value="batch" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <Layers className="w-5 h-5" />
-            <span className="font-semibold">กลุ่ม</span>
+          <TabsTrigger value="batch" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <Layers className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">กลุ่ม</span>
           </TabsTrigger>
-          <TabsTrigger value="adjust" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <Edit className="w-5 h-5" />
-            <span className="font-semibold">ปรับปรุง</span>
+          <TabsTrigger value="adjust" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <Edit className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">ปรับปรุง</span>
           </TabsTrigger>
-          <TabsTrigger value="audit" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <History className="w-5 h-5" />
-            <span className="font-semibold">ประวัติ</span>
-          </TabsTrigger>
-          <TabsTrigger value="integration" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <BarChart3 className="w-5 h-5" />
-            <span className="font-semibold">Integration</span>
-          </TabsTrigger>
-          <TabsTrigger value="zones" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <MapPin className="w-5 h-5" />
-            <span className="font-semibold">โซนคลัง</span>
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <CheckSquare className="w-5 h-5" />
-            <span className="font-semibold">งาน</span>
-          </TabsTrigger>
-          <TabsTrigger value="alerts" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <Bell className="w-5 h-5" />
-            <span className="font-semibold">แจ้งเตือน</span>
-          </TabsTrigger>
-          <TabsTrigger value="transfers" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <ArrowRightLeft className="w-5 h-5" />
-            <span className="font-semibold">โอนย้าย</span>
+          <TabsTrigger value="audit" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <History className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">ประวัติ</span>
           </TabsTrigger>
 
-          <TabsTrigger value="analytics" className="min-w-[100px] h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-3">
-            <TrendingUp className="w-5 h-5" />
-            <span className="font-semibold">วิเคราะห์</span>
+          <TabsTrigger value="zones" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <MapPin className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">โซนคลัง</span>
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <CheckSquare className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">งาน</span>
+          </TabsTrigger>
+
+
+          <TabsTrigger value="analytics" className="h-16 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-lg transition-all px-2">
+            <TrendingUp className="w-4 h-4" />
+            <span className="text-xs font-semibold text-center leading-tight">วิเคราะห์</span>
           </TabsTrigger>
           </TabsList>
-        </ScrollArea>
+        </div>
 
         <TabsContent value="overview" className="space-y-6 mt-4">
           {/* Enhanced Stats Cards */}
@@ -536,21 +525,17 @@ export default function Warehouses() {
           <AuditTrail branchId={currentBranch?.id} />
         </TabsContent>
 
-        <TabsContent value="integration" className="mt-4">
-          <IntegrationDashboard />
-        </TabsContent>
+
 
         <TabsContent value="zones" className="mt-4">
-          <ZoneManagement warehouseId={warehouses[0]?.id || 'default'} />
+          <ZoneManagement warehouseId={currentBranch?.id || 'default'} />
         </TabsContent>
 
         <TabsContent value="tasks" className="mt-4">
-          <TaskManagement />
+          <TaskManagement warehouseId={currentBranch?.id || 'default'} />
         </TabsContent>
 
-        <TabsContent value="alerts" className="mt-4">
-          <WarehouseAlertSystem />
-        </TabsContent>
+
 
         <TabsContent value="transfers" className="mt-4">
           <TransferManagementEnhanced />
@@ -559,7 +544,7 @@ export default function Warehouses() {
 
 
         <TabsContent value="analytics" className="mt-4">
-          <WarehouseAnalytics />
+          <WarehouseAnalytics warehouseId={currentBranch?.id} />
         </TabsContent>
       </Tabs>
 

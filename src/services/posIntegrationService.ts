@@ -66,13 +66,13 @@ class POSIntegrationService {
       for (const item of request.items) {
         // Get available serial numbers for this product
         let query = supabase
-          .from('product_serial_numbers')
-          .select('id, serial_number, product_id, warehouse_id')
+          .from('serial_numbers')
+          .select('id, serial_number, product_id, branch_id')
           .eq('product_id', item.productId)
           .eq('status', SNStatus.AVAILABLE);
 
         if (item.warehouseId) {
-          query = query.eq('warehouse_id', item.warehouseId);
+          query = query.eq('branch_id', item.warehouseId);
         }
 
         const { data: serialNumbers, error } = await query
@@ -205,10 +205,10 @@ class POSIntegrationService {
       for (const item of request.items) {
         // Get available serial numbers
         const { data: serialNumbers, error } = await supabase
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .select('id, serial_number')
           .eq('product_id', item.productId)
-          .eq('warehouse_id', request.warehouseId)
+          .eq('branch_id', request.warehouseId)
           .eq('status', SNStatus.AVAILABLE)
           .order('created_at', { ascending: true })
           .limit(item.quantity);
@@ -228,7 +228,7 @@ class POSIntegrationService {
 
         // Update status to reserved
         const { error: updateError } = await supabase
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .update({
             status: SNStatus.RESERVED,
             reference_number: request.reservationId,
@@ -267,7 +267,7 @@ class POSIntegrationService {
     try {
       // Find reserved items by reservation ID
       const { data: reservedItems, error: findError } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select('id, serial_number')
         .eq('status', SNStatus.RESERVED)
         .eq('reference_number', reservationId);
@@ -285,7 +285,7 @@ class POSIntegrationService {
 
       // Update status back to available
       const { error: updateError } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .update({
           status: SNStatus.AVAILABLE,
           reference_number: null,
@@ -329,7 +329,7 @@ class POSIntegrationService {
   }> {
     try {
       let query = supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           product_id,
           status,
@@ -341,7 +341,7 @@ class POSIntegrationService {
         `);
 
       if (warehouseId) {
-        query = query.eq('warehouse_id', warehouseId);
+        query = query.eq('branch_id', warehouseId);
       }
 
       const { data: serialNumbers, error } = await query;
@@ -359,7 +359,7 @@ class POSIntegrationService {
           stockMap.set(productId, {
             productId,
             productName: sn.products ? (Array.isArray(sn.products) ? sn.products[0]?.name || 'Unknown' : (sn.products as any)?.name || 'Unknown') : 'Unknown',
-            productCode: sn.products ? (Array.isArray(sn.products) ? sn.products[0]?.code || 'Unknown' : (sn.products as any)?.code || 'Unknown') : 'Unknown',
+            productCode: sn.products ? (Array.isArray(sn.products) ? sn.products[0]?.product_code || 'Unknown' : (sn.products as any)?.product_code || 'Unknown') : 'Unknown',
             availableQuantity: 0,
             reservedQuantity: 0,
             totalQuantity: 0

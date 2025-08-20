@@ -31,10 +31,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { WarehouseService } from '@/services/warehouseService';
-import type { SerialNumber, StockLevel, Warehouse } from '@/types/warehouse';
+import { useBranchData } from '@/hooks/useBranchData';
+import type { SerialNumber, StockLevel, Branch } from '@/types/warehouse';
 
 interface BatchOperationsProps {
-  warehouses: Warehouse[];
+  branchId?: string;
 }
 
 export type BatchOperationType = 
@@ -49,8 +50,8 @@ export type BatchOperationType =
 export interface BatchOperation {
   id: string;
   type: BatchOperationType;
-  warehouseId: string;
-  targetWarehouseId?: string;
+  branchId: string;
+  targetBranchId?: string;
   newStatus?: string;
   newPrice?: number;
   adjustmentReason?: string;
@@ -85,18 +86,21 @@ export interface ValidationResult {
 }
 
 export const BatchOperations: React.FC<BatchOperationsProps> = ({
-  warehouses
+  branchId: initialBranchId
 }) => {
+  // Branch data
+  const { currentBranch, branches } = useBranchData();
+  const [selectedBranch, setSelectedBranch] = useState(initialBranchId || currentBranch?.id || '');
   // State management
   const [activeTab, setActiveTab] = useState('create');
   const [loading, setLoading] = useState(false);
-  const [selectedWarehouse, setSelectedWarehouse] = useState('');
+
   
   // Batch operation state
   const [batchForm, setBatchForm] = useState({
     type: '' as BatchOperationType | '',
-    warehouseId: '',
-    targetWarehouseId: '',
+    branchId: selectedBranch,
+    targetBranchId: '',
     newStatus: '',
     newPrice: 0,
     adjustmentReason: '',
@@ -128,7 +132,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
         {
           id: 'batch-1',
           type: 'status_update',
-          warehouseId: 'warehouse-1',
+          branchId: 'branch-1',
           newStatus: 'damaged',
           serialNumbers: ['SN001', 'SN002', 'SN003'],
           status: 'completed',
@@ -164,8 +168,8 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
 
   // Validate serial numbers
   const validateSerialNumbers = async (serialNumbers: string[]) => {
-    if (!selectedWarehouse) {
-      toast.error('กรุณาเลือกคลังสินค้าก่อน');
+    if (!selectedBranch) {
+      toast.error('กรุณาเลือกสาขาก่อน');
       return;
     }
 
@@ -190,7 +194,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
         // Check if exists in database
         try {
           const response = await WarehouseService.getSerialNumbers({
-            warehouseId: selectedWarehouse,
+            branchId: selectedBranch,
             search: sn,
             limit: 1
           });
@@ -324,8 +328,8 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
         return;
       }
 
-      if (!selectedWarehouse) {
-        toast.error('กรุณาเลือกคลังสินค้า');
+      if (!selectedBranch) {
+        toast.error('กรุณาเลือกสาขา');
         return;
       }
 
@@ -336,8 +340,8 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
       }
 
       // Additional validation based on operation type
-      if (batchForm.type === 'transfer' && !batchForm.targetWarehouseId) {
-        toast.error('กรุณาเลือกคลังปลายทาง');
+      if (batchForm.type === 'transfer' && !batchForm.targetBranchId) {
+        toast.error('กรุณาเลือกสาขาปลายทาง');
         return;
       }
 
@@ -357,8 +361,8 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
       const operation: BatchOperation = {
         id: `batch-${Date.now()}`,
         type: batchForm.type,
-        warehouseId: selectedWarehouse,
-        targetWarehouseId: batchForm.targetWarehouseId,
+        branchId: selectedBranch,
+        targetBranchId: batchForm.targetBranchId,
         newStatus: batchForm.newStatus,
         newPrice: batchForm.newPrice,
         adjustmentReason: batchForm.adjustmentReason,
@@ -395,7 +399,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
             
             case 'transfer':
               // Transfer using warehouse service
-              await transferSerialNumber(result.serialNumber, batchForm.targetWarehouseId);
+              await transferSerialNumber(result.serialNumber, batchForm.targetBranchId);
               break;
             
             case 'adjust':
@@ -444,8 +448,8 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
       // Reset form
       setBatchForm({
         type: '',
-        warehouseId: selectedWarehouse,
-        targetWarehouseId: '',
+        branchId: selectedBranch,
+        targetBranchId: '',
         newStatus: '',
         newPrice: 0,
         adjustmentReason: '',
@@ -479,13 +483,13 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
     if (error) throw error;
   };
 
-  const transferSerialNumber = async (serialNumber: string, targetWarehouseId: string) => {
+  const transferSerialNumber = async (serialNumber: string, targetBranchId: string) => {
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
       .from('product_inventory')
       .update({
-        warehouse_id: targetWarehouseId,
+        branch_id: targetBranchId,
         status: 'transferred',
         updated_at: new Date().toISOString()
       })
@@ -541,26 +545,26 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
         </div>
       </div>
 
-      {/* Warehouse Selection */}
+      {/* Branch Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>เลือกคลังสินค้า</CardTitle>
+          <CardTitle>เลือกสาขา</CardTitle>
         </CardHeader>
         <CardContent>
           <Select 
-            value={selectedWarehouse} 
+            value={selectedBranch} 
             onValueChange={(value) => {
-              setSelectedWarehouse(value);
-              setBatchForm(prev => ({ ...prev, warehouseId: value }));
+              setSelectedBranch(value);
+              setBatchForm(prev => ({ ...prev, branchId: value }));
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="เลือกคลังสินค้า" />
+              <SelectValue placeholder="เลือกสาขา" />
             </SelectTrigger>
             <SelectContent>
-              {warehouses.map((warehouse) => (
-                <SelectItem key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name} ({warehouse.code})
+              {branches.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name} ({branch.code})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -605,7 +609,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
         </Card>
       )}
 
-      {selectedWarehouse && (
+      {selectedBranch && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="create">สร้างการดำเนินการ</TabsTrigger>
@@ -632,7 +636,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="status_update">อัปเดตสถานะ</SelectItem>
-                      <SelectItem value="transfer">โอนย้ายคลัง</SelectItem>
+                      <SelectItem value="transfer">โอนย้ายสาขา</SelectItem>
                       <SelectItem value="adjust">ปรับปรุงข้อมูล</SelectItem>
                       <SelectItem value="price_update">อัปเดตราคา</SelectItem>
                       <SelectItem value="export_data">ส่งออกข้อมูล</SelectItem>
@@ -643,20 +647,20 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
                 {/* Additional fields based on operation type */}
                 {batchForm.type === 'transfer' && (
                   <div>
-                    <Label htmlFor="targetWarehouse">คลังปลายทาง</Label>
+                    <Label htmlFor="targetBranch">สาขาปลายทาง</Label>
                     <Select 
-                      value={batchForm.targetWarehouseId} 
-                      onValueChange={(value) => setBatchForm(prev => ({ ...prev, targetWarehouseId: value }))}
+                      value={batchForm.targetBranchId} 
+                      onValueChange={(value) => setBatchForm(prev => ({ ...prev, targetBranchId: value }))}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="เลือกคลังปลายทาง" />
+                        <SelectValue placeholder="เลือกสาขาปลายทาง" />
                       </SelectTrigger>
                       <SelectContent>
-                        {warehouses
-                          .filter(w => w.id !== selectedWarehouse)
-                          .map((warehouse) => (
-                          <SelectItem key={warehouse.id} value={warehouse.id}>
-                            {warehouse.name} ({warehouse.code})
+                        {branches
+                          .filter(b => b.id !== selectedBranch)
+                          .map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id}>
+                            {branch.name} ({branch.code})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -811,7 +815,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
                     </span>
                     <Button
                       onClick={() => validateSerialNumbers(batchForm.serialNumbers)}
-                      disabled={loading || !selectedWarehouse}
+                      disabled={loading || !selectedBranch}
                       size="sm"
                     >
                       {loading ? (

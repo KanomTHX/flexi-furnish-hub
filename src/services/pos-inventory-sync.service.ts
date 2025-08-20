@@ -31,7 +31,7 @@ export interface InventoryUpdateRequest {
 
 export interface StockAlertGenerationParams {
   productId?: string;
-  warehouseId?: string;
+  branchId?: string;
   urgencyLevel?: 'low' | 'medium' | 'high' | 'critical';
   forceRecalculation?: boolean;
 }
@@ -200,10 +200,10 @@ export class POSInventorySyncService {
           reorder_point,
           reorder_quantity,
           category,
-          product_serial_numbers (
+          serial_numbers (
             id,
             status,
-            warehouse_id,
+            branch_id,
             warehouses (
               id,
               name,
@@ -217,7 +217,7 @@ export class POSInventorySyncService {
       }
 
       for (const product of products || []) {
-        const serialNumbers = product.product_serial_numbers || [];
+        const serialNumbers = product.serial_numbers || [];
         const availableStock = serialNumbers.filter((sn: any) => sn.status === 'available').length;
         const reorderPoint = product.reorder_point || product.minimum_stock || 10;
 
@@ -246,7 +246,7 @@ export class POSInventorySyncService {
             id: `alert_${product.id}_${Date.now()}`,
             productId: product.id,
             productName: product.name,
-            productCode: product.code,
+            productCode: product.product_code,
             currentStock: availableStock,
             minimumStock: product.minimum_stock || 0,
             reorderPoint,
@@ -302,10 +302,10 @@ export class POSInventorySyncService {
           reorder_point,
           reorder_quantity,
           category,
-          product_serial_numbers!inner (
+          serial_numbers!inner (
             id,
             status,
-            warehouse_id,
+            branch_id,
             warehouses (
               id,
               name,
@@ -327,11 +327,11 @@ export class POSInventorySyncService {
       const alerts: StockAlert[] = [];
 
       for (const product of products || []) {
-        const serialNumbers = product.product_serial_numbers || [];
+        const serialNumbers = product.serial_numbers || [];
         
         // Filter by warehouse if specified
-        const relevantSerialNumbers = params.warehouseId 
-          ? serialNumbers.filter((sn: any) => sn.warehouse_id === params.warehouseId)
+        const relevantSerialNumbers = params.branchId 
+          ? serialNumbers.filter((sn: any) => sn.branch_id === params.branchId)
           : serialNumbers;
 
         const availableStock = relevantSerialNumbers.filter((sn: any) => sn.status === 'available').length;
@@ -459,7 +459,7 @@ export class POSInventorySyncService {
     }[];
     receivedAt: string;
     receivedBy: string;
-    warehouseId: string;
+    branchId: string;
   }): Promise<{ success: boolean; updatedProducts: string[]; errors: string[] }> {
     try {
       const updatedProducts: string[] = [];
@@ -614,11 +614,11 @@ export class POSInventorySyncService {
         id,
         code,
         name,
-        product_serial_numbers (
-          id,
-          status,
-          warehouse_id
-        )
+        serial_numbers (
+            id,
+            status,
+            warehouse_id
+          )
       `);
 
     if (error) {
@@ -689,7 +689,7 @@ export class POSInventorySyncService {
       .from('products')
       .select(`
         id,
-        product_serial_numbers (
+        serial_numbers (
           id,
           status
         )
@@ -705,7 +705,7 @@ export class POSInventorySyncService {
     let outOfStockCount = 0;
 
     for (const product of products || []) {
-      const availableStock = product.product_serial_numbers?.filter((sn: any) => sn.status === 'available').length || 0;
+      const availableStock = product.serial_numbers?.filter((sn: any) => sn.status === 'available').length || 0;
       totalAvailableStock += availableStock;
       
       if (availableStock === 0) {
@@ -790,7 +790,7 @@ export class POSInventorySyncService {
       id: `alert_${product.id}_${Date.now()}`,
       productId: product.id,
       productName: product.name,
-      productCode: product.code,
+      productCode: product.product_code,
       currentStock: availableStock,
       minimumStock: product.minimum_stock || 0,
       reorderPoint,

@@ -98,23 +98,23 @@ CREATE INDEX idx_notifications_type ON public.notifications(type);
       console.log('✅ notifications table already exists');
     }
 
-    // ตรวจสอบตาราง product_serial_numbers
-    console.log('\nTesting product_serial_numbers table...');
-    const { data: snTest, error: snError } = await supabase
-      .from('product_serial_numbers')
+    // ตรวจสอบตาราง serial_numbers
+console.log('\nTesting serial_numbers table...');
+const { data: snData, error: snError } = await supabase
+  .from('serial_numbers')
       .select('id')
       .limit(1);
 
     if (snError) {
       if (snError.message.includes('does not exist')) {
-        console.log('❌ product_serial_numbers table does not exist');
+        console.log('❌ serial_numbers table does not exist');
         console.log('\n📋 This table should be created by the warehouse migration');
         console.log('Please ensure the warehouse system migration has been run');
       } else {
         console.log('❌ Other error:', snError.message);
       }
     } else {
-      console.log('✅ product_serial_numbers table exists');
+      console.log('✅ serial_numbers table exists');
     }
 
     // ตรวจสอบตาราง stock_transfers

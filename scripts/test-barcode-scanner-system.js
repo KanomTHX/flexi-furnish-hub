@@ -45,10 +45,10 @@ async function testBarcodeScannerSystem() {
     // 2. Get sample serial numbers for testing
     console.log('\n2️⃣ Getting sample serial numbers for barcode testing...');
     const { data: serialNumbers, error: snError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select(`
         *,
-        product:products(id, name, code, brand, model, barcode),
+        product:products(id, name, product_code, brand, model, barcode),
         warehouse:warehouses(id, name, code)
       `)
       .eq('warehouse_id', testWarehouse.id)
@@ -77,7 +77,7 @@ async function testBarcodeScannerSystem() {
       },
       {
         type: 'product_barcode_match',
-        barcode: serialNumbers[0].product.barcode || serialNumbers[0].product.code,
+        barcode: serialNumbers[0].product.barcode || serialNumbers[0].product.product_code,
         description: 'Product barcode match'
       },
       {
@@ -98,10 +98,10 @@ async function testBarcodeScannerSystem() {
 
       // Search for exact match
       let query = supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           *,
-          product:products(id, name, code, brand, model, barcode),
+          product:products(id, name, product_code, brand, model, barcode),
           warehouse:warehouses(id, name, code)
         `)
         .eq('warehouse_id', testWarehouse.id);
@@ -109,7 +109,7 @@ async function testBarcodeScannerSystem() {
       if (testCase.type === 'exact_serial_match') {
         query = query.eq('serial_number', testCase.barcode);
       } else if (testCase.type === 'product_barcode_match') {
-        query = query.eq('product.code', testCase.barcode);
+        query = query.eq('product.product_code', testCase.barcode);
       } else if (testCase.type === 'partial_match') {
         query = query.ilike('serial_number', `%${testCase.barcode}%`);
       } else {
@@ -201,7 +201,7 @@ async function testBarcodeScannerSystem() {
       totalScans++;
       
       const { data: scanResult, error: scanError } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select('*')
         .eq('serial_number', barcode)
         .eq('warehouse_id', testWarehouse.id)
@@ -250,7 +250,7 @@ async function testBarcodeScannerSystem() {
       .from('stock_movements')
       .select(`
         *,
-        product:products(name, code),
+        product:products(name, product_code),
         warehouse:warehouses(name, code)
       `)
       .eq('movement_type', 'scan')

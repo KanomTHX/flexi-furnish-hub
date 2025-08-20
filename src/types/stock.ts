@@ -13,8 +13,8 @@ export interface StockLevel {
     unitCost: number;
     sellingPrice: number;
   };
-  warehouseId: string;
-  warehouse: {
+  branchId: string;
+  branch: {
     id: string;
     name: string;
     code: string;
@@ -77,11 +77,11 @@ export interface StockMovement {
   product: {
     id: string;
     name: string;
-    sku: string;
+    product_code: string;
     category: string;
   };
-  warehouseId: string;
-  warehouse: {
+  branchId: string;
+  branch: {
     id: string;
     name: string;
     code: string;
@@ -118,14 +118,14 @@ export interface StockMovement {
   
   // Related Transfer (if applicable)
   transferId?: string;
-  fromWarehouseId?: string;
-  fromWarehouse?: {
+  fromBranchId?: string;
+  fromBranch?: {
     id: string;
     name: string;
     code: string;
   };
-  toWarehouseId?: string;
-  toWarehouse?: {
+  toBranchId?: string;
+  toBranch?: {
     id: string;
     name: string;
     code: string;
@@ -156,8 +156,8 @@ export interface StockMovement {
 export interface StockAdjustment {
   id: string;
   adjustmentNumber: string;
-  warehouseId: string;
-  warehouse: {
+  branchId: string;
+  branch: {
     id: string;
     name: string;
     code: string;
@@ -219,8 +219,8 @@ export interface StockAlert {
     sku: string;
     category: string;
   };
-  warehouseId: string;
-  warehouse: {
+  branchId: string;
+  branch: {
     id: string;
     name: string;
     code: string;
@@ -253,8 +253,8 @@ export interface StockAlert {
 export interface StockCount {
   id: string;
   countNumber: string;
-  warehouseId: string;
-  warehouse: {
+  branchId: string;
+  branch: {
     id: string;
     name: string;
     code: string;
@@ -346,9 +346,9 @@ export interface StockSummary {
   overstockItems: number;
   
   // By Warehouse
-  warehouseBreakdown: {
-    warehouseId: string;
-    warehouseName: string;
+  branchBreakdown: {
+    branchId: string;
+    branchName: string;
     totalProducts: number;
     totalValue: number;
     utilizationPercentage: number;
@@ -392,7 +392,7 @@ export interface StockSummary {
 
 // Filters and Search
 export interface StockFilter {
-  warehouseId?: string;
+  branchId?: string;
   zoneId?: string;
   categoryId?: string;
   status?: StockLevel['status'];
@@ -403,7 +403,7 @@ export interface StockFilter {
 }
 
 export interface MovementFilter {
-  warehouseId?: string;
+  branchId?: string;
   zoneId?: string;
   productId?: string;
   type?: StockMovement['type'];
@@ -416,7 +416,7 @@ export interface MovementFilter {
 }
 
 export interface AlertFilter {
-  warehouseId?: string;
+  branchId?: string;
   type?: StockAlert['type'];
   severity?: StockAlert['severity'];
   isRead?: boolean;
@@ -433,7 +433,7 @@ export interface StockExportData {
     name: string;
     sku: string;
     category: string;
-    warehouse: string;
+    branch: string;
     zone: string;
     location?: string;
     quantity: number;
@@ -462,7 +462,7 @@ export interface MovementExportData {
     date: string;
     product: string;
     sku: string;
-    warehouse: string;
+    branch: string;
     zone: string;
     type: string;
     subType?: string;

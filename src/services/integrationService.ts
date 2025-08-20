@@ -532,7 +532,7 @@ export class IntegrationService {
           movement_type,
           quantity,
           unit_cost,
-          product:products(name, code)
+          product:products(name, product_code)
         `)
         .eq('movement_type', 'receive')
         .gte('created_at', fromDate.toISOString())

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { useCustomers } from '@/hooks/useCustomers';
-import { CustomerAnalytics } from '@/components/installments/CustomerAnalytics';
+import { CustomerAnalytics as CustomerAnalyticsComponent } from '@/components/installments/CustomerAnalytics';
 import {
   Users,
   TrendingUp,
@@ -253,7 +253,7 @@ export const CustomerReports: React.FC<CustomerReportsProps> = ({
       </div>
 
       {/* การวิเคราะห์ลูกค้า */}
-      <CustomerAnalytics customers={filteredCustomers} />
+      <CustomerAnalyticsComponent customers={filteredCustomers} />
 
       {/* ตารางลูกค้าที่กรองแล้ว */}
       <Card>

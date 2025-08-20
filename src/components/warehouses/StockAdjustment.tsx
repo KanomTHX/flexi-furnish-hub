@@ -25,11 +25,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { WarehouseService } from '@/services/warehouseService';
-import type { SerialNumber, StockLevel, Warehouse } from '@/types/warehouse';
+import { useBranchData } from '@/hooks/useBranchData';
+import type { SerialNumber, StockLevel, Warehouse, Branch } from '@/types/warehouse';
 
 interface StockAdjustmentProps {
-  warehouseId: string;
-  warehouses: Warehouse[];
+  branchId?: string;
 }
 
 export interface StockAdjustmentData {
@@ -69,21 +69,23 @@ export interface AdjustmentRecord {
 export type AdjustmentType = 'count' | 'damage' | 'loss' | 'found' | 'correction';
 
 export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
-  warehouseId: initialWarehouseId,
-  warehouses
+  branchId: initialBranchId
 }) => {
+  // Branch data
+  const { branches, currentBranch, switchBranch } = useBranchData();
+  
   // State management
   const [activeTab, setActiveTab] = useState('create');
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedWarehouse, setSelectedWarehouse] = useState(initialWarehouseId);
+  const [selectedBranch, setSelectedBranch] = useState(initialBranchId || currentBranch?.id || '');
   const [stockLevels, setStockLevels] = useState<StockLevel[]>([]);
   const [serialNumbers, setSerialNumbers] = useState<SerialNumber[]>([]);
   const [adjustmentHistory, setAdjustmentHistory] = useState<AdjustmentRecord[]>([]);
   
   // Form state
   const [adjustmentForm, setAdjustmentForm] = useState({
-    warehouseId: initialWarehouseId,
+    branchId: selectedBranch,
     adjustmentType: 'correction' as AdjustmentType,
     reason: '',
     notes: '',
@@ -99,18 +101,18 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   // Load data on component mount
   useEffect(() => {
-    if (selectedWarehouse) {
+    if (selectedBranch) {
       loadStockLevels();
     }
     loadAdjustmentHistory();
-  }, [selectedWarehouse, searchTerm]);
+  }, [selectedBranch, searchTerm]);
 
   // Load stock levels
   const loadStockLevels = async () => {
     try {
       setLoading(true);
       const response = await WarehouseService.getStockLevels({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         search: searchTerm,
         limit: 50
       });
@@ -128,7 +130,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     try {
       setLoading(true);
       const response = await WarehouseService.getSerialNumbers({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         productId: productId,
         limit: 100
       });
@@ -145,7 +147,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const loadAdjustmentHistory = async () => {
     try {
       const response = await WarehouseService.getStockMovements({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         movementType: 'adjustment',
         limit: 20
       });
@@ -215,10 +217,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const handleSubmitAdjustment = async () => {
     try {
       // Validation
-      if (!adjustmentForm.warehouseId) {
-        toast.error('กรุณาเลือกคลังสินค้า');
-        return;
-      }
+        if (!adjustmentForm.branchId) {
+          toast.error('กรุณาเลือกสาขา');
+          return;
+        }
 
       if ((adjustmentForm.items || []).length === 0) {
         toast.error('กรุณาเลือกสินค้าที่ต้องการปรับปรุง');
@@ -246,7 +248,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         await WarehouseService.logStockMovement({
           productId: item.serialNumber.productId,
           serialNumberId: item.serialNumber.id,
-          warehouseId: adjustmentForm.warehouseId,
+          branchId: adjustmentForm.branchId,
           movementType: 'adjustment',
           quantity: item.quantityChange || 1,
           unitCost: item.serialNumber.unitCost,
@@ -261,7 +263,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       
       // Reset form
       setAdjustmentForm({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         adjustmentType: 'correction',
         reason: '',
         notes: '',
@@ -367,26 +369,26 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         </div>
       </div>
 
-      {/* Warehouse Selection */}
+      {/* Branch Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>เลือกคลังสินค้า</CardTitle>
+          <CardTitle>เลือกสาขา</CardTitle>
         </CardHeader>
         <CardContent>
           <Select 
-            value={selectedWarehouse} 
+            value={selectedBranch} 
             onValueChange={(value) => {
-              setSelectedWarehouse(value);
-              setAdjustmentForm(prev => ({ ...prev, warehouseId: value }));
+              setSelectedBranch(value);
+              setAdjustmentForm(prev => ({ ...prev, branchId: value }));
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="เลือกคลังสินค้า" />
+              <SelectValue placeholder="เลือกสาขา" />
             </SelectTrigger>
             <SelectContent>
-              {warehouses.map((warehouse) => (
-                <SelectItem key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name} ({warehouse.code})
+              {branches.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name} ({branch.code})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -394,7 +396,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         </CardContent>
       </Card>
 
-      {selectedWarehouse && (
+      {selectedBranch && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="create">สร้างการปรับปรุง</TabsTrigger>
@@ -782,7 +784,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p><strong>คลังสินค้า:</strong> {warehouses.find(w => w.id === selectedWarehouse)?.name}</p>
+                  <p><strong>สาขา:</strong> {branches.find(b => b.id === selectedBranch)?.name}</p>
                   <p><strong>ประเภท:</strong> {adjustmentForm.adjustmentType}</p>
                 </div>
                 <div>

@@ -126,8 +126,8 @@ class TransferService {
       const { data: request, error: requestError } = await supabase
         .from('transfer_requests')
         .insert({
-          source_warehouse_id: data.source_warehouse_id,
-          destination_warehouse_id: data.destination_warehouse_id,
+          source_branch_id: data.source_branch_id,
+          destination_branch_id: data.destination_branch_id,
           requested_by: user.user.id,
           priority: data.priority,
           required_date: data.required_date,

@@ -27,7 +27,7 @@ const Accounting = lazy(() => import("./pages/Accounting"));
 const Claims = lazy(() => import("./pages/Claims"));
 const Audit = lazy(() => import("./pages/Audit"));
 const Reports = lazy(() => import("./pages/Reports"));
-const Settings = lazy(() => import("./pages/Settings"));
+
 const Employees = lazy(() => import("./pages/Employees"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -172,15 +172,7 @@ const App = () => {
                 </AdminLayout>
               </ProtectedRoute>
             } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการตั้งค่า..." />}>
-                    <Settings />
-                  </SuspenseWrapper>
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
+
 
             <Route path="/log-analysis" element={
               <ProtectedRoute>

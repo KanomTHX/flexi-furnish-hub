@@ -68,10 +68,7 @@ export const UserMenu = () => {
           <User className="mr-2 h-4 w-4" />
           <span>โปรไฟล์</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/settings')}>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>ตั้งค่า</span>
-        </DropdownMenuItem>
+
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           onClick={handleSignOut} 

@@ -18,17 +18,22 @@ BEGIN
         CREATE TABLE public.products (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name TEXT NOT NULL,
-            code TEXT UNIQUE NOT NULL,
+            product_code VARCHAR(50) UNIQUE NOT NULL,
             sku TEXT UNIQUE,
+            category_id UUID REFERENCES product_categories(id),
             category TEXT,
             brand TEXT,
             model TEXT,
             description TEXT,
-            unit_cost NUMERIC(10,2) DEFAULT 0,
+            unit VARCHAR(20) DEFAULT 'ชิ้น',
+            cost_price NUMERIC(10,2) DEFAULT 0,
             selling_price NUMERIC(10,2) DEFAULT 0,
+            min_stock_level INTEGER DEFAULT 0,
+            max_stock_level INTEGER DEFAULT 1000,
             barcode TEXT,
             image_url TEXT,
             is_active BOOLEAN DEFAULT true,
+            status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'discontinued')),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
@@ -364,7 +369,7 @@ CREATE INDEX idx_stock_adjustments_status ON public.stock_adjustments(status);
 CREATE INDEX IF NOT EXISTS idx_products_name_gin ON public.products USING gin(to_tsvector('english', name));
 CREATE INDEX IF NOT EXISTS idx_products_brand ON public.products(brand);
 CREATE INDEX IF NOT EXISTS idx_products_model ON public.products(model);
-CREATE INDEX IF NOT EXISTS idx_products_code ON public.products(code);
+CREATE INDEX IF NOT EXISTS idx_products_product_code ON public.products(product_code);
 CREATE INDEX IF NOT EXISTS idx_products_sku ON public.products(sku);
 
 -- Create composite indexes for common queries
@@ -374,7 +379,7 @@ CREATE INDEX idx_movements_product_warehouse_date ON public.stock_movements(prod
 
 -- Create functions for automatic serial number generation
 CREATE OR REPLACE FUNCTION generate_serial_number(
-    product_code TEXT,
+    product_code_param TEXT,
     warehouse_code TEXT DEFAULT NULL
 ) RETURNS TEXT AS $$
 DECLARE
@@ -388,17 +393,17 @@ BEGIN
     -- Get next sequence number for this product in this year
     SELECT COALESCE(MAX(
         CAST(
-            SUBSTRING(serial_number FROM LENGTH(product_code) + 6) AS INTEGER
+            SUBSTRING(serial_number FROM LENGTH(product_code_param) + 6) AS INTEGER
         )
     ), 0) + 1
     INTO sequence_num
     FROM product_serial_numbers psn
     JOIN products p ON psn.product_id = p.id
-    WHERE p.code = product_code
-    AND serial_number LIKE product_code || '-' || year_part || '-%';
+    WHERE p.product_code = product_code_param
+    AND serial_number LIKE product_code_param || '-' || year_part || '-%';
     
     -- Format: PRODUCT_CODE-YYYY-NNN (e.g., SF001-2024-001)
-    sn := product_code || '-' || year_part || '-' || LPAD(sequence_num::TEXT, 3, '0');
+    sn := product_code_param || '-' || year_part || '-' || LPAD(sequence_num::TEXT, 3, '0');
     
     RETURN sn;
 END;
@@ -426,7 +431,7 @@ BEGIN
     SELECT 
         p.id as product_id,
         p.name as product_name,
-        p.code as product_code,
+        p.product_code as product_code,
         w.id as warehouse_id,
         w.name as warehouse_name,
         COUNT(psn.id) as total_quantity,
@@ -442,7 +447,7 @@ BEGIN
     AND (product_id_param IS NULL OR p.id = product_id_param)
     AND p.is_active = true
     AND w.status = 'active'
-    GROUP BY p.id, p.name, p.code, w.id, w.name
+    GROUP BY p.id, p.name, p.product_code, w.id, w.name
     HAVING COUNT(psn.id) > 0 OR warehouse_id_param IS NOT NULL
     ORDER BY p.name, w.name;
 END;
@@ -564,17 +569,17 @@ BEGIN
     END IF;
     
     -- Insert sample products if they don't exist
-    INSERT INTO products (name, code, sku, category, brand, model, unit_cost, selling_price)
+    INSERT INTO products (name, product_code, sku, category, brand, model, cost_price, selling_price)
     VALUES 
         ('โซฟา 3 ที่นั่ง', 'SF001', 'SF001-BRN', 'เฟอร์นิเจอร์', 'HomePro', 'Classic-3S', 15000, 25000),
         ('โต๊ะทำงาน', 'TB001', 'TB001-OAK', 'เฟอร์นิเจอร์', 'Office+', 'Desk-120', 8000, 15000),
         ('เก้าอี้สำนักงาน', 'CH001', 'CH001-BLK', 'เฟอร์นิเจอร์', 'ErgoMax', 'Chair-Pro', 5000, 9000)
-    ON CONFLICT (code) DO NOTHING;
+    ON CONFLICT (product_code) DO NOTHING;
     
     -- Only proceed if we have a warehouse
     IF sample_warehouse_id IS NOT NULL THEN
         -- Get sample product
-        SELECT id INTO sample_product_id FROM products WHERE code = 'SF001';
+        SELECT id INTO sample_product_id FROM products WHERE product_code = 'SF001';
         
         IF sample_product_id IS NOT NULL THEN
             -- Insert sample serial numbers
@@ -593,7 +598,7 @@ CREATE OR REPLACE VIEW stock_summary_view AS
 SELECT 
     p.id as product_id,
     p.name as product_name,
-    p.code as product_code,
+    p.product_code as product_code,
     p.brand,
     p.model,
     w.id as warehouse_id,
@@ -612,7 +617,7 @@ FROM products p
 CROSS JOIN warehouses w
 LEFT JOIN product_serial_numbers psn ON p.id = psn.product_id AND w.id = psn.warehouse_id
 WHERE p.is_active = true AND w.status = 'active'
-GROUP BY p.id, p.name, p.code, p.brand, p.model, w.id, w.name, w.code;
+GROUP BY p.id, p.name, p.product_code, p.brand, p.model, w.id, w.name, w.code;
 
 -- Grant necessary permissions
 GRANT USAGE ON SCHEMA public TO authenticated;

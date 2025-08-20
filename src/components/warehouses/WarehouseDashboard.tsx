@@ -69,12 +69,13 @@ import {
 } from 'lucide-react';
 import { SerialNumberManagement } from './SerialNumberManagement';
 import { useWarehouse } from '@/hooks/useWarehouse';
+import { useBranchData } from '@/hooks/useBranch';
 import { useSerialNumberStats } from '@/hooks/useSerialNumber';
 import { useToast } from '@/hooks/use-toast';
-import type { Warehouse as WarehouseType } from '@/types/warehouse';
+import type { Branch as BranchType } from '@/types/branch';
 
 interface WarehouseDashboardProps {
-  warehouseId?: string;
+  branchId?: string;
 }
 
 interface DashboardStats {
@@ -107,13 +108,13 @@ interface RecentActivity {
   status: 'completed' | 'pending' | 'failed';
 }
 
-export function WarehouseDashboard({ warehouseId }: WarehouseDashboardProps) {
+export function WarehouseDashboard({ branchId }: WarehouseDashboardProps) {
   const { toast } = useToast();
-  const { warehouses, loading: warehouseLoading } = useWarehouse();
-  const { stats: snStats, loading: snLoading } = useSerialNumberStats({ warehouseId });
+  const { branches, loading: branchLoading } = useBranchData();
+  const { stats: snStats, loading: snLoading } = useSerialNumberStats({ branchId });
   
   // State
-  const [selectedWarehouse, setSelectedWarehouse] = useState<WarehouseType | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<BranchType | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showSettings, setShowSettings] = useState(false);
@@ -220,15 +221,15 @@ export function WarehouseDashboard({ warehouseId }: WarehouseDashboardProps) {
     }
   }, [snStats]);
 
-  // Set selected warehouse
+  // Set selected branch
   useEffect(() => {
-    if (warehouseId && warehouses.length > 0) {
-      const warehouse = warehouses.find(w => w.id === warehouseId);
-      setSelectedWarehouse(warehouse || null);
-    } else if (warehouses.length > 0) {
-      setSelectedWarehouse(warehouses[0]);
+    if (branchId && branches.length > 0) {
+      const branch = branches.find(b => b.id === branchId);
+      setSelectedBranch(branch || null);
+    } else if (branches.length > 0) {
+      setSelectedBranch(branches[0]);
     }
-  }, [warehouseId, warehouses]);
+  }, [branchId, branches]);
 
   const getActivityIcon = (type: RecentActivity['type']) => {
     switch (type) {
@@ -261,24 +262,24 @@ export function WarehouseDashboard({ warehouseId }: WarehouseDashboardProps) {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Warehouse Dashboard</h1>
           <p className="text-muted-foreground">
-            {selectedWarehouse ? `คลัง: ${selectedWarehouse.name}` : 'ภาพรวมระบบคลังสินค้า'}
+            {selectedBranch ? `สาขา: ${selectedBranch.name}` : 'ภาพรวมระบบคลังสินค้า'}
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Select
-            value={selectedWarehouse?.id || ''}
+            value={selectedBranch?.id || ''}
             onValueChange={(value) => {
-              const warehouse = warehouses.find(w => w.id === value);
-              setSelectedWarehouse(warehouse || null);
+              const branch = branches.find(b => b.id === value);
+              setSelectedBranch(branch || null);
             }}
           >
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="เลือกคลัง" />
+              <SelectValue placeholder="เลือกสาขา" />
             </SelectTrigger>
             <SelectContent>
-              {warehouses.map((warehouse) => (
-                <SelectItem key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name}
+              {branches.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -542,7 +543,7 @@ export function WarehouseDashboard({ warehouseId }: WarehouseDashboardProps) {
 
         {/* Serial Numbers Tab */}
         <TabsContent value="serial-numbers">
-          <SerialNumberManagement warehouseId={selectedWarehouse?.id} />
+          <SerialNumberManagement branchId={selectedBranch?.id} />
         </TabsContent>
 
         {/* Inventory Tab */}

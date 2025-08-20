@@ -174,7 +174,7 @@ export function AuditReport({ className }: AuditReportProps) {
                   <SelectItem value="all">ทั้งหมด</SelectItem>
                   <SelectItem value="pos">POS</SelectItem>
                   <SelectItem value="inventory">สต็อก</SelectItem>
-                  <SelectItem value="warehouse">คลังสินค้า</SelectItem>
+                  <SelectItem value="warehouse">สาขา</SelectItem>
                   <SelectItem value="accounting">บัญชี</SelectItem>
                   <SelectItem value="claims">เคลม</SelectItem>
                   <SelectItem value="users">ผู้ใช้</SelectItem>

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useWarehouse } from '@/hooks/useWarehouse';
+import { useBranch } from '@/hooks/useBranch';
 
 import {
   Hash,
@@ -22,7 +22,7 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SNStatus } from '@/types/warehouse';
+import { SNStatus } from '@/types/branch';
 
 interface SerialNumberReportsProps {
   className?: string;
@@ -30,11 +30,11 @@ interface SerialNumberReportsProps {
 
 export function SerialNumberReports({ className }: SerialNumberReportsProps) {
   const { toast } = useToast();
-  const { serialNumbers, loading, error } = useWarehouse();
+  const { serialNumbers, loading, error } = useBranch();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
+  const [branchFilter, setBranchFilter] = useState<string>('all');
   const [productFilter, setProductFilter] = useState<string>('all');
 
   // Calculate serial number statistics
@@ -48,7 +48,7 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
       damagedCount: 0,
       reservedCount: 0,
       statusBreakdown: [],
-      warehouseBreakdown: []
+      branchBreakdown: []
     };
 
     const totalSerialNumbers = serialNumbers.length;
@@ -68,15 +68,15 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
       { status: 'reserved', count: reservedCount, label: 'จอง' }
     ];
 
-    // Group by warehouse
-    const warehouseGroups = serialNumbers.reduce((acc, sn) => {
-      const warehouseId = sn.warehouseId;
-      const warehouseName = sn.warehouse?.name || warehouseId;
+    // Group by branch
+    const branchGroups = serialNumbers.reduce((acc, sn) => {
+      const branchId = sn.branchId;
+      const branchName = sn.branch?.name || branchId;
       
-      if (!acc[warehouseId]) {
-        acc[warehouseId] = {
-          warehouseId,
-          warehouseName,
+      if (!acc[branchId]) {
+        acc[branchId] = {
+          branchId,
+          branchName,
           total: 0,
           available: 0,
           sold: 0,
@@ -84,15 +84,15 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
         };
       }
       
-      acc[warehouseId].total++;
-      if (sn.status === SNStatus.AVAILABLE) acc[warehouseId].available++;
-      else if (sn.status === SNStatus.SOLD) acc[warehouseId].sold++;
-      else acc[warehouseId].other++;
+      acc[branchId].total++;
+      if (sn.status === SNStatus.AVAILABLE) acc[branchId].available++;
+      else if (sn.status === SNStatus.SOLD) acc[branchId].sold++;
+      else acc[branchId].other++;
       
       return acc;
     }, {} as Record<string, any>);
 
-    const warehouseBreakdown = Object.values(warehouseGroups);
+    const branchBreakdown = Object.values(branchGroups);
 
     return {
       totalSerialNumbers,
@@ -103,7 +103,7 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
       damagedCount,
       reservedCount,
       statusBreakdown,
-      warehouseBreakdown
+      branchBreakdown
     };
   }, [serialNumbers]);
 
@@ -117,7 +117,7 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
         'ชื่อสินค้า': sn.product?.name || '',
         'แบรนด์': sn.product?.brand || '',
         'โมเดล': sn.product?.model || '',
-        'คลังสินค้า': sn.warehouse?.name || sn.warehouseId,
+        'สาขา': sn.branch?.name || sn.branchId,
         'สถานะ': getStatusLabel(sn.status),
         'ต้นทุน': sn.unitCost,
         'ผู้จำหน่าย': sn.supplier?.name || '',
@@ -166,15 +166,15 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
         sn.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (sn.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (sn.product?.code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (sn.warehouse?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+        (sn.branch?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || sn.status === statusFilter;
-      const matchesWarehouse = warehouseFilter === 'all' || sn.warehouseId === warehouseFilter;
+      const matchesBranch = branchFilter === 'all' || sn.branchId === branchFilter;
       const matchesProduct = productFilter === 'all' || sn.productId === productFilter;
       
-      return matchesSearch && matchesStatus && matchesWarehouse && matchesProduct;
+      return matchesSearch && matchesStatus && matchesBranch && matchesProduct;
     });
-  }, [serialNumbers, searchTerm, statusFilter, warehouseFilter, productFilter]);
+  }, [serialNumbers, searchTerm, statusFilter, branchFilter, productFilter]);
 
   const getStatusLabel = (status: SNStatus) => {
     switch (status) {
@@ -372,28 +372,28 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
             </CardContent>
           </Card>
 
-          {/* Warehouse Breakdown */}
+          {/* Branch Breakdown */}
           <Card>
             <CardHeader>
-              <CardTitle>การแจกแจงตามคลังสินค้า</CardTitle>
+              <CardTitle>การแจกแจงตามสาขา</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {serialNumberStatistics.warehouseBreakdown.map((warehouse) => (
-                  <div key={warehouse.warehouseId} className="flex items-center justify-between">
+                {serialNumberStatistics.branchBreakdown.map((branch) => (
+                  <div key={branch.branchId} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Package className="h-4 w-4 text-blue-500" />
                       <div>
-                        <p className="font-medium">{warehouse.warehouseName}</p>
+                        <p className="font-medium">{branch.branchName}</p>
                         <p className="text-sm text-muted-foreground">
-                          พร้อมใช้งาน: {warehouse.available} | ขายแล้ว: {warehouse.sold} | อื่นๆ: {warehouse.other}
+                          พร้อมใช้งาน: {branch.available} | ขายแล้ว: {branch.sold} | อื่นๆ: {branch.other}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">{warehouse.total.toLocaleString()}</p>
+                      <p className="font-medium">{branch.total.toLocaleString()}</p>
                       <p className="text-sm text-muted-foreground">
-                        {((warehouse.total / serialNumberStatistics.totalSerialNumbers) * 100).toFixed(1)}%
+                        {((branch.total / serialNumberStatistics.totalSerialNumbers) * 100).toFixed(1)}%
                       </p>
                     </div>
                   </div>
@@ -433,13 +433,13 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
                   </SelectContent>
                 </Select>
 
-                <Select value={warehouseFilter} onValueChange={setWarehouseFilter}>
+                <Select value={branchFilter} onValueChange={setBranchFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="คลังสินค้า" />
+                    <SelectValue placeholder="สาขา" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">ทุกคลัง</SelectItem>
-                    {/* Add warehouse options dynamically */}
+                    <SelectItem value="all">ทุกสาขา</SelectItem>
+                    {/* Add branch options dynamically */}
                   </SelectContent>
                 </Select>
 
@@ -468,7 +468,7 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
                     <tr className="border-b">
                       <th className="text-left p-2">หมายเลขซีเรียล</th>
                       <th className="text-left p-2">สินค้า</th>
-                      <th className="text-left p-2">คลังสินค้า</th>
+                      <th className="text-left p-2">สาขา</th>
                       <th className="text-left p-2">สถานะ</th>
                       <th className="text-left p-2">ต้นทุน</th>
                       <th className="text-left p-2">วันที่สร้าง</th>
@@ -484,7 +484,7 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
                             <p className="text-sm text-muted-foreground">{sn.product?.code || sn.productId}</p>
                           </div>
                         </td>
-                        <td className="p-2">{sn.warehouse?.name || sn.warehouseId}</td>
+                        <td className="p-2">{sn.branch?.name || sn.branchId}</td>
                         <td className="p-2">
                           {getStatusBadge(sn.status)}
                         </td>

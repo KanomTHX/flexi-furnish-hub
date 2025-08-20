@@ -22,7 +22,7 @@ export class SerialNumberService {
   static async getSerialNumbers(filter?: SerialNumberFilter): Promise<SerialNumber[]> {
     try {
       let query = supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           *,
           product:products(*),
@@ -40,8 +40,8 @@ export class SerialNumberService {
         query = query.eq('status', filter.status);
       }
       
-      if (filter?.warehouseId) {
-        query = query.eq('warehouse_id', filter.warehouseId);
+      if (filter?.branchId) {
+        query = query.eq('branch_id', filter.branchId);
       }
       
       if (filter?.productId) {
@@ -88,7 +88,7 @@ export class SerialNumberService {
   static async getSerialNumberById(id: string): Promise<SerialNumber | null> {
     try {
       const { data, error } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           *,
           product:products(*),
@@ -97,8 +97,8 @@ export class SerialNumberService {
           purchase_order:purchase_orders(*),
           history:serial_number_history(
             *,
-            from_warehouse:from_warehouse_id(name),
-            to_warehouse:to_warehouse_id(name),
+            from_warehouse:from_branch_id(name),
+            to_warehouse:to_branch_id(name),
             performer:performed_by(first_name, last_name)
           )
         `)
@@ -120,7 +120,7 @@ export class SerialNumberService {
     try {
       // Exact match first
       const { data: exactMatch, error: exactError } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           *,
           product:products(*),
@@ -138,7 +138,7 @@ export class SerialNumberService {
 
       // Fuzzy search for suggestions
       const { data: suggestions, error: suggestError } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           *,
           product:products(*),
@@ -172,7 +172,7 @@ export class SerialNumberService {
       const serialNumberRecords = request.serialNumbers.map(sn => ({
         serial_number: sn,
         product_id: request.productId,
-        warehouse_id: request.warehouseId,
+        branch_id: request.branchId,
         supplier_id: request.supplierId,
         purchase_order_id: request.purchaseOrderId,
         status: 'available',
@@ -186,7 +186,7 @@ export class SerialNumberService {
       }));
 
       const { data, error } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .insert(serialNumberRecords)
         .select();
 
@@ -197,7 +197,7 @@ export class SerialNumberService {
         serial_number_id: sn.id,
         action: 'created',
         to_status: 'available',
-        to_warehouse_id: request.warehouseId,
+        to_branch_id: request.branchId,
         to_position: request.position,
         notes: `Created with ${request.serialNumbers.length} serial numbers`,
         performed_by: 'current-user',
@@ -231,11 +231,11 @@ export class SerialNumberService {
 
       // Update serial number
       const { data, error } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .update({
           status: request.newStatus,
           position: request.toPosition || current.position,
-          warehouse_id: request.toWarehouseId || current.warehouseId,
+          branch_id: request.toBranchId || current.branchId,
           notes: request.notes || current.notes,
           updated_by: request.performedBy,
           updated_at: new Date(),
@@ -254,8 +254,8 @@ export class SerialNumberService {
           action: 'status_changed',
           from_status: current.status,
           to_status: request.newStatus,
-          from_warehouse_id: current.warehouseId,
-          to_warehouse_id: request.toWarehouseId || current.warehouseId,
+          from_branch_id: current.branchId,
+          to_branch_id: request.toBranchId || current.branchId,
           from_position: current.position,
           to_position: request.toPosition || current.position,
           order_id: request.orderId,
@@ -279,7 +279,7 @@ export class SerialNumberService {
     try {
       // Get current serial numbers
       const { data: currentSNs, error: fetchError } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select('*')
         .in('id', request.serialNumberIds);
 
@@ -290,9 +290,9 @@ export class SerialNumberService {
 
       // Update serial numbers
       const { data, error } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .update({
-          warehouse_id: request.toWarehouseId,
+          branch_id: request.toBranchId,
           position: request.toPosition,
           status: 'transferred',
           notes: request.notes,
@@ -310,8 +310,8 @@ export class SerialNumberService {
         action: 'transferred',
         from_status: sn.status,
         to_status: 'transferred',
-        from_warehouse_id: sn.warehouse_id,
-        to_warehouse_id: request.toWarehouseId,
+        from_branch_id: sn.branch_id,
+        to_branch_id: request.toBranchId,
         from_position: sn.position,
         to_position: request.toPosition,
         notes: request.notes,
@@ -336,12 +336,12 @@ export class SerialNumberService {
   static async getSerialNumberStats(filter?: SerialNumberFilter): Promise<SerialNumberStats> {
     try {
       let query = supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select('status');
 
       // Apply filters
-      if (filter?.warehouseId) {
-        query = query.eq('warehouse_id', filter.warehouseId);
+      if (filter?.branchId) {
+        query = query.eq('branch_id', filter.branchId);
       }
       
       if (filter?.productId) {
@@ -400,7 +400,7 @@ export class SerialNumberService {
 
       // Check for existing serial numbers in database
       const { data: existing, error } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select('serial_number')
         .in('serial_number', serialNumbers);
 
@@ -441,9 +441,9 @@ export class SerialNumberService {
         .from('serial_number_history')
         .select(`
           *,
-          serial_number:product_serial_numbers(serial_number),
-          from_warehouse:from_warehouse_id(name),
-          to_warehouse:to_warehouse_id(name),
+          serial_number:serial_numbers(serial_number),
+          from_warehouse:from_branch_id(name),
+          to_warehouse:to_branch_id(name),
           performer:performed_by(first_name, last_name)
         `)
         .eq('serial_number_id', serialNumberId)
@@ -463,7 +463,7 @@ export class SerialNumberService {
   static async bulkUpdateSerialNumbers(request: BulkUpdateSerialNumberRequest): Promise<SerialNumber[]> {
     try {
       const { data, error } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .update({
           ...request.updates,
           updated_by: request.performedBy,
@@ -497,7 +497,7 @@ export class SerialNumberService {
   /**
    * Get warehouse zones
    */
-  static async getWarehouseZones(warehouseId: string): Promise<WarehouseZone[]> {
+  static async getWarehouseZones(branchId: string): Promise<WarehouseZone[]> {
     try {
       const { data, error } = await supabase
         .from('warehouse_zones')
@@ -506,7 +506,7 @@ export class SerialNumberService {
           warehouse:warehouses(*),
           shelves:warehouse_shelves(*)
         `)
-        .eq('warehouse_id', warehouseId)
+        .eq('branch_id', branchId)
         .eq('is_active', true)
         .order('code');
 

@@ -8,16 +8,8 @@ import {
   DateRange,
   ReportType
 } from '@/types/reports';
-import { 
-  mockSalesReports, 
-  mockInventoryReports, 
-  mockFinancialReports,
-  mockCustomReportConfigs,
-  mockReportStats,
-  generateMockSalesData,
-  generateMockInventoryData,
-  generateMockFinancialData
-} from '@/hooks/useSupabaseHooks';
+// TODO: Replace with real data fetching from Supabase
+// import { supabase } from '@/lib/supabase';
 
 export const useReports = () => {
   const [salesReports, setSalesReports] = useState<SalesReport[]>([]);
@@ -143,7 +135,8 @@ export const useReports = () => {
   };
 
   const getSalesData = useCallback((days: number = 30) => {
-    return generateMockSalesData();
+    // TODO: Fetch real sales data from Supabase
+    return [];
   }, []);
 
   // Inventory Reports
@@ -195,7 +188,8 @@ export const useReports = () => {
   };
 
   const getInventoryData = () => {
-    return generateMockInventoryData();
+    // TODO: Fetch real inventory data from Supabase
+    return [];
   };
 
   // Financial Reports
@@ -245,7 +239,8 @@ export const useReports = () => {
   };
 
   const getFinancialData = useCallback((months: number = 12) => {
-    return generateMockFinancialData();
+    // TODO: Fetch real financial data from Supabase
+    return [];
   }, []);
 
   // Custom Reports

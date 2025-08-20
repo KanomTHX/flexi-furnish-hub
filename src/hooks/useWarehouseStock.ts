@@ -5,14 +5,13 @@ import type { StockLevel, StockMovement, SerialNumber } from '@/types/warehouse'
 import { useToast } from '@/hooks/use-toast';
 
 export interface UseWarehouseStockOptions {
-  warehouseId?: string;
+  branchId?: string;
   productId?: string;
   autoFetch?: boolean;
   refreshInterval?: number;
 }
 
 export interface StockFilters {
-  warehouseId?: string;
   branchId?: string;
   productId?: string;
   search?: string;
@@ -22,7 +21,6 @@ export interface StockFilters {
 }
 
 export interface MovementFilters {
-  warehouseId?: string;
   branchId?: string;
   productId?: string;
   movementType?: string;
@@ -33,7 +31,7 @@ export interface MovementFilters {
 }
 
 export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
-  const { warehouseId, productId, autoFetch = true, refreshInterval } = options;
+  const { branchId, productId, autoFetch = true, refreshInterval } = options;
   const { toast } = useToast();
 
   // State
@@ -58,8 +56,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
       setError(null);
 
       const searchFilters = {
-        warehouseId: filters?.warehouseId || warehouseId,
-        branchId: filters?.branchId,
+        branchId: filters?.branchId || branchId,
         productId: filters?.productId || productId,
         search: filters?.search,
         status: filters?.status,
@@ -101,7 +98,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [warehouseId, productId, toast]);
+  }, [branchId, productId, toast]);
 
   // Fetch stock movements
   const fetchStockMovements = useCallback(async (filters?: MovementFilters) => {
@@ -110,8 +107,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
       setError(null);
 
       const searchFilters = {
-        warehouseId: filters?.warehouseId || warehouseId,
-        branchId: filters?.branchId,
+        branchId: filters?.branchId || branchId,
         productId: filters?.productId || productId,
         movementType: filters?.movementType,
         dateFrom: filters?.dateFrom,
@@ -135,11 +131,10 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [warehouseId, productId, toast]);
+  }, [branchId, productId, toast]);
 
   // Fetch serial numbers
   const fetchSerialNumbers = useCallback(async (filters?: {
-    warehouseId?: string;
     branchId?: string;
     productId?: string;
     status?: string;
@@ -152,8 +147,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
       setError(null);
 
       const searchFilters = {
-        warehouseId: filters?.warehouseId || warehouseId,
-        branchId: filters?.branchId,
+        branchId: filters?.branchId || branchId,
         productId: filters?.productId || productId,
         status: filters?.status,
         search: filters?.search,
@@ -176,11 +170,11 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [warehouseId, productId, toast]);
+  }, [branchId, productId, toast]);
 
   // Receive goods
   const receiveGoods = useCallback(async (receiveData: {
-    warehouseId: string;
+    branchId: string;
     supplierId?: string;
     invoiceNumber?: string;
     items: {
@@ -228,7 +222,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
   const logStockMovement = useCallback(async (movementData: {
     productId: string;
     serialNumberId?: string;
-    warehouseId: string;
+    branchId: string;
     movementType: string;
     quantity: number;
     unitCost?: number;
@@ -271,10 +265,10 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
   }, [fetchStockLevels, fetchStockMovements, toast]);
 
   // Get warehouse summary
-  const getWarehouseSummary = useCallback(async (targetWarehouseId?: string) => {
+  const getWarehouseSummary = useCallback(async (targetBranchId?: string) => {
     try {
       const summaryData = await WarehouseService.getWarehouseSummary(
-        targetWarehouseId || warehouseId
+        targetBranchId || branchId
       );
       setSummary(summaryData);
       return summaryData;
@@ -282,7 +276,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
       console.error('Error getting warehouse summary:', err);
       return summary;
     }
-  }, [warehouseId, summary]);
+  }, [branchId, summary]);
 
   // Get low stock alerts
   const getLowStockAlerts = useCallback(async (threshold: number = 5) => {
@@ -313,7 +307,7 @@ export function useWarehouseStock(options: UseWarehouseStockOptions = {}) {
         fetchSerialNumbers()
       ]);
     }
-  }, [autoFetch, warehouseId, productId, fetchStockLevels, fetchStockMovements, fetchSerialNumbers]);
+  }, [autoFetch, branchId, productId, fetchStockLevels, fetchStockMovements, fetchSerialNumbers]);
 
   // Set up refresh interval
   useEffect(() => {

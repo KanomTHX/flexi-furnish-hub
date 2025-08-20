@@ -27,10 +27,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { WarehouseService } from '@/services/warehouseService';
-import type { SerialNumber, StockLevel, Warehouse } from '@/types/warehouse';
+import { useBranchData } from '@/hooks/useBranchData';
+import type { SerialNumber, StockLevel, Branch } from '@/types/warehouse';
 
 interface WithdrawDispatchProps {
-  warehouses: Warehouse[];
+  branchId?: string;
 }
 
 interface WithdrawItem {
@@ -40,7 +41,7 @@ interface WithdrawItem {
 }
 
 interface WithdrawForm {
-  warehouseId: string;
+  branchId: string;
   items: WithdrawItem[];
   reason: string;
   referenceType: 'sale' | 'transfer' | 'return' | 'adjustment' | 'claim' | 'other';
@@ -53,19 +54,22 @@ interface WithdrawForm {
   performedBy: string;
 }
 
-export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) {
+export default function WithdrawDispatch({ branchId: initialBranchId }: WithdrawDispatchProps) {
+  // Branch data
+  const { currentBranch, branches } = useBranchData();
+  const [selectedBranch, setSelectedBranch] = useState(initialBranchId || currentBranch?.id || '');
   // State management
   const [activeTab, setActiveTab] = useState('withdraw');
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedWarehouse, setSelectedWarehouse] = useState('');
+
   const [stockLevels, setStockLevels] = useState<StockLevel[]>([]);
   const [serialNumbers, setSerialNumbers] = useState<SerialNumber[]>([]);
   const [withdrawHistory, setWithdrawHistory] = useState<any[]>([]);
 
   // Form state
   const [withdrawForm, setWithdrawForm] = useState<WithdrawForm>({
-    warehouseId: '',
+    branchId: selectedBranch,
     items: [],
     reason: '',
     referenceType: 'sale',
@@ -80,18 +84,18 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
 
   // Load data on component mount
   useEffect(() => {
-    if (selectedWarehouse) {
+    if (selectedBranch) {
       loadStockLevels();
       loadWithdrawHistory();
     }
-  }, [selectedWarehouse, searchTerm]);
+  }, [selectedBranch, searchTerm]);
 
   // Load stock levels
   const loadStockLevels = async () => {
     try {
       setLoading(true);
       const response = await WarehouseService.getStockLevels({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         search: searchTerm,
         status: 'in_stock',
         limit: 50
@@ -110,7 +114,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
     try {
       setLoading(true);
       const response = await WarehouseService.getSerialNumbers({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         productId: productId,
         status: 'available',
         limit: 100
@@ -128,7 +132,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
   const loadWithdrawHistory = async () => {
     try {
       const response = await WarehouseService.getStockMovements({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         movementType: 'withdraw',
         limit: 20
       });
@@ -182,10 +186,10 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
   const handleSubmitWithdraw = async () => {
     try {
       // Validation
-      if (!withdrawForm.warehouseId) {
-        toast.error('กรุณาเลือกคลังสินค้า');
-        return;
-      }
+      if (!withdrawForm.branchId) {
+      toast.error('กรุณาเลือกสาขา');
+      return;
+    }
 
       if (withdrawForm.items.length === 0) {
         toast.error('กรุณาเลือกสินค้าที่ต้องการจ่าย');
@@ -211,7 +215,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
 
       // Reset form
       setWithdrawForm({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         items: [],
         reason: '',
         referenceType: 'sale',
@@ -235,7 +239,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
     const serialNumberIds = withdrawForm.items.map(item => item.serialNumber.id);
 
     return await WarehouseService.withdrawGoods({
-      warehouseId: withdrawForm.warehouseId,
+      branchId: withdrawForm.branchId,
       serialNumberIds,
       reason: withdrawForm.reason,
       referenceType: withdrawForm.referenceType,
@@ -283,26 +287,26 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
         </div>
       </div>
 
-      {/* Warehouse Selection */}
+      {/* Branch Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>เลือกคลังสินค้า</CardTitle>
+          <CardTitle>เลือกสาขา</CardTitle>
         </CardHeader>
         <CardContent>
           <Select
-            value={selectedWarehouse}
+            value={selectedBranch}
             onValueChange={(value) => {
-              setSelectedWarehouse(value);
-              setWithdrawForm(prev => ({ ...prev, warehouseId: value }));
+              setSelectedBranch(value);
+              setWithdrawForm(prev => ({ ...prev, branchId: value }));
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="เลือกคลังสินค้า" />
+              <SelectValue placeholder="เลือกสาขา" />
             </SelectTrigger>
             <SelectContent>
-              {warehouses?.map((warehouse) => (
-                <SelectItem key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name} ({warehouse.code})
+              {branches?.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name} ({branch.code})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -310,7 +314,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
         </CardContent>
       </Card>
 
-      {selectedWarehouse && (
+      {selectedBranch && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="withdraw">จ่ายสินค้า</TabsTrigger>
@@ -368,7 +372,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
                     </TableHeader>
                     <TableBody>
                       {stockLevels?.map((stock) => (
-                        <TableRow key={`${stock.productId}-${stock.warehouseId}`}>
+                        <TableRow key={`${stock.productId}-${stock.branchId}`}>
                           <TableCell>
                             <div>
                               <p className="font-medium">{stock.productName}</p>
@@ -707,7 +711,7 @@ export default function WithdrawDispatch({ warehouses }: WithdrawDispatchProps) 
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p><strong>คลังสินค้า:</strong> {warehouses.find(w => w.id === selectedWarehouse)?.name}</p>
+                  <p><strong>สาขา:</strong> {branches.find(b => b.id === selectedBranch)?.name}</p>
                   <p><strong>ประเภท:</strong> {withdrawForm.referenceType}</p>
                   <p><strong>เลขที่อ้างอิง:</strong> {withdrawForm.referenceNumber || '-'}</p>
                 </div>

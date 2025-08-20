@@ -16,7 +16,7 @@ import type {
 } from '@/types/serialNumber';
 
 interface UseSerialNumberOptions {
-  warehouseId?: string;
+  branchId?: string;
   productId?: string;
   autoFetch?: boolean;
 }
@@ -45,7 +45,7 @@ interface UseSerialNumberReturn {
   bulkUpdateSerialNumbers: (request: BulkUpdateSerialNumberRequest) => Promise<SerialNumber[]>;
   getHistory: (serialNumberId: string) => Promise<void>;
   getStats: (filter?: SerialNumberFilter) => Promise<void>;
-  getZones: (warehouseId: string) => Promise<void>;
+  getZones: (branchId: string) => Promise<void>;
   getShelves: (zoneId: string) => Promise<void>;
   exportSerialNumbers: (filter?: SerialNumberFilter) => Promise<string>;
   generateSerialNumbers: (prefix: string, count: number, startNumber?: number) => string[];
@@ -57,7 +57,7 @@ interface UseSerialNumberReturn {
 }
 
 export function useSerialNumber(options: UseSerialNumberOptions = {}): UseSerialNumberReturn {
-  const { warehouseId, productId, autoFetch = true } = options;
+  const { branchId, productId, autoFetch = true } = options;
   
   // State
   const [serialNumbers, setSerialNumbers] = useState<SerialNumber[]>([]);
@@ -83,7 +83,7 @@ export function useSerialNumber(options: UseSerialNumberOptions = {}): UseSerial
   
   // Current filter
   const [currentFilter, setCurrentFilter] = useState<SerialNumberFilter>({
-    warehouseId,
+    branchId,
     productId,
   });
 
@@ -406,14 +406,14 @@ export function useSerialNumber(options: UseSerialNumberOptions = {}): UseSerial
       fetchSerialNumbers();
       getStats();
     }
-  }, [autoFetch, warehouseId, productId]);
+  }, [autoFetch, branchId, productId]);
 
-  // Auto-fetch zones when warehouse changes
+  // Auto-fetch zones when branch changes
   useEffect(() => {
-    if (warehouseId) {
-      getZones(warehouseId);
+    if (branchId) {
+      getZones(branchId);
     }
-  }, [warehouseId, getZones]);
+  }, [branchId, getZones]);
 
   return {
     // Data
@@ -454,10 +454,10 @@ export function useSerialNumber(options: UseSerialNumberOptions = {}): UseSerial
 // Specialized hooks for specific use cases
 
 /**
- * Hook for warehouse-specific serial number management
+ * Hook for branch-specific serial number management
  */
-export function useWarehouseSerialNumbers(warehouseId: string) {
-  return useSerialNumber({ warehouseId, autoFetch: true });
+export function useBranchSerialNumbers(branchId: string) {
+  return useSerialNumber({ branchId, autoFetch: true });
 }
 
 /**

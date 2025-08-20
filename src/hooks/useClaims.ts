@@ -45,7 +45,7 @@ export function useClaims() {
           *,
           customers(id, name, phone, email),
           products(id, name, cost_price),
-          employees(id, name)
+          employees(id, first_name, last_name)
         `)
         .order('created_at', { ascending: false });
 
@@ -107,7 +107,7 @@ export function useClaims() {
         estimatedCost: claim.compensation_amount || 0,
         actualCost: claim.compensation_amount || 0,
         assignedTo: claim.handled_by,
-        assignedToName: claim.employees?.name || '',
+        assignedToName: claim.employees ? `${claim.employees.first_name || ''} ${claim.employees.last_name || ''}`.trim() : '',
         createdAt: claim.created_at,
         updatedAt: claim.updated_at,
         timeline: [],

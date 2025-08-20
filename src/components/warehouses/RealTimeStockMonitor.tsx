@@ -85,7 +85,7 @@ export function RealTimeStockMonitor({
       const [productsResult, branchesResult] = await Promise.all([
         productIds.length > 0 ? supabase
           .from('products')
-          .select('id, name, code')
+          .select('id, name, product_code')
           .in('id', productIds) : { data: [], error: null },
         branchIds.length > 0 ? supabase
           .from('branches')
@@ -241,27 +241,17 @@ export function RealTimeStockMonitor({
         variant: "destructive"
       });
       
-      // ใช้ข้อมูลจำลองในกรณีที่เกิดข้อผิดพลาด
-      const mockData = {
-        totalItems: 1247,
-        inStock: 1180,
-        lowStock: 45,
-        outOfStock: 22,
-        recentMovements: [
-          { id: 1, type: 'in', product: 'โซฟา 3 ที่นั่ง รุ่น Comfort', quantity: 5, warehouse: 'คลังใหญ่', time: '10:15' },
-          { id: 2, type: 'out', product: 'เตียงนอน 6 ฟุต รุ่น Luxury', quantity: 2, warehouse: 'สาขาเซ็นทรัล', time: '09:45' },
-          { id: 3, type: 'transfer', product: 'โต๊ะทำงาน รุ่น Modern', quantity: 3, from: 'คลังใหญ่', to: 'สาขาเมกา', time: '09:30' },
-          { id: 4, type: 'in', product: 'ตู้เสื้อผ้า 3 บาน รุ่น Classic', quantity: 8, warehouse: 'คลังใหญ่', time: '09:15' },
-        ],
-        topMoving: [
-          { product: 'โซฟา 3 ที่นั่ง รุ่น Comfort', movements: 28, trend: 'up' },
-          { product: 'เตียงนอน 6 ฟุต รุ่น Luxury', movements: 24, trend: 'up' },
-          { product: 'โต๊ะทำงาน รุ่น Modern', movements: 19, trend: 'down' },
-          { product: 'ตู้เสื้อผ้า 3 บาน รุ่น Classic', movements: 15, trend: 'up' },
-        ]
+      // ใช้ข้อมูลเริ่มต้นในกรณีที่เกิดข้อผิดพลาด
+      const defaultData = {
+        totalItems: 0,
+        inStock: 0,
+        lowStock: 0,
+        outOfStock: 0,
+        recentMovements: [],
+        topMoving: []
       };
       
-      setStockData(mockData);
+      setStockData(defaultData);
     } finally {
       setLoading(false);
     }

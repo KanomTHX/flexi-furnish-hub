@@ -21,12 +21,14 @@ import {
   Clock,
   ChevronRight,
   Shield,
-  PieChart
+  PieChart,
+  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useClaims } from "@/hooks/useClaims";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 import {
   Sidebar,
@@ -51,112 +53,139 @@ export function AdminSidebar() {
   const currentPath = location.pathname;
   const { toast } = useToast();
   const { statistics } = useClaims();
+  const { todaySales, systemStatus, isLoading, error, lastUpdated, refreshStats } = useDashboardStats();
+
+  // Quick Actions สำหรับงานที่ใช้บ่อย
+  const quickActions = [
+    {
+      title: "ขายด่วน",
+      url: "/pos",
+      icon: ShoppingCart,
+      color: "bg-gradient-to-r from-green-500 to-emerald-500",
+      description: "เปิด POS ขายสินค้า"
+    },
+    {
+      title: "เพิ่มสินค้า",
+      url: "/warehouses?action=add",
+      icon: Plus,
+      color: "bg-gradient-to-r from-blue-500 to-cyan-500",
+      description: "เพิ่มสินค้าใหม่"
+    },
+    {
+      title: "ลูกค้าใหม่",
+      url: "/customers?action=add",
+      icon: Users,
+      color: "bg-gradient-to-r from-purple-500 to-pink-500",
+      description: "เพิ่มลูกค้าใหม่"
+    }
+  ];
 
   const navigationGroups = [
     {
-      label: "หลัก",
+      label: "หน้าหลัก",
+      icon: LayoutDashboard,
       items: [
         {
           title: "แดชบอร์ด",
           url: "/",
           icon: LayoutDashboard,
           badge: null,
-          description: "ภาพรวมระบบ"
+          description: "ภาพรวมระบบและสถิติ",
+          color: "text-blue-600"
         },
         {
-          title: "POS",
+          title: "POS ขายสินค้า",
           url: "/pos",
           icon: ShoppingCart,
-          badge: null,
+          badge: "HOT",
           description: "ระบบขายสินค้า Point of Sale",
-          highlight: true
+          highlight: true,
+          color: "text-green-600"
         }
       ]
     },
     {
-      label: "การเงิน",
+      label: "การขายและการเงิน",
+      icon: CreditCard,
       items: [
         {
           title: "ผ่อนชำระ",
           url: "/installments",
           icon: CreditCard,
           badge: null,
-          description: "จัดการการผ่อน"
+          description: "จัดการการผ่อนชำระ",
+          color: "text-orange-600"
         },
         {
-          title: "บัญชี",
+          title: "บัญชีการเงิน",
           url: "/accounting",
           icon: BarChart3,
           badge: null,
-          description: "การเงินและบัญชี"
+          description: "การเงินและบัญชี",
+          color: "text-indigo-600"
+        },
+        {
+          title: "รายงานขาย",
+          url: "/reports",
+          icon: TrendingUp,
+          badge: null,
+          description: "รายงานและสถิติการขาย",
+          color: "text-emerald-600"
         }
       ]
     },
     {
-      label: "จัดการ",
+      label: "จัดการข้อมูล",
+      icon: Users,
       items: [
         {
           title: "ลูกค้า",
           url: "/customers",
           icon: Users,
           badge: null,
-          description: "จัดการข้อมูลลูกค้าและประวัติ"
+          description: "จัดการข้อมูลลูกค้า",
+          color: "text-purple-600"
         },
         {
           title: "คลังสินค้า",
           url: "/warehouses",
           icon: Warehouse,
           badge: null,
-          description: "จัดการคลังและสต็อกสินค้า"
-        },
-        {
-          title: "สาขา",
-          url: "/branches",
-          icon: Store,
-          badge: null,
-          description: "จัดการข้อมูลสาขาและสถานที่"
+          description: "จัดการคลังและสต็อก",
+          color: "text-amber-600"
         },
         {
           title: "พนักงาน",
           url: "/employees",
           icon: UserCheck,
           badge: null,
-          description: "จัดการพนักงาน"
+          description: "จัดการข้อมูลพนักงาน",
+          color: "text-teal-600"
         }
       ]
     },
     {
-      label: "ระบบ",
+      label: "ระบบและการตั้งค่า",
+      icon: Settings,
       items: [
         {
           title: "งานเคลม",
           url: "/claims",
           icon: AlertCircle,
           badge: statistics.pendingClaims > 0 ? statistics.pendingClaims.toString() : null,
-          description: "คำร้องและการรับประกันสินค้า",
-          urgent: statistics.urgentClaims > 0
+          description: "คำร้องและการรับประกัน",
+          urgent: statistics.urgentClaims > 0,
+          color: "text-red-600"
         },
         {
-          title: "ตรวจสอบ",
+          title: "ตรวจสอบระบบ",
           url: "/audit",
           icon: Activity,
           badge: null,
-          description: "บันทึกและตรวจสอบระบบ"
+          description: "บันทึกและตรวจสอบ",
+          color: "text-slate-600"
         },
-        {
-          title: "รายงาน",
-          url: "/reports",
-          icon: TrendingUp,
-          badge: null,
-          description: "รายงานและสถิติ"
-        },
-        {
-          title: "ตั้งค่า",
-          url: "/settings",
-          icon: Settings,
-          badge: null,
-          description: "การตั้งค่าระบบ"
-        }
+
       ]
     }
   ];
@@ -171,32 +200,36 @@ export function AdminSidebar() {
     const isCurrentActive = isActive(path);
     
     if (isCurrentActive) {
-      return `${baseClass} bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25 border border-primary/20`;
+      return `${baseClass} bg-gradient-to-r from-primary via-primary/95 to-primary/90 text-primary-foreground shadow-lg shadow-primary/30 border border-primary/30 ring-2 ring-primary/20`;
     }
     
     if (item?.highlight) {
-      return `${baseClass} bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 text-green-700 hover:text-green-800 border border-green-200/50 hover:border-green-300 hover:shadow-md`;
+      return `${baseClass} bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 hover:from-green-100 hover:via-emerald-100 hover:to-green-100 text-green-700 hover:text-green-800 border border-green-200/60 hover:border-green-300 hover:shadow-lg hover:shadow-green-200/50 transform hover:scale-[1.02]`;
     }
     
     if (item?.urgent) {
-      return `${baseClass} bg-gradient-to-r from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 text-red-700 hover:text-red-800 border border-red-200/50 hover:border-red-300 hover:shadow-md`;
+      return `${baseClass} bg-gradient-to-r from-red-50 via-orange-50 to-red-50 hover:from-red-100 hover:via-orange-100 hover:to-red-100 text-red-700 hover:text-red-800 border border-red-200/60 hover:border-red-300 hover:shadow-lg hover:shadow-red-200/50 animate-pulse`;
     }
     
-    return `${baseClass} hover:bg-accent/50 hover:text-accent-foreground hover:shadow-md border border-transparent hover:border-accent/20`;
+    return `${baseClass} hover:bg-gradient-to-r hover:from-accent/30 hover:via-accent/20 hover:to-accent/30 hover:text-accent-foreground hover:shadow-lg hover:shadow-accent/20 border border-transparent hover:border-accent/30 transform hover:scale-[1.01]`;
+  };
+
+  const getQuickActionClass = (action: any) => {
+    return `w-full justify-start transition-all duration-300 rounded-xl group relative overflow-hidden ${action.color} text-white hover:shadow-xl hover:shadow-black/20 transform hover:scale-105 border border-white/20 hover:border-white/40`;
   };
 
   const renderNavItem = (item: any) => {
     const navContent = (
       <NavLink to={item.url} className={getNavClass(item.url, item)}>
         <div className="flex items-center gap-3 w-full">
-          <div className={`p-1.5 rounded-lg transition-all duration-200 ${
+          <div className={`p-2 rounded-xl transition-all duration-300 ${
             isActive(item.url) 
-              ? 'bg-white/20' 
+              ? 'bg-white/25 shadow-lg' 
               : item.highlight 
-                ? 'bg-green-100' 
+                ? 'bg-white/80 shadow-md' 
                 : item.urgent 
-                  ? 'bg-red-100' 
-                  : 'bg-accent/10 group-hover:bg-accent/20'
+                  ? 'bg-white/80 shadow-md' 
+                  : 'bg-white/10 group-hover:bg-white/20 group-hover:shadow-md'
           }`}>
             <item.icon className="w-4 h-4 shrink-0" />
           </div>
@@ -276,131 +309,203 @@ export function AdminSidebar() {
         '--sidebar-width-icon': '4rem'
       } as React.CSSProperties}
     >
-      <SidebarContent className="bg-sidebar/95 h-full">
-        {/* Modern Brand Header - Enhanced Responsive */}
-        <div className="responsive-spacing border-b border-sidebar-border/30 bg-gradient-to-r from-primary/5 to-primary/10">
-          <div className="flex items-center gap-2 lg:gap-3">
+      <SidebarContent className="bg-gradient-to-b from-sidebar via-sidebar/98 to-sidebar/95 h-full">
+        {/* Modern Brand Header - Enhanced */}
+        <div className="p-4 border-b border-sidebar-border/20 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/8">
+          <div className="flex items-center gap-3">
             <div className="relative flex-shrink-0">
-              <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-primary via-primary/90 to-primary/70 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-lg lg:shadow-xl shadow-primary/25 ring-1 lg:ring-2 ring-primary/20">
-                <Store className="w-4 h-4 lg:w-5 lg:h-5 text-white drop-shadow-sm" />
+              <div className="w-10 h-10 bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-2xl flex items-center justify-center shadow-xl shadow-primary/30 ring-2 ring-primary/20">
+                <Store className="w-5 h-5 text-white drop-shadow-sm" />
               </div>
-              <div className="absolute -top-0.5 -right-0.5 lg:-top-1 lg:-right-1 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-sidebar animate-pulse shadow-lg"></div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-400 to-green-500 rounded-full border-2 border-sidebar animate-pulse shadow-lg"></div>
             </div>
             {!collapsed && (
               <div className="animate-fade-in min-w-0 flex-1">
-                <h2 className="responsive-text-lg lg:responsive-text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent truncate">
+                <h2 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent truncate">
                   Flexi Furnish Hub
                 </h2>
-                <p className="responsive-text-sm text-sidebar-foreground/70 font-medium truncate flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 lg:w-2 lg:h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  ระบบจัดการโมเดิร์น • เวอร์ชัน 2.0
+                <p className="text-sm text-sidebar-foreground/70 font-medium truncate flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-sm"></span>
+                  ระบบจัดการโมเดิร์น • v2.0
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Modern Navigation Groups - Enhanced Responsive */}
-        <div className="flex-1 overflow-y-auto space-modern">
-          {navigationGroups.map((group, groupIndex) => (
-            <SidebarGroup key={group.label} className={groupIndex > 0 ? "mt-4 lg:mt-6" : "mt-2"}>
-              <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-wider responsive-text-sm font-bold px-2 lg:px-3 mb-1 lg:mb-2">
-                {!collapsed && (
-                  <div className="flex items-center gap-2">
-                    <span className="truncate">{group.label}</span>
-                    <div className="flex-1 h-px bg-sidebar-border/30"></div>
+        {/* Quick Actions Section */}
+        {!collapsed && (
+          <div className="p-4 border-b border-sidebar-border/20">
+            <div className="mb-3">
+              <h3 className="text-xs font-bold text-sidebar-foreground/60 uppercase tracking-wider mb-2">งานด่วน</h3>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {quickActions.map((action) => (
+                <NavLink key={action.title} to={action.url} className={getQuickActionClass(action)}>
+                  <div className="flex items-center gap-3 p-3">
+                    <div className="p-1.5 rounded-lg bg-white/20">
+                      <action.icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{action.title}</div>
+                      <div className="text-xs opacity-80 truncate">{action.description}</div>
+                    </div>
                   </div>
-                )}
-              </SidebarGroupLabel>
-              <SidebarGroupContent className="px-2 lg:px-3">
-                <SidebarMenu className="space-y-0.5 lg:space-y-1">
-                  {group.items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        {renderNavItem(item)}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Modern Navigation Groups - Enhanced */}
+        <div className="flex-1 overflow-y-auto px-4 py-2">
+          {navigationGroups.map((group, groupIndex) => (
+            <div key={group.label} className={groupIndex > 0 ? "mt-6" : "mt-2"}>
+              {/* Group Header */}
+              {!collapsed && (
+                <div className="mb-3">
+                  <div className="flex items-center gap-2 px-2 py-1">
+                    <div className="p-1.5 rounded-lg bg-sidebar-accent/10">
+                      <group.icon className="w-4 h-4 text-sidebar-foreground/70" />
+                    </div>
+                    <span className="text-xs font-bold text-sidebar-foreground/60 uppercase tracking-wider truncate">
+                      {group.label}
+                    </span>
+                    <div className="flex-1 h-px bg-gradient-to-r from-sidebar-border/30 to-transparent"></div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Group Items */}
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <SidebarMenu className="space-y-1">
+                    {group.items.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          {renderNavItem(item)}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </div>
           ))}
         </div>
 
-        {/* Enhanced Status Bar with Quick Stats - Responsive */}
-        <div className="mt-auto border-t border-sidebar-border/20 bg-gradient-to-t from-sidebar/50 to-transparent">
-          <div className="responsive-spacing space-y-2 lg:space-y-3">
+        {/* Enhanced Footer Section */}
+        <div className="mt-auto border-t border-sidebar-border/20 bg-gradient-to-t from-sidebar-accent/5 to-transparent">
+          <div className="p-4 space-y-3">
             {!collapsed ? (
               <div className="space-y-3 animate-fade-in">
-                {/* System Status */}
-                <div className="bg-gradient-to-r from-success/10 to-success/5 rounded-xl p-3 border border-success/20">
+                {/* System Status Card */}
+                <div className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-green-900/20 rounded-xl p-3 border border-green-200/50 dark:border-green-700/30">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-success/20 rounded-lg flex items-center justify-center">
-                        <Shield className="w-4 h-4 text-success" />
+                      <div className="w-7 h-7 bg-green-100 dark:bg-green-800/50 rounded-lg flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-green-600 dark:text-green-400" />
                       </div>
-                      <span className="responsive-text-base font-semibold text-sidebar-foreground">สถานะระบบ</span>
+                      <span className="text-sm font-semibold text-green-800 dark:text-green-200">สถานะระบบ</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
-                      <span className="responsive-text-sm text-success font-bold">ปกติ</span>
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-sm"></div>
+                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">ปกติ</span>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 responsive-text-sm">
-                    <div className="bg-white/10 rounded-lg p-2">
-                      <div className="text-sidebar-foreground/60">สาขาหลัก</div>
-                      <div className="text-success font-semibold">ออนไลน์</div>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-2">
-                      <div className="text-sidebar-foreground/60">ผู้ใช้งาน</div>
-                      <div className="text-blue-400 font-semibold">8 คน</div>
-                    </div>
-                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                     <div className="bg-white/60 dark:bg-black/20 rounded-lg p-2">
+                       <div className="text-green-600/70 dark:text-green-400/70">{systemStatus?.branchStatus || 'สาขาหลัก'}</div>
+                       <div className="text-green-700 dark:text-green-300 font-medium">
+                         {systemStatus?.status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}
+                       </div>
+                     </div>
+                     <div className="bg-white/60 dark:bg-black/20 rounded-lg p-2">
+                       <div className="text-green-600/70 dark:text-green-400/70">ผู้ใช้งาน</div>
+                       <div className="text-blue-600 dark:text-blue-400 font-medium">
+                         {isLoading ? (
+                           <RefreshCw className="w-3 h-3 animate-spin" />
+                         ) : (
+                           `${systemStatus?.activeUsers || 0} คน`
+                         )}
+                       </div>
+                     </div>
+                   </div>
                 </div>
                 
-                {/* Quick Stats */}
-                <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-3 border border-primary/20">
+                {/* Quick Stats Card */}
+                <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-blue-900/20 rounded-xl p-3 border border-blue-200/50 dark:border-blue-700/30">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                      <PieChart className="w-4 h-4 text-primary" />
+                    <div className="w-7 h-7 bg-blue-100 dark:bg-blue-800/50 rounded-lg flex items-center justify-center">
+                      <PieChart className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className="responsive-text-base font-semibold text-sidebar-foreground">สถิติวันนี้</span>
+                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">สถิติวันนี้</span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 responsive-text-sm">
-                    <div className="bg-white/10 rounded-lg p-2">
-                      <div className="text-sidebar-foreground/60">ยอดขาย</div>
-                      <div className="text-primary font-semibold">฿45,280</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-white/60 dark:bg-black/20 rounded-lg p-2">
+                      <div className="text-blue-600/70 dark:text-blue-400/70">ยอดขาย</div>
+                      <div className="text-blue-700 dark:text-blue-300 font-medium">
+                        {isLoading ? (
+                           <RefreshCw className="w-3 h-3 animate-spin" />
+                         ) : (
+                           `฿${todaySales?.amount?.toLocaleString() || '0'}`
+                         )}
+                      </div>
                     </div>
-                    <div className="bg-white/10 rounded-lg p-2">
-                      <div className="text-sidebar-foreground/60">ออเดอร์</div>
-                      <div className="text-orange-400 font-semibold">23 รายการ</div>
+                    <div className="bg-white/60 dark:bg-black/20 rounded-lg p-2">
+                      <div className="text-blue-600/70 dark:text-blue-400/70">ออเดอร์</div>
+                      <div className="text-orange-600 dark:text-orange-400 font-medium">
+                        {isLoading ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          `${todaySales?.orderCount || 0} รายการ`
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
                 
-                {/* Last Update */}
-                <div className="flex items-center justify-center gap-2 text-xs text-sidebar-foreground/50 pt-1">
-                  <Clock className="w-3 h-3" />
-                  <span>อัปเดต: {new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
+                {/* Footer Info */}
+                 <div className="flex items-center justify-center gap-2 text-xs text-sidebar-foreground/50 pt-1 border-t border-sidebar-border/10">
+                   <Clock className="w-3 h-3" />
+                   <span>อัปเดต: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+                   <button 
+                     onClick={refreshStats}
+                     className="ml-1 p-0.5 rounded hover:bg-sidebar-accent/20 transition-colors"
+                     disabled={isLoading}
+                     title="รีเฟรชข้อมูล"
+                   >
+                     <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+                   </button>
+                 </div>
+                 
+                 {/* Error Message */}
+                 {error && (
+                   <div className="px-3 py-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg mx-3 mb-2">
+                     <div className="flex items-center gap-1">
+                       <span className="font-medium">ข้อผิดพลาด:</span>
+                       <span>{error}</span>
+                     </div>
+                   </div>
+                 )}
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex justify-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-success/20 to-success/10 rounded-xl flex items-center justify-center border border-success/20">
-                          <Shield className="w-5 h-5 text-success" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-800 dark:to-green-700 rounded-xl flex items-center justify-center border border-green-200 dark:border-green-600 shadow-sm">
+                          <Shield className="w-5 h-5 text-green-600 dark:text-green-300" />
                         </div>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right" className="ml-2">
-                      <div className="text-sm font-medium">สถานะระบบ: ปกติ</div>
-                      <div className="text-xs opacity-70">สาขาหลัก • ออนไลน์</div>
-                      <div className="text-xs opacity-70">ผู้ใช้งาน: 8 คน</div>
+                      <div className="text-sm font-medium">สถานะระบบ: {systemStatus?.status === 'online' ? 'ปกติ' : 'ออฟไลน์'}</div>
+                      <div className="text-xs opacity-70">{systemStatus?.branchStatus || 'สาขาหลัก'} • {systemStatus?.status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}</div>
+                      <div className="text-xs opacity-70">ผู้ใช้งาน: {isLoading ? 'กำลังโหลด...' : `${systemStatus?.activeUsers || 0} คน`}</div>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -409,15 +514,19 @@ export function AdminSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex justify-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
-                          <PieChart className="w-5 h-5 text-primary" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700 rounded-xl flex items-center justify-center border border-blue-200 dark:border-blue-600 shadow-sm">
+                          <PieChart className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                         </div>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right" className="ml-2">
                       <div className="text-sm font-medium">สถิติวันนี้</div>
-                      <div className="text-xs opacity-70">ยอดขาย: ฿45,280</div>
-                      <div className="text-xs opacity-70">ออเดอร์: 23 รายการ</div>
+                      <div className="text-xs opacity-70">
+                         ยอดขาย: {isLoading ? 'กำลังโหลด...' : `฿${todaySales?.amount?.toLocaleString() || '0'}`}
+                       </div>
+                      <div className="text-xs opacity-70">
+                        ออเดอร์: {isLoading ? 'กำลังโหลด...' : `${todaySales?.orderCount || 0} รายการ`}
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

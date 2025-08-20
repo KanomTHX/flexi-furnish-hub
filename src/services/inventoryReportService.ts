@@ -317,7 +317,7 @@ export class InventoryReportService {
           date: movement.created_at,
           reason,
           productId: movement.product_id,
-          warehouseId: movement.warehouse_id
+          branchId: movement.branch_id
         };
       });
     } catch (error) {

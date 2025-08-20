@@ -110,7 +110,9 @@ export class BrowserErrorHandler {
         };
         
         this.handleError(error);
-        throw fetchError;
+        // Don't re-throw the error to avoid breaking API calls
+        // Return a rejected promise instead
+        return Promise.reject(fetchError);
       }
     };
   }

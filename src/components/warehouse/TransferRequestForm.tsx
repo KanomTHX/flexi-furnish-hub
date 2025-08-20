@@ -27,7 +27,7 @@ import { th } from 'date-fns/locale';
 
 interface TransferRequestFormProps {
   warehouses: Array<{ id: string; name: string; code: string }>;
-  products: Array<{ id: string; name: string; code: string; unit: string; stock: number }>;
+  products: Array<{ id: string; name: string; product_code: string; unit: string; stock: number }>;
   onSubmit: (data: CreateTransferRequestData) => void;
   onCancel?: () => void;
   loading?: boolean;
@@ -91,7 +91,7 @@ export function TransferRequestForm({
 
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.code.toLowerCase().includes(searchTerm.toLowerCase())
+    product.product_code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddProduct = (product: typeof products[0]) => {
@@ -104,7 +104,7 @@ export function TransferRequestForm({
     const newItem: FormItem = {
       productId: product.id,
       productName: product.name,
-      productCode: product.code,
+      productCode: product.product_code,
       unit: product.unit,
       requestedQuantity: 1,
       availableQuantity: product.stock,
@@ -369,7 +369,7 @@ export function TransferRequestForm({
                               <div>
                                 <p className="font-medium">{product.name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  รหัส: {product.code} | สต็อก: {product.stock.toLocaleString()} {product.unit}
+                                  รหัส: {product.product_code} | สต็อก: {product.stock.toLocaleString()} {product.unit}
                                 </p>
                               </div>
                               <Plus className="h-4 w-4" />

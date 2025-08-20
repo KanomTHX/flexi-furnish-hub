@@ -3,31 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock data exports for compatibility
-export const mockEmployees = [];
-export const mockDepartments = [];
-export const mockPositions = [];
-export const mockAttendance = [];
-export const mockLeaves = [];
-export const mockPayrolls = [];
-export const mockTrainings = [];
-
-export const mockSalesReports = [];
-export const mockInventoryReports = [];
-export const mockFinancialReports = [];
-export const mockCustomReportConfigs = [];
-export const mockReportStats = { totalReports: 0, reportsThisMonth: 0, mostUsedReportType: 'sales', averageGenerationTime: 2.5 };
-export const generateMockSalesData = () => [];
-export const generateMockInventoryData = () => [];
-export const generateMockFinancialData = () => [];
-
-export const mockGeneralSettings = { companyName: '', companyAddress: '', phone: '', email: '', website: '', taxId: '', currency: 'THB', timezone: 'Asia/Bangkok', dateFormat: 'DD/MM/YYYY', language: 'th' };
-export const mockUsers = [];
-export const mockUserRoles = [];
-export const mockPermissions = [];
-export const mockSystemConfiguration = {};
-export const mockBusinessSettings = {};
-export const mockSecuritySettings = {};
+// TODO: Remove mock data exports when all components are updated to use real data
+// These exports are kept temporarily for compatibility
 export const mockIntegrationSettings = {};
 export const mockSettingsCategories = [];
 export const mockSettingsAuditLog = [];
@@ -82,7 +59,7 @@ export function useEmployees() {
       const { data, error } = await supabase
         .from('departments')
         .select('*')
-        .eq('is_active', true);
+        .eq('status', 'active');
       
       if (error) throw error;
       setDepartments(data || []);
@@ -97,7 +74,7 @@ export function useEmployees() {
       const { data, error } = await supabase
         .from('positions')
         .select('*')
-        .eq('is_active', true);
+        .eq('status', 'active');
       
       if (error) throw error;
       setPositions(data || []);

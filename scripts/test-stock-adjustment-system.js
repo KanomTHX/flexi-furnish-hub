@@ -68,10 +68,10 @@ async function testStockAdjustmentSystem() {
     const firstProduct = stockData[0];
     
     const { data: serialNumbers, error: snError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select(`
         *,
-        product:products(id, name, code),
+        product:products(id, name, product_code),
         warehouse:warehouses(id, name, code)
       `)
       .eq('product_id', firstProduct.product_id)
@@ -110,7 +110,7 @@ async function testStockAdjustmentSystem() {
       // Update serial number status if needed
       if (adjustment.newStatus) {
         const { data: updatedSN, error: updateError } = await supabase
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .update({
             status: adjustment.newStatus,
             reference_number: `${adjustmentNumber}-${adjustment.type}`,
@@ -171,9 +171,9 @@ async function testStockAdjustmentSystem() {
       .from('stock_movements')
       .select(`
         *,
-        product:products(name, code),
+        product:products(name, product_code),
         warehouse:warehouses(name, code),
-        serial_number:product_serial_numbers(serial_number)
+        serial_number:serial_numbers(serial_number)
       `)
       .eq('movement_type', 'adjustment')
       .eq('warehouse_id', testWarehouse.id)
@@ -205,7 +205,7 @@ async function testStockAdjustmentSystem() {
     // 8. Test serial number status tracking
     console.log('\n8️⃣ Testing serial number status tracking...');
     const { data: statusCounts, error: statusError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select('status')
       .eq('warehouse_id', testWarehouse.id);
 

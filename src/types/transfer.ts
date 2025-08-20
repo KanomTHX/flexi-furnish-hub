@@ -2,10 +2,10 @@
 export interface TransferRequest {
   id: string;
   request_number: string;
-  from_warehouse_id: string;
-  to_warehouse_id: string;
-  from_warehouse?: Warehouse;
-  to_warehouse?: Warehouse;
+  from_branch_id: string;
+  to_branch_id: string;
+  from_branch?: Branch;
+  to_branch?: Branch;
   requested_by: string;
   requested_by_user?: User;
   status: TransferRequestStatus;
@@ -148,8 +148,8 @@ export type TransferAuditAction =
 
 // Form Data Types
 export interface CreateTransferRequestData {
-  from_warehouse_id: string;
-  to_warehouse_id: string;
+  from_branch_id: string;
+  to_branch_id: string;
   priority: TransferRequestPriority;
   required_date?: string;
   notes?: string;
@@ -226,8 +226,8 @@ export interface TransferRequestFilters {
   search?: string;
   status?: TransferRequestStatus;
   priority?: TransferRequestPriority;
-  from_warehouse_id?: string;
-  to_warehouse_id?: string;
+  from_branch_id?: string;
+  to_branch_id?: string;
   requested_by?: string;
   date_from?: string;
   date_to?: string;
@@ -261,8 +261,8 @@ export interface TransferStatistics {
 }
 
 export interface TransferRoute {
-  from_warehouse: Warehouse;
-  to_warehouse: Warehouse;
+  from_branch: Branch;
+  to_branch: Branch;
   request_count: number;
   total_value: number;
 }
@@ -285,7 +285,7 @@ export interface PaginationInfo {
 }
 
 // Related Types (should be imported from other modules)
-export interface Warehouse {
+export interface Branch {
   id: string;
   name: string;
   code: string;

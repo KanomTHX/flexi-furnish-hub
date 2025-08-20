@@ -161,27 +161,27 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Filter className="h-5 w-5" />
-              <span>Audit Trail Filters</span>
+              <span>ตัวกรองประวัติการใช้งาน</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">Operation Type</label>
+                <label className="text-sm font-medium mb-1 block">ประเภทการดำเนินการ</label>
                 <Select
                   value={filter.operation_type || 'ALL'}
                   onValueChange={(value) => handleFilterChange('operation_type', value === 'ALL' ? '' : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All operations" />
+                    <SelectValue placeholder="การดำเนินการทั้งหมด" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">All Operations</SelectItem>
-                    <SelectItem value="STOCK_RECEIVE">Stock Receive</SelectItem>
-                    <SelectItem value="STOCK_WITHDRAW">Stock Withdraw</SelectItem>
-                    <SelectItem value="STOCK_TRANSFER">Stock Transfer</SelectItem>
-                    <SelectItem value="STOCK_ADJUSTMENT">Stock Adjustment</SelectItem>
-                    <SelectItem value="SN_STATUS_CHANGE">Status Change</SelectItem>
+                    <SelectItem value="ALL">การดำเนินการทั้งหมด</SelectItem>
+                    <SelectItem value="STOCK_RECEIVE">รับสินค้าเข้าคลัง</SelectItem>
+                    <SelectItem value="STOCK_WITHDRAW">เบิกสินค้าออก</SelectItem>
+                    <SelectItem value="STOCK_TRANSFER">โอนย้ายสินค้า</SelectItem>
+                    <SelectItem value="STOCK_ADJUSTMENT">ปรับปรุงสต็อก</SelectItem>
+                    <SelectItem value="SN_STATUS_CHANGE">เปลี่ยนสถานะ</SelectItem>
                     <SelectItem value="BATCH_OPERATION">Batch Operation</SelectItem>
                     <SelectItem value="USER_LOGIN">User Login</SelectItem>
                     <SelectItem value="USER_LOGOUT">User Logout</SelectItem>
@@ -190,25 +190,25 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">Table Name</label>
+                <label className="text-sm font-medium mb-1 block">ชื่อตาราง</label>
                 <Input
                   value={filter.table_name || ''}
                   onChange={(e) => handleFilterChange('table_name', e.target.value)}
-                  placeholder="Table name"
+                  placeholder="ชื่อตาราง"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">Record ID</label>
+                <label className="text-sm font-medium mb-1 block">รหัสเรคคอร์ด</label>
                 <Input
                   value={filter.record_id || ''}
                   onChange={(e) => handleFilterChange('record_id', e.target.value)}
-                  placeholder="Record ID"
+                  placeholder="รหัสเรคคอร์ด"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">Date From</label>
+                <label className="text-sm font-medium mb-1 block">วันที่เริ่มต้น</label>
                 <Input
                   type="date"
                   value={filter.date_from || ''}
@@ -217,7 +217,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">Date To</label>
+                <label className="text-sm font-medium mb-1 block">วันที่สิ้นสุด</label>
                 <Input
                   type="date"
                   value={filter.date_to || ''}
@@ -229,16 +229,16 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
             <div className="flex justify-between items-center mt-4">
               <div className="flex space-x-2">
                 <Button variant="outline" onClick={clearFilters}>
-                  Clear Filters
+                  ล้างตัวกรอง
                 </Button>
                 <Button onClick={loadAuditLogs} disabled={loading}>
                   <Search className="h-4 w-4 mr-2" />
-                  {loading ? 'Searching...' : 'Search'}
+                  {loading ? 'กำลังค้นหา...' : 'ค้นหา'}
                 </Button>
               </div>
               <Button variant="outline" onClick={exportAuditLogs}>
                 <Download className="h-4 w-4 mr-2" />
-                Export CSV
+                ส่งออก CSV
               </Button>
             </div>
           </CardContent>
@@ -251,28 +251,28 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Clock className="h-5 w-5" />
-              <span>Audit Trail ({auditLogs.length} records)</span>
+              <span>ประวัติการใช้งาน ({auditLogs.length} รายการ)</span>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">Loading audit logs...</div>
+            <div className="text-center py-8">กำลังโหลดประวัติการใช้งาน...</div>
           ) : auditLogs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No audit logs found matching the current filters.
+              ไม่พบประวัติการใช้งานที่ตรงกับตัวกรองปัจจุบัน
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Operation</TableHead>
-                  <TableHead>Table</TableHead>
-                  <TableHead>Record ID</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>เวลา</TableHead>
+                  <TableHead>การดำเนินการ</TableHead>
+                  <TableHead>ตาราง</TableHead>
+                  <TableHead>รหัสเรคคอร์ด</TableHead>
+                  <TableHead>ผู้ใช้</TableHead>
+                  <TableHead>คำอธิบาย</TableHead>
+                  <TableHead>การจัดการ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -310,7 +310,8 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
                           setShowDetails(true);
                         }}
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 mr-1" />
+                        ดูรายละเอียด
                       </Button>
                     </TableCell>
                   </TableRow>

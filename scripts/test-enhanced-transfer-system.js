@@ -11,17 +11,17 @@ async function testEnhancedTransferSystem() {
   console.log('🚀 Testing Enhanced Transfer System...\n');
 
   try {
-    // 1. ทดสอบการเปิดใช้งานตาราง product_serial_numbers
-    console.log('1. Testing product_serial_numbers table...');
+    // 1. ทดสอบการเปิดใช้งานตาราง serial_numbers
+    console.log('1. Testing serial_numbers table...');
     const { data: serialNumbers, error: snError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select('*')
       .limit(5);
 
     if (snError) {
-      console.log('❌ product_serial_numbers table not available:', snError.message);
+      console.log('❌ serial_numbers table not available:', snError.message);
     } else {
-      console.log('✅ product_serial_numbers table is working');
+      console.log('✅ serial_numbers table is working');
       console.log(`   Found ${serialNumbers.length} serial numbers`);
     }
 
@@ -202,7 +202,7 @@ async function testEnhancedTransferSystem() {
     try {
       // ทดสอบโดยไม่มี authentication (ควรจะ fail)
       const { data: restrictedData, error: rlsError } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select('*')
         .limit(1);
 

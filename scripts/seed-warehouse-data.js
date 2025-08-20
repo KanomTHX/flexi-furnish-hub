@@ -48,7 +48,7 @@ function info(message) {
 const sampleProducts = [
   {
     name: 'โซฟา 3 ที่นั่ง สีน้ำตาล',
-    code: 'SOFA-001',
+    product_code: 'SOFA-001',
     sku: 'SF001',
     category: 'เฟอร์นิเจอร์',
     brand: 'HomePro',
@@ -61,7 +61,7 @@ const sampleProducts = [
   },
   {
     name: 'โต๊ะทำงาน ไม้โอ๊ค',
-    code: 'TABLE-002',
+    product_code: 'TABLE-002',
     sku: 'TB002',
     category: 'เฟอร์นิเจอร์',
     brand: 'IKEA',
@@ -74,7 +74,7 @@ const sampleProducts = [
   },
   {
     name: 'เก้าอี้สำนักงาน หนังแท้',
-    code: 'CHAIR-003',
+    product_code: 'CHAIR-003',
     sku: 'CH003',
     category: 'เฟอร์นิเจอร์',
     brand: 'Herman Miller',
@@ -87,7 +87,7 @@ const sampleProducts = [
   },
   {
     name: 'เตียงนอน King Size',
-    code: 'BED-004',
+    product_code: 'BED-004',
     sku: 'BD004',
     category: 'เฟอร์นิเจอร์',
     brand: 'Serta',
@@ -100,7 +100,7 @@ const sampleProducts = [
   },
   {
     name: 'ตู้เสื้อผ้า 4 บาน',
-    code: 'WARDROBE-005',
+    product_code: 'WARDROBE-005',
     sku: 'WD005',
     category: 'เฟอร์นิเจอร์',
     brand: 'Index Living',
@@ -279,7 +279,7 @@ async function createSerialNumbers(products, warehouses) {
       const batch = serialNumbers.slice(i, i + batchSize);
       
       const { data, error } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .insert(batch)
         .select();
 
@@ -374,7 +374,7 @@ async function generateSummaryReport() {
       .select('id', { count: 'exact' });
     
     const { data: serialNumbersCount } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select('id', { count: 'exact' });
     
     const { data: movementsCount } = await supabase

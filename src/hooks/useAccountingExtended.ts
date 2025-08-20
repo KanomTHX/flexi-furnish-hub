@@ -413,7 +413,7 @@ export function useAccountingExtended() {
       const { data, error } = await supabase
         .from('expense_categories')
         .select('*')
-        .eq('is_active', true)
+        .eq('status', 'active')
         .order('name');
 
       if (error) throw error;

@@ -4,8 +4,8 @@ export interface StockUpdateEvent {
   type: 'receive' | 'withdraw' | 'transfer' | 'adjust' | 'stock_level_changed' | 'movement_logged' | 'serial_number_updated' | 'alert_triggered';
   productId: string;
   productName: string;
-  warehouseId: string;
-  warehouseName: string;
+  branchId: string;
+  branchName: string;
   quantity: number;
   previousQuantity: number;
   newQuantity: number;
@@ -23,8 +23,8 @@ export interface StockAlert {
   severity: 'low' | 'medium' | 'high' | 'critical' | 'warning' | 'info';
   productId: string;
   productName: string;
-  warehouseId: string;
-  warehouseName: string;
+  branchId: string;
+  branchName: string;
   currentQuantity: number;
   threshold?: number;
   message: string;
@@ -40,8 +40,8 @@ export interface StockAlert {
 export interface StockLevel {
   productId: string;
   productName: string;
-  warehouseId: string;
-  warehouseName: string;
+  branchId: string;
+  branchName: string;
   currentQuantity: number;
   reservedQuantity: number;
   availableQuantity: number;
@@ -52,7 +52,7 @@ export interface StockLevel {
 
 export interface StockSearchFilters {
   searchTerm: string;
-  warehouseId: string;
+  branchId: string;
   category: string;
   status: 'available' | 'reserved' | 'damaged' | 'out_of_stock' | '';
   productId?: string;
@@ -63,9 +63,9 @@ export interface StockSearchFilters {
   dateTo?: Date;
 }
 
-export interface WarehouseStockSummary {
-  warehouseId: string;
-  warehouseName: string;
+export interface BranchStockSummary {
+  branchId: string;
+  branchName: string;
   totalProducts: number;
   totalQuantity: number;
   lowStockItems: number;
@@ -96,9 +96,9 @@ export interface StockMovement {
     name: string;
     code: string;
   };
-  warehouseId: string;
-  warehouseName: string;
-  warehouse?: {
+  branchId: string;
+  branchName: string;
+  branch?: {
     name: string;
   };
   quantity: number;
@@ -120,7 +120,7 @@ export interface SerialNumber {
   id: string;
   serial_number: string;
   product_id: string;
-  warehouse_id: string;
+  branch_id: string;
   status: SNStatus;
   created_at: string;
   updated_at: string;
@@ -129,8 +129,8 @@ export interface SerialNumber {
 export interface StockTransfer {
   id: string;
   transferNumber: string;
-  sourceWarehouseId: string;
-  targetWarehouseId: string;
+  sourceBranchId: string;
+  targetBranchId: string;
   totalItems: number;
   items: Array<{
     productId: string;

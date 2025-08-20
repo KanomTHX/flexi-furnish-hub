@@ -255,7 +255,7 @@ export class WarehouseService {
         `, { count: 'exact' });
 
       if (filters?.warehouseId) {
-        query = query.eq('warehouse_id', filters.warehouseId);
+        query = query.eq('branch_id', filters.warehouseId);
       }
 
       if (filters?.branchId) {
@@ -304,7 +304,7 @@ export class WarehouseService {
           id: item.serial_number_id,
           serialNumber: `SN-${item.serial_number_id.slice(-8)}`,
           productId: item.product_id,
-          warehouseId: item.warehouse_id,
+          branchId: item.branch_id,
           unitCost: item.unit_cost || 0,
           status: 'available' as any,
           createdAt: new Date(item.created_at),
@@ -434,7 +434,7 @@ export class WarehouseService {
    */
   static async createSerialNumbers(serialNumbers: {
     productId: string;
-    warehouseId: string;
+    branchId: string;
     unitCost: number;
     supplierId?: string;
     invoiceNumber?: string;
@@ -449,7 +449,7 @@ export class WarehouseService {
           const { data: serialNumberData, error: serialError } = await supabase
             .rpc('generate_serial_number', {
               product_code: `PROD-${item.productId.slice(-8)}`, // Use last 8 chars of product ID
-              warehouse_code: `WH-${item.warehouseId.slice(-4)}` // Use last 4 chars of warehouse ID
+              warehouse_code: `BR-${item.branchId.slice(-4)}` // Use last 4 chars of branch ID
             });
 
           if (serialError) throw serialError;
@@ -457,7 +457,7 @@ export class WarehouseService {
           serialNumbersToInsert.push({
             serial_number: serialNumberData,
             product_id: item.productId,
-            warehouse_id: item.warehouseId,
+            branch_id: item.branchId,
             unit_cost: item.unitCost,
             supplier_id: item.supplierId,
             invoice_number: item.invoiceNumber,
@@ -467,11 +467,11 @@ export class WarehouseService {
       }
 
       const { data, error } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .insert(serialNumbersToInsert)
         .select(`
           *,
-          product:products(id, name, code),
+          product:products(id, name, product_code),
           warehouse:warehouses(id, name, code)
         `);
 
@@ -503,7 +503,7 @@ export class WarehouseService {
    * Withdraw goods from warehouse
    */
   static async withdrawGoods(withdrawData: {
-    warehouseId: string;
+    branchId: string;
     serialNumberIds: string[];
     reason: string;
     referenceType?: string;
@@ -526,10 +526,10 @@ export class WarehouseService {
       for (const serialNumberId of withdrawData.serialNumberIds) {
         // Get serial number details
         const { data: serialNumber, error: snError } = await supabase
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .select(`
             *,
-            product:products(id, name, code)
+            product:products(id, name, product_code)
           `)
           .eq('id', serialNumberId)
           .single();
@@ -542,7 +542,7 @@ export class WarehouseService {
                          withdrawData.referenceType === 'claim' ? 'claimed' : 'sold';
 
         const { data: updatedSN, error: updateError } = await supabase
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .update({
             status: newStatus,
             sold_at: newStatus === 'sold' ? new Date().toISOString() : null,
@@ -554,7 +554,7 @@ export class WarehouseService {
           .eq('id', serialNumberId)
           .select(`
             *,
-            product:products(id, name, code),
+            product:products(id, name, product_code),
             warehouse:warehouses(id, name, code)
           `)
           .single();
@@ -565,7 +565,7 @@ export class WarehouseService {
         const movement = await this.logStockMovement({
           productId: serialNumber.product_id,
           serialNumberId: serialNumberId,
-          warehouseId: withdrawData.warehouseId,
+          warehouseId: withdrawData.branchId,
           movementType: 'withdraw',
           quantity: 1,
           unitCost: serialNumber.unit_cost,
@@ -581,7 +581,7 @@ export class WarehouseService {
           serialNumber: updatedSN.serial_number,
           productId: updatedSN.product_id,
           product: updatedSN.product,
-          warehouseId: updatedSN.warehouse_id,
+          branchId: updatedSN.branch_id,
           warehouse: updatedSN.warehouse,
           unitCost: updatedSN.unit_cost,
           supplierId: updatedSN.supplier_id,
@@ -598,7 +598,7 @@ export class WarehouseService {
         // Log audit trail
         await auditTrailService.logWarehouseOperation(
           'STOCK_WITHDRAW',
-          'product_serial_numbers',
+          'serial_numbers',
           serialNumberId,
           `จ่ายสินค้า ${serialNumber.product?.name} (${serialNumber.serial_number}) - ${withdrawData.reason}`,
           { status: serialNumber.status },
@@ -626,8 +626,8 @@ export class WarehouseService {
    * Transfer goods between warehouses
    */
   static async transferGoods(transferData: {
-    sourceWarehouseId: string;
-    targetWarehouseId: string;
+    sourceBranchId: string;
+    targetBranchId: string;
     serialNumberIds: string[];
     reason: string;
     priority?: string;
@@ -650,10 +650,10 @@ export class WarehouseService {
       for (const serialNumberId of transferData.serialNumberIds) {
         // Get serial number details
         const { data: serialNumber, error: snError } = await supabase
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .select(`
             *,
-            product:products(id, name, code)
+            product:products(id, name, product_code)
           `)
           .eq('id', serialNumberId)
           .single();
@@ -662,9 +662,9 @@ export class WarehouseService {
 
         // Update serial number warehouse and status
         const { data: updatedSN, error: updateError } = await supabase
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .update({
-            warehouse_id: transferData.targetWarehouseId,
+            branch_id: transferData.targetBranchId,
             status: 'transferred',
             reference_number: transferNumber,
             notes: transferData.notes,
@@ -673,7 +673,7 @@ export class WarehouseService {
           .eq('id', serialNumberId)
           .select(`
             *,
-            product:products(id, name, code),
+            product:products(id, name, product_code),
             warehouse:warehouses(id, name, code)
           `)
           .single();
@@ -684,13 +684,13 @@ export class WarehouseService {
         const outMovement = await this.logStockMovement({
           productId: serialNumber.product_id,
           serialNumberId: serialNumberId,
-          warehouseId: transferData.sourceWarehouseId,
+          warehouseId: transferData.sourceBranchId,
           movementType: 'transfer_out',
           quantity: 1,
           unitCost: serialNumber.unit_cost,
           referenceType: 'transfer',
           referenceNumber: transferNumber,
-          notes: `Transfer to target warehouse - ${transferData.reason}`,
+          notes: `Transfer to target branch - ${transferData.reason}`,
           performedBy: transferData.performedBy
         });
 
@@ -698,13 +698,13 @@ export class WarehouseService {
         const inMovement = await this.logStockMovement({
           productId: serialNumber.product_id,
           serialNumberId: serialNumberId,
-          warehouseId: transferData.targetWarehouseId,
+          warehouseId: transferData.targetBranchId,
           movementType: 'transfer_in',
           quantity: 1,
           unitCost: serialNumber.unit_cost,
           referenceType: 'transfer',
           referenceNumber: transferNumber,
-          notes: `Transfer from source warehouse - ${transferData.reason}`,
+          notes: `Transfer from source branch - ${transferData.reason}`,
           performedBy: transferData.performedBy
         });
 
@@ -732,7 +732,7 @@ export class WarehouseService {
         // Log audit trail
         await auditTrailService.logWarehouseOperation(
           'STOCK_TRANSFER',
-          'product_serial_numbers',
+          'serial_numbers',
           serialNumberId,
           `โอนย้ายสินค้า ${serialNumber.product?.name} (${serialNumber.serial_number}) - ${transferData.reason}`,
           { warehouse_id: transferData.sourceWarehouseId, status: serialNumber.status },
@@ -784,10 +784,10 @@ export class WarehouseService {
       for (const serialNumberId of adjustmentData.serialNumberIds) {
         // Get serial number details
         const { data: serialNumber, error: snError } = await supabase
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .select(`
             *,
-            product:products(id, name, code)
+            product:products(id, name, product_code)
           `)
           .eq('id', serialNumberId)
           .single();
@@ -798,7 +798,7 @@ export class WarehouseService {
         let updatedSN = serialNumber;
         if (adjustmentData.adjustmentType === 'damage') {
           const { data: updated, error: updateError } = await supabase
-            .from('product_serial_numbers')
+            .from('serial_numbers')
             .update({
               status: 'damaged',
               reference_number: adjustmentNumber,
@@ -808,7 +808,7 @@ export class WarehouseService {
             .eq('id', serialNumberId)
             .select(`
               *,
-              product:products(id, name, code),
+              product:products(id, name, product_code),
               warehouse:warehouses(id, name, code)
             `)
             .single();
@@ -855,7 +855,7 @@ export class WarehouseService {
         // Log audit trail
         await auditTrailService.logWarehouseOperation(
           'STOCK_ADJUSTMENT',
-          'product_serial_numbers',
+          'serial_numbers',
           serialNumberId,
           `ปรับปรุงสต็อก ${serialNumber.product?.name} (${serialNumber.serial_number}) - ${adjustmentData.adjustmentType}: ${adjustmentData.reason}`,
           { status: serialNumber.status },
@@ -894,10 +894,10 @@ export class WarehouseService {
     try {
       // Search for exact match first
       let query = supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           *,
-          product:products(id, name, code, brand, model, category),
+          product:products(id, name, product_code, brand, model, category),
           warehouse:warehouses(id, name, code),
           supplier:suppliers(id, name, code)
         `)
@@ -939,13 +939,13 @@ export class WarehouseService {
 
       // If no exact match, search for similar items
       let suggestionQuery = supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           *,
-          product:products(id, name, code, brand, model, category),
+          product:products(id, name, product_code, brand, model, category),
           warehouse:warehouses(id, name, code)
         `)
-        .or(`serial_number.ilike.%${searchData.barcode}%,product.name.ilike.%${searchData.barcode}%,product.code.ilike.%${searchData.barcode}%`);
+        .or(`serial_number.ilike.%${searchData.barcode}%,product.name.ilike.%${searchData.barcode}%,product.product_code.ilike.%${searchData.barcode}%`);
 
       if (searchData.warehouseId) {
         suggestionQuery = suggestionQuery.eq('warehouse_id', searchData.warehouseId);
@@ -1049,7 +1049,7 @@ export class WarehouseService {
         try {
           // Get serial number details first
           const { data: snData, error: snError } = await supabase
-            .from('product_serial_numbers')
+            .from('serial_numbers')
             .select('*')
             .eq('serial_number', serialNumber)
             .eq('warehouse_id', batchData.warehouseId)
@@ -1127,7 +1127,7 @@ export class WarehouseService {
           // Log audit trail
           await auditTrailService.logWarehouseOperation(
             'BATCH_OPERATION',
-            'product_serial_numbers',
+            'serial_numbers',
             snData.id,
             `ดำเนินการแบบกลุ่ม: ${batchData.type} สำหรับ ${serialNumber}`,
             { status: snData.status },
@@ -1175,7 +1175,7 @@ export class WarehouseService {
     batchNumber: string
   ): Promise<void> {
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .update({
         status: newStatus,
         reference_number: batchNumber,
@@ -1195,7 +1195,7 @@ export class WarehouseService {
     batchNumber: string
   ): Promise<void> {
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .update({
         warehouse_id: targetWarehouseId,
         status: 'transferred',
@@ -1216,7 +1216,7 @@ export class WarehouseService {
     batchNumber: string
   ): Promise<void> {
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .update({
         notes: reason,
         reference_number: batchNumber,
@@ -1236,7 +1236,7 @@ export class WarehouseService {
     batchNumber: string
   ): Promise<void> {
     const { error } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .update({
         unit_cost: newPrice,
         reference_number: batchNumber,
@@ -1375,7 +1375,7 @@ export class WarehouseService {
         }])
         .select(`
           *,
-          product:products(id, name, code),
+          product:products(id, name, product_code),
           warehouse:warehouses(id, name, code)
         `)
         .single();

@@ -13,8 +13,8 @@ import {
 interface DatabaseTransferRequest {
   id: string;
   request_number: string;
-  source_warehouse_id: string;
-  destination_warehouse_id: string;
+  source_branch_id: string;
+  destination_branch_id: string;
   status: TransferRequestStatus;
   priority: TransferRequestPriority;
   requested_date: string;
@@ -47,7 +47,7 @@ interface DatabaseTransferRequestItem {
   };
 }
 
-interface DatabaseWarehouse {
+interface DatabaseBranch {
   id: string;
   name: string;
   code: string;
@@ -72,8 +72,8 @@ export function useTransferRequests() {
     return {
       id: dbRequest.id,
       requestNumber: dbRequest.request_number,
-      sourceWarehouseId: dbRequest.source_warehouse_id,
-      destinationWarehouseId: dbRequest.destination_warehouse_id,
+      sourceBranchId: dbRequest.source_branch_id,
+      destinationBranchId: dbRequest.destination_branch_id,
       status: dbRequest.status,
       priority: dbRequest.priority,
       requestedDate: new Date(dbRequest.requested_date),

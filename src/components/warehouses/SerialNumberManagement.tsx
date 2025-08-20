@@ -86,7 +86,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { SerialNumber, Warehouse, Product } from '@/types/warehouse';
 
 interface SerialNumberManagementProps {
-  warehouseId?: string;
+  branchId?: string;
   productId?: string;
 }
 
@@ -104,7 +104,7 @@ interface SerialNumberStats {
 interface SerialNumberFilter {
   search: string;
   status: string;
-  warehouseId: string;
+  branchId: string;
   productId: string;
   supplierId: string;
   dateFrom: string;
@@ -122,14 +122,14 @@ const statusConfig = {
   returned: { label: 'คืนสินค้า', color: 'bg-gray-500', icon: RefreshCw },
 };
 
-export function SerialNumberManagement({ warehouseId, productId }: SerialNumberManagementProps) {
+export function SerialNumberManagement({ branchId, productId }: SerialNumberManagementProps) {
   const { toast } = useToast();
   const {
     serialNumbers,
     loading,
     error,
     refresh: fetchSerialNumbers,
-  } = useWarehouseStock({ warehouseId, productId });
+  } = useWarehouseStock({ branchId, productId });
 
   // Mock functions for missing methods
   const createSerialNumbers = async (data: any) => {

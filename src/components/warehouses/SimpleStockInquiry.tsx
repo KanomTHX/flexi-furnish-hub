@@ -7,18 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useWarehouseStock } from '@/hooks/useWarehouseStock';
-import { useWarehouses } from '@/hooks/useWarehouses';
 import { useBranchData } from '@/hooks/useBranchData';
 
 export function SimpleStockInquiry() {
   const { currentBranch } = useBranchData();
   // State for search and filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedWarehouse, setSelectedWarehouse] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
   // Hooks
-  const { warehouses, loading: warehousesLoading } = useWarehouses();
+  const { branches } = useBranchData();
   const { 
     stockLevels, 
     loading, 
@@ -31,12 +30,11 @@ export function SimpleStockInquiry() {
   useEffect(() => {
     const filters = {
       search: searchTerm.trim() || undefined,
-      warehouseId: selectedWarehouse && selectedWarehouse !== 'all' ? selectedWarehouse : undefined,
-      branchId: currentBranch?.id,
+      branchId: selectedBranch && selectedBranch !== 'all' ? selectedBranch : currentBranch?.id,
       status: selectedStatus && selectedStatus !== 'all' ? selectedStatus : undefined
     };
     fetchStockLevels(filters);
-  }, [searchTerm, selectedWarehouse, selectedStatus, currentBranch, fetchStockLevels]);
+  }, [searchTerm, selectedBranch, selectedStatus, currentBranch, fetchStockLevels]);
 
   // Group stock levels by product for better display
   const groupedStock = useMemo(() => {
@@ -122,7 +120,7 @@ export function SimpleStockInquiry() {
             ค้นหาและตรวจสอบสต็อก
           </CardTitle>
           <CardDescription>
-            ค้นหาสินค้าจากชื่อ รหัสสินค้า หรือชื่อคลัง
+            ค้นหาสินค้าจากชื่อ รหัสสินค้า หรือชื่อสาขา
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -143,15 +141,15 @@ export function SimpleStockInquiry() {
 
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
+            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
               <SelectTrigger>
-                <SelectValue placeholder="เลือกคลัง/สาขา" />
+                <SelectValue placeholder="เลือกสาขา" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">ทุกคลัง</SelectItem>
-                {warehouses.map((warehouse) => (
-                  <SelectItem key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name}
+                <SelectItem value="all">ทุกสาขา</SelectItem>
+                {branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id}>
+                    {branch.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -248,7 +246,7 @@ export function SimpleStockInquiry() {
                   <TableRow>
                     <TableHead>รหัสสินค้า</TableHead>
                     <TableHead>ชื่อสินค้า</TableHead>
-                    <TableHead>คลัง/สาขา</TableHead>
+                    <TableHead>สาขา</TableHead>
                     <TableHead className="text-right">จำนวน</TableHead>
                     <TableHead className="text-right">พร้อมจำหน่าย</TableHead>
                     <TableHead className="text-right">มูลค่า</TableHead>
@@ -272,8 +270,8 @@ export function SimpleStockInquiry() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{stock.warehouseName}</p>
-                          <p className="text-sm text-muted-foreground">{stock.warehouseCode}</p>
+                          <p className="font-medium">{stock.branchName}</p>
+                          <p className="text-sm text-muted-foreground">{stock.branchCode}</p>
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-medium">
@@ -344,7 +342,7 @@ export function SimpleStockInquiry() {
 
                     {/* Warehouse Breakdown */}
                     <div className="space-y-2">
-                      <h4 className="font-medium text-sm text-muted-foreground">กระจายตามคลัง/สาขา:</h4>
+                      <h4 className="font-medium text-sm text-muted-foreground">กระจายตามสาขา:</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {group.warehouses.map((stock) => (
                           <div
@@ -352,7 +350,7 @@ export function SimpleStockInquiry() {
                             className="flex items-center justify-between p-2 bg-muted/50 rounded"
                           >
                             <div>
-                              <p className="font-medium text-sm">{stock.warehouseName}</p>
+                              <p className="font-medium text-sm">{stock.branchName}</p>
                               <p className="text-xs text-muted-foreground">
                                 {stock.availableQuantity}/{stock.totalQuantity} ชิ้น
                               </p>

@@ -167,205 +167,57 @@ type DateRange = {
 
 type MetricPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
-// Mock Data
-const mockMetrics: AnalyticsMetrics = {
-  totalProducts: 2847,
-  totalValue: 12500000,
-  lowStockItems: 23,
-  outOfStockItems: 5,
-  averageStockLevel: 78.5,
-  stockTurnoverRate: 4.2,
-  totalInbound: 1250,
-  totalOutbound: 1180,
-  totalTransfers: 45,
-  averageProcessingTime: 2.3,
-  warehouseUtilization: 82.4,
-  orderFulfillmentRate: 96.8,
-  accuracyRate: 99.2,
-  onTimeDeliveryRate: 94.5,
-  totalRevenue: 8750000,
-  totalCosts: 6200000,
-  profitMargin: 29.1,
-  costPerUnit: 4250,
-  defectRate: 0.8,
-  returnRate: 2.1,
-  customerSatisfaction: 4.6,
-  warrantyClaimRate: 1.2,
-  pickingEfficiency: 87.3,
-  packingEfficiency: 91.2,
-  shippingEfficiency: 89.7,
-  overallEfficiency: 89.4
+// Default empty metrics
+const defaultMetrics: AnalyticsMetrics = {
+  totalProducts: 0,
+  totalValue: 0,
+  lowStockItems: 0,
+  outOfStockItems: 0,
+  averageStockLevel: 0,
+  stockTurnoverRate: 0,
+  totalInbound: 0,
+  totalOutbound: 0,
+  totalTransfers: 0,
+  averageProcessingTime: 0,
+  warehouseUtilization: 0,
+  orderFulfillmentRate: 0,
+  accuracyRate: 0,
+  onTimeDeliveryRate: 0,
+  totalRevenue: 0,
+  totalCosts: 0,
+  profitMargin: 0,
+  costPerUnit: 0,
+  defectRate: 0,
+  returnRate: 0,
+  customerSatisfaction: 0,
+  warrantyClaimRate: 0,
+  pickingEfficiency: 0,
+  packingEfficiency: 0,
+  shippingEfficiency: 0,
+  overallEfficiency: 0
 };
 
-const mockTimeSeriesData: TimeSeriesData[] = [
-  { date: '2024-01-01', value: 1200 },
-  { date: '2024-01-02', value: 1350 },
-  { date: '2024-01-03', value: 1180 },
-  { date: '2024-01-04', value: 1420 },
-  { date: '2024-01-05', value: 1380 },
-  { date: '2024-01-06', value: 1250 },
-  { date: '2024-01-07', value: 1480 },
-  { date: '2024-01-08', value: 1320 },
-  { date: '2024-01-09', value: 1450 },
-  { date: '2024-01-10', value: 1380 },
-  { date: '2024-01-11', value: 1520 },
-  { date: '2024-01-12', value: 1420 },
-  { date: '2024-01-13', value: 1350 },
-  { date: '2024-01-14', value: 1480 }
-];
+const defaultTimeSeriesData: TimeSeriesData[] = [];
 
-const mockCategoryData: CategoryData[] = [
-  { name: 'โซฟา', value: 850, percentage: 35.2, color: '#3b82f6' },
-  { name: 'เตียง', value: 620, percentage: 25.7, color: '#10b981' },
-  { name: 'โต๊ะ', value: 480, percentage: 19.9, color: '#f59e0b' },
-  { name: 'เก้าอี้', value: 320, percentage: 13.3, color: '#ef4444' },
-  { name: 'ตู้', value: 145, percentage: 6.0, color: '#8b5cf6' }
-];
+const defaultCategoryData: CategoryData[] = [];
 
-const mockPerformanceData: PerformanceData[] = [
-  {
-    metric: 'Order Fulfillment Rate',
-    current: 96.8,
-    target: 95.0,
-    previous: 94.2,
-    trend: 'up',
-    status: 'good'
-  },
-  {
-    metric: 'Accuracy Rate',
-    current: 99.2,
-    target: 99.5,
-    previous: 99.1,
-    trend: 'up',
-    status: 'warning'
-  },
-  {
-    metric: 'On-Time Delivery',
-    current: 94.5,
-    target: 96.0,
-    previous: 95.8,
-    trend: 'down',
-    status: 'warning'
-  },
-  {
-    metric: 'Warehouse Utilization',
-    current: 82.4,
-    target: 85.0,
-    previous: 80.1,
-    trend: 'up',
-    status: 'good'
-  },
-  {
-    metric: 'Stock Turnover Rate',
-    current: 4.2,
-    target: 4.5,
-    previous: 4.0,
-    trend: 'up',
-    status: 'good'
-  },
-  {
-    metric: 'Customer Satisfaction',
-    current: 4.6,
-    target: 4.5,
-    previous: 4.4,
-    trend: 'up',
-    status: 'good'
-  }
-];
+const defaultPerformanceData: PerformanceData[] = [];
 
-const mockZoneMetrics: WarehouseZoneMetrics[] = [
-  {
-    zoneId: 'A1',
-    zoneName: 'โซน A1 - โซฟาและเก้าอี้',
-    utilization: 85.2,
-    capacity: 1000,
-    currentStock: 852,
-    efficiency: 92.1,
-    temperature: 24.5,
-    humidity: 45.2,
-    status: 'optimal'
-  },
-  {
-    zoneId: 'B1',
-    zoneName: 'โซน B1 - เตียงและที่นอน',
-    utilization: 78.9,
-    capacity: 800,
-    currentStock: 631,
-    efficiency: 88.7,
-    temperature: 23.8,
-    humidity: 42.1,
-    status: 'optimal'
-  },
-  {
-    zoneId: 'C1',
-    zoneName: 'โซน C1 - โต๊ะและตู้',
-    utilization: 92.4,
-    capacity: 600,
-    currentStock: 554,
-    efficiency: 85.3,
-    temperature: 25.1,
-    humidity: 48.7,
-    status: 'warning'
-  },
-  {
-    zoneId: 'D1',
-    zoneName: 'โซน D1 - อุปกรณ์เสริม',
-    utilization: 67.3,
-    capacity: 400,
-    currentStock: 269,
-    efficiency: 91.8,
-    temperature: 24.2,
-    humidity: 44.5,
-    status: 'optimal'
-  }
-];
+const defaultZoneMetrics: WarehouseZoneMetrics[] = [];
 
-const mockReports: ReportConfig[] = [
-  {
-    id: '1',
-    name: 'รายงานสินค้าคงคลังรายวัน',
-    description: 'รายงานสถานะสินค้าคงคลัง ระดับสต็อก และการเคลื่อนไหวรายวัน',
-    type: 'inventory',
-    frequency: 'daily',
-    format: 'pdf',
-    recipients: ['manager@company.com', 'warehouse@company.com'],
-    isActive: true,
-    lastGenerated: new Date('2024-01-20T08:00:00'),
-    nextScheduled: new Date('2024-01-21T08:00:00')
-  },
-  {
-    id: '2',
-    name: 'รายงานประสิทธิภาพรายสัปดาห์',
-    description: 'รายงานประสิทธิภาพการทำงาน KPIs และเป้าหมายรายสัปดาห์',
-    type: 'performance',
-    frequency: 'weekly',
-    format: 'excel',
-    recipients: ['ceo@company.com', 'operations@company.com'],
-    isActive: true,
-    lastGenerated: new Date('2024-01-15T09:00:00'),
-    nextScheduled: new Date('2024-01-22T09:00:00')
-  },
-  {
-    id: '3',
-    name: 'รายงานการเงินรายเดือน',
-    description: 'รายงานรายได้ ค่าใช้จ่าย และกำไรขาดทุนรายเดือน',
-    type: 'financial',
-    frequency: 'monthly',
-    format: 'pdf',
-    recipients: ['finance@company.com', 'accounting@company.com'],
-    isActive: true,
-    lastGenerated: new Date('2024-01-01T10:00:00'),
-    nextScheduled: new Date('2024-02-01T10:00:00')
-  }
-];
+const defaultReports: ReportConfig[] = [];
 
-export function WarehouseAnalytics() {
-  const [metrics, setMetrics] = useState<AnalyticsMetrics>(mockMetrics);
-  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>(mockTimeSeriesData);
-  const [categoryData, setCategoryData] = useState<CategoryData[]>(mockCategoryData);
-  const [performanceData, setPerformanceData] = useState<PerformanceData[]>(mockPerformanceData);
-  const [zoneMetrics, setZoneMetrics] = useState<WarehouseZoneMetrics[]>(mockZoneMetrics);
-  const [reports, setReports] = useState<ReportConfig[]>(mockReports);
+interface WarehouseAnalyticsProps {
+  warehouseId?: string;
+}
+
+export function WarehouseAnalytics({ warehouseId }: WarehouseAnalyticsProps) {
+  const [metrics, setMetrics] = useState<AnalyticsMetrics>(defaultMetrics);
+  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>(defaultTimeSeriesData);
+  const [categoryData, setCategoryData] = useState<CategoryData[]>(defaultCategoryData);
+  const [performanceData, setPerformanceData] = useState<PerformanceData[]>(defaultPerformanceData);
+  const [zoneMetrics, setZoneMetrics] = useState<WarehouseZoneMetrics[]>(defaultZoneMetrics);
+  const [reports, setReports] = useState<ReportConfig[]>(defaultReports);
   const [selectedPeriod, setSelectedPeriod] = useState<MetricPeriod>('month');
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(new Date()),

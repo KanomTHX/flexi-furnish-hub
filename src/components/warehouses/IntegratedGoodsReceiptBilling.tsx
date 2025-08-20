@@ -37,6 +37,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AddNewProduct } from './AddNewProduct';
+import { useBranchData } from '@/hooks/useBranchData';
 
 // Types
 interface Product {
@@ -49,7 +50,7 @@ interface Product {
   status: string;
 }
 
-interface Warehouse {
+interface Branch {
   id: string;
   name: string;
   code: string;
@@ -86,15 +87,15 @@ interface WorkflowStep {
 
 interface IntegratedGoodsReceiptBillingProps {
   onComplete?: (data: any) => void;
-  defaultWarehouseId?: string;
+  defaultBranchId?: string;
   branchId?: string;
 }
 
-export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, branchId }: IntegratedGoodsReceiptBillingProps) {
+export function IntegratedGoodsReceiptBilling({ onComplete, defaultBranchId, branchId }: IntegratedGoodsReceiptBillingProps) {
   const { toast } = useToast();
+  const { branches } = useBranchData();
   
   // State management
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -102,7 +103,7 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, 
   // Workflow steps
   const [currentStep, setCurrentStep] = useState(1);
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([
-    { id: 1, title: 'รับสินค้า', description: 'เลือกคลังสินค้าและข้อมูลพื้นฐาน', completed: false, active: true },
+    { id: 1, title: 'รับสินค้า', description: 'เลือกสาขาและข้อมูลพื้นฐาน', completed: false, active: true },
     { id: 2, title: 'เลือก/เพิ่มสินค้า', description: 'เลือกสินค้าที่มีอยู่หรือเพิ่มสินค้าใหม่', completed: false, active: false },
     { id: 3, title: 'ระบุจำนวน/ราคา', description: 'กำหนดจำนวนและราคาต่อชิ้น', completed: false, active: false },
     { id: 4, title: 'สร้าง SN อัตโนมัติ', description: 'ระบบสร้าง Serial Number และเก็บข้อมูล', completed: false, active: false },
@@ -111,7 +112,7 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, 
   ]);
   
   // Form state
-  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>(defaultWarehouseId || '');
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(defaultBranchId || '');
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -150,25 +151,12 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, 
   const loadInitialData = async () => {
     setIsLoading(true);
     try {
-      // Load warehouses
-      let warehousesQuery = supabase
-        .from('warehouses')
-        .select('*')
-        .eq('status', 'active');
-      
-      if (branchId) {
-        warehousesQuery = warehousesQuery.eq('branch_id', branchId);
-      }
-      
-      const { data: warehousesData, error: warehousesError } = await warehousesQuery;
-      
-      if (warehousesError) throw warehousesError;
-      setWarehouses(warehousesData || []);
+      // Branches are loaded via useBranchData hook
 
       // Load products
       let productsQuery = supabase
         .from('products')
-        .select('*')
+        .select('*, branch_id')
         .eq('status', 'active');
       
       if (branchId) {
@@ -278,8 +266,8 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, 
 
     switch (currentStep) {
       case 1:
-        if (!selectedWarehouseId) {
-          newErrors.warehouse = 'กรุณาเลือกคลังสินค้า';
+        if (!selectedBranchId) {
+          newErrors.branch = 'กรุณาเลือกสาขา';
         }
         break;
       case 2:
@@ -400,7 +388,7 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, 
         // Create stock movement
         const movement = {
           product_id: item.productId,
-          warehouse_id: selectedWarehouseId,
+          branch_id: selectedBranchId,
           movement_type: 'in',
           quantity: item.quantity,
           notes: `${receiptNumber} - ${suppliers.find(s => s.id === selectedSupplierId)?.supplierName || 'Unknown Supplier'}${invoiceNumber ? ` - Invoice: ${invoiceNumber}` : ''}${notes ? ` - ${notes}` : ''}`
@@ -412,7 +400,7 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, 
           serialNumberRecords.push({
             serial_number: sn,
             product_id: item.productId,
-            warehouse_id: selectedWarehouseId,
+            branch_id: selectedBranchId,
             supplier_id: selectedSupplierId,
             unit_cost: item.unitCost,
             status: 'in_stock',
@@ -536,14 +524,14 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, 
   const resetWorkflow = () => {
     setCurrentStep(1);
     setWorkflowSteps([
-      { id: 1, title: 'รับสินค้า', description: 'เลือกคลังสินค้าและข้อมูลพื้นฐาน', completed: false, active: true },
+      { id: 1, title: 'รับสินค้า', description: 'เลือกสาขาและข้อมูลพื้นฐาน', completed: false, active: true },
       { id: 2, title: 'เลือก/เพิ่มสินค้า', description: 'เลือกสินค้าที่มีอยู่หรือเพิ่มสินค้าใหม่', completed: false, active: false },
       { id: 3, title: 'ระบุจำนวน/ราคา', description: 'กำหนดจำนวนและราคาต่อชิ้น', completed: false, active: false },
       { id: 4, title: 'สร้าง SN อัตโนมัติ', description: 'ระบบสร้าง Serial Number และเก็บข้อมูล', completed: false, active: false },
       { id: 5, title: 'ผูกกับ Supplier', description: 'เชื่อมโยงกับซัพพลายเออร์และสร้างใบวางบิล', completed: false, active: false },
       { id: 6, title: 'พิมพ์เอกสาร', description: 'พิมพ์ใบรับสินค้าและ Sticker SN', completed: false, active: false }
     ]);
-    setSelectedWarehouseId(defaultWarehouseId || '');
+    setSelectedBranchId(defaultBranchId || '');
     setSelectedSupplierId('');
     setInvoiceNumber('');
     setDeliveryDate(new Date().toISOString().split('T')[0]);
@@ -646,24 +634,24 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultWarehouseId, 
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="warehouse">คลังสินค้า *</Label>
-                  <Select value={selectedWarehouseId} onValueChange={setSelectedWarehouseId}>
+                  <Label htmlFor="branch">สาขา *</Label>
+                  <Select value={selectedBranchId} onValueChange={setSelectedBranchId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="เลือกคลังสินค้า" />
+                      <SelectValue placeholder="เลือกสาขา" />
                     </SelectTrigger>
                     <SelectContent>
-                      {warehouses.map((warehouse) => (
-                        <SelectItem key={warehouse.id} value={warehouse.id}>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
                           <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4" />
-                            {warehouse.name} ({warehouse.code})
+                            {branch.name} ({branch.code})
                           </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.warehouse && (
-                    <p className="text-sm text-red-500">{errors.warehouse}</p>
+                  {errors.branch && (
+                    <p className="text-sm text-red-500">{errors.branch}</p>
                   )}
                 </div>
 

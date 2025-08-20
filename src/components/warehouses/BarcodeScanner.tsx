@@ -26,20 +26,22 @@ import { toast } from 'sonner';
 import { WarehouseService } from '@/services/warehouseService';
 import { useScanSessions, type ScanResult, type ScanSession } from '@/hooks/useScanSessions';
 import { useWarehouse } from '@/hooks/useWarehouse';
+import { useBranchData } from '@/hooks/useBranchData';
 import type { SerialNumber, StockLevel, Warehouse } from '@/types/warehouse';
+import type { Branch } from '@/types/branch';
 
 interface BarcodeScannerProps {
-  warehouses?: Warehouse[];
+  branches?: Branch[];
 }
 
 // ScanResult and ScanSession interfaces are now imported from useScanSessions hook
 
 export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
-  warehouses: propWarehouses
+  branches: propBranches
 }) => {
-  // Use warehouse hook to fetch warehouses if not provided
-  const { warehouses: fetchedWarehouses, loading: warehousesLoading } = useWarehouse();
-  const warehouses = propWarehouses || fetchedWarehouses;
+  // Use branch hook to fetch branches if not provided
+  const { branches: fetchedBranches, loading: branchesLoading } = useBranchData();
+  const branches = propBranches || fetchedBranches;
   // Use scan sessions hook
   const {
     sessions: scanHistory,
@@ -56,7 +58,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   // State management
   const [activeTab, setActiveTab] = useState('scanner');
   const [loading, setLoading] = useState(false);
-  const [selectedWarehouse, setSelectedWarehouse] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('');
   const [scanMode, setScanMode] = useState<'camera' | 'manual'>('manual');
   const [isScanning, setIsScanning] = useState(false);
   
@@ -83,12 +85,12 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   // Start new scan session
   const startScanSession = async () => {
-    if (!selectedWarehouse) {
-      toast.error('กรุณาเลือกคลังสินค้าก่อน');
+    if (!selectedBranch) {
+      toast.error('กรุณาเลือกสาขาก่อน');
       return;
     }
 
-    const session = await startSession(selectedWarehouse);
+    const session = await startSession(selectedBranch);
     if (session) {
       setScanResults([]);
     }
@@ -105,8 +107,8 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   // Handle barcode scan
   const handleScan = async (barcode: string) => {
     if (!barcode.trim()) return;
-    if (!selectedWarehouse) {
-      toast.error('กรุณาเลือกคลังสินค้าก่อน');
+    if (!selectedBranch) {
+      toast.error('กรุณาเลือกสาขาก่อน');
       return;
     }
 
@@ -115,7 +117,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     try {
       // Search for serial number by barcode
       const response = await WarehouseService.getSerialNumbers({
-        warehouseId: selectedWarehouse,
+        branchId: selectedBranch,
         search: barcode.trim(),
         limit: 1
       });
@@ -232,7 +234,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               จบเซสชัน
             </Button>
           ) : (
-            <Button onClick={startScanSession} disabled={!selectedWarehouse}>
+            <Button onClick={startScanSession} disabled={!selectedBranch}>
               <Plus className="h-4 w-4 mr-2" />
               เริ่มเซสชันใหม่
             </Button>
@@ -240,32 +242,32 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         </div>
       </div>
 
-      {/* Warehouse Selection */}
+      {/* Branch Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>เลือกคลังสินค้า</CardTitle>
+          <CardTitle>เลือกสาขา</CardTitle>
         </CardHeader>
         <CardContent>
-          {warehousesLoading ? (
+          {branchesLoading ? (
             <div className="flex items-center justify-center py-4">
-              <div className="text-sm text-muted-foreground">กำลังโหลดข้อมูลคลังสินค้า...</div>
+              <div className="text-sm text-muted-foreground">กำลังโหลดข้อมูลสาขา...</div>
             </div>
-          ) : warehouses.length === 0 ? (
+          ) : branches.length === 0 ? (
             <div className="flex items-center justify-center py-4">
-              <div className="text-sm text-muted-foreground">ไม่พบข้อมูลคลังสินค้า</div>
+              <div className="text-sm text-muted-foreground">ไม่พบข้อมูลสาขา</div>
             </div>
           ) : (
             <Select 
-              value={selectedWarehouse} 
-              onValueChange={setSelectedWarehouse}
+              value={selectedBranch} 
+              onValueChange={setSelectedBranch}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="เลือกคลังสินค้า" />
+                <SelectValue placeholder="เลือกสาขา" />
               </SelectTrigger>
               <SelectContent>
-                {warehouses.map((warehouse) => (
-                  <SelectItem key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name} ({warehouse.code})
+                {branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id}>
+                    {branch.name} ({branch.code})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -364,12 +366,12 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                     onKeyDown={handleKeyDown}
                     placeholder="สแกนหรือพิมพ์บาร์โค้ด / Serial Number"
                     className="flex-1"
-                    disabled={loading || sessionLoading || !selectedWarehouse}
+                    disabled={loading || sessionLoading || !selectedBranch}
                     autoFocus
                   />
                   <Button
                     onClick={() => handleScan(inputValue)}
-                    disabled={!inputValue.trim() || loading || sessionLoading || !selectedWarehouse}
+                    disabled={!inputValue.trim() || loading || sessionLoading || !selectedBranch}
                   >
                     {(loading || sessionLoading) ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -547,7 +549,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                           {session.startTime.toLocaleDateString('th-TH')}
                         </TableCell>
                         <TableCell>
-                          {warehouses.find(w => w.id === session.warehouseId)?.name || 'Unknown'}
+                          {branches.find(b => b.id === session.branchId)?.name || 'Unknown'}
                         </TableCell>
                         <TableCell>
                           {session.endTime ? (

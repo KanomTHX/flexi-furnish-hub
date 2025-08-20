@@ -3,19 +3,36 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // ใช้ service role key สำหรับ migration
+  process.env.VITE_SUPABASE_SERVICE_ROLE_KEY // ใช้ service role key สำหรับ migration
 );
 
 async function runMigrations() {
   console.log('🚀 Running database migrations...\n');
 
   try {
-    // 1. รัน warehouse stock system migration
-    console.log('1. Running warehouse stock system migration...');
+    // 1. รัน add branch_id to products migration
+    console.log('1. Running add branch_id to products migration...');
+    const branchIdMigration = readFileSync(
+      join(process.cwd(), 'supabase/migrations/20250120000001_add_branch_id_to_products.sql'),
+      'utf8'
+    );
+
+    const { error: branchIdError } = await supabase.rpc('exec_sql', {
+      sql: branchIdMigration
+    });
+
+    if (branchIdError) {
+      console.log('❌ Branch ID migration failed:', branchIdError.message);
+    } else {
+      console.log('✅ Branch ID migration completed successfully!');
+    }
+
+    // 2. รัน warehouse stock system migration
+    console.log('2. Running warehouse stock system migration...');
     const warehouseMigration = readFileSync(
       join(process.cwd(), 'supabase/migrations/20250808000001_warehouse_stock_serial_system.sql'),
       'utf8'

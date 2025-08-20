@@ -159,7 +159,7 @@ export function useDashboardData(branchId?: string) {
       let totalQuery = supabase
         .from('products')
         .select('id', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .eq('status', 'active');
       
       if (branchId) {
         totalQuery = totalQuery.eq('branch_id', branchId);
@@ -353,13 +353,22 @@ export function useDashboardData(branchId?: string) {
     const startTime = performance.now();
     
     try {
+      // Add timeout for each request
+      const timeout = (ms: number) => new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), ms)
+      );
+
+      const fetchWithTimeout = async <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
+        return Promise.race([promise, timeout(timeoutMs)]);
+      };
+
       const [todaySales, customers, products, employees, recentSales, lowStockItems] = await Promise.all([
-        fetchTodaySales(),
-        fetchCustomersData(),
-        fetchProductsData(),
-        fetchEmployeesData(),
-        fetchRecentSales(),
-        fetchLowStockItems()
+        fetchWithTimeout(fetchTodaySales()),
+        fetchWithTimeout(fetchCustomersData()),
+        fetchWithTimeout(fetchProductsData()),
+        fetchWithTimeout(fetchEmployeesData()),
+        fetchWithTimeout(fetchRecentSales()),
+        fetchWithTimeout(fetchLowStockItems())
       ]);
 
       const inventory = {
@@ -392,7 +401,19 @@ export function useDashboardData(branchId?: string) {
       });
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch dashboard data';
+      console.error('Dashboard data fetch error:', error);
+      let errorMessage = 'Failed to fetch dashboard data';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'ไม่สามารถเชื่อมต่อเครือข่ายได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setData(prev => ({
         ...prev,
         loading: false,
@@ -407,13 +428,19 @@ export function useDashboardData(branchId?: string) {
     }
   }, [branchId, fetchTodaySales, fetchCustomersData, fetchProductsData, fetchEmployeesData, fetchRecentSales, fetchLowStockItems, toast]);
 
-  // Auto refresh every 30 seconds
+  // Auto refresh every 30 seconds with retry logic
   useEffect(() => {
     fetchDashboardData();
     
-    const interval = setInterval(fetchDashboardData, 30000);
+    const interval = setInterval(() => {
+      // Only auto-refresh if not currently loading and no critical errors
+      if (!data.loading && (!data.error || !data.error.includes('network'))) {
+        fetchDashboardData();
+      }
+    }, 30000);
+    
     return () => clearInterval(interval);
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, data.loading, data.error]);
 
   // Debounced refresh to prevent rapid successive calls
   const refresh = useCallback(() => {

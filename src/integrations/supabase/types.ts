@@ -2554,7 +2554,6 @@ export type Database = {
           quantity: number
           reference_id: string | null
           reference_type: string | null
-          warehouse_id: string | null
         }
         Insert: {
           branch_id?: string | null
@@ -2567,7 +2566,6 @@ export type Database = {
           quantity: number
           reference_id?: string | null
           reference_type?: string | null
-          warehouse_id?: string | null
         }
         Update: {
           branch_id?: string | null
@@ -2580,7 +2578,6 @@ export type Database = {
           quantity?: number
           reference_id?: string | null
           reference_type?: string | null
-          warehouse_id?: string | null
         }
         Relationships: [
           {
@@ -2604,13 +2601,7 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "stock_movements_warehouse_id_fkey"
-            columns: ["warehouse_id"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
-            referencedColumns: ["id"]
-          },
+
         ]
       }
       supplier_communication_preferences: {

@@ -15,7 +15,7 @@ export const warehouseStockService = {
     return [];
   },
 
-  async getSerialNumbers(filters?: { warehouseId?: string; productId?: string; status?: string }): Promise<SerialNumber[]> {
+  async getSerialNumbers(filters?: { branchId?: string; productId?: string; status?: string }): Promise<SerialNumber[]> {
     return [];
   },
 
@@ -27,11 +27,11 @@ export const warehouseStockService = {
     throw new Error('Serial number functionality not available');
   },
 
-  async getAvailableSerialNumbers(warehouseId: string, productId?: string): Promise<SerialNumber[]> {
+  async getAvailableSerialNumbers(branchId: string, productId?: string): Promise<SerialNumber[]> {
     return [];
   },
 
-  async getStockMovements(filters?: { warehouseId?: string; productId?: string; type?: MovementType }): Promise<StockMovement[]> {
+  async getStockMovements(filters?: { branchId?: string; productId?: string; type?: MovementType }): Promise<StockMovement[]> {
     return [];
   },
 
@@ -51,7 +51,7 @@ export const warehouseStockService = {
     return [];
   },
 
-  async getStockSummary(warehouseId?: string): Promise<{
+  async getStockSummary(branchId?: string): Promise<{
     totalProducts: number;
     totalQuantity: number;
     totalValue: number;

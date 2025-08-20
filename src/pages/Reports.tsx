@@ -17,7 +17,6 @@ import { SerialNumberReports } from '@/components/warehouses/SerialNumberReports
 import { WarehouseAnalytics } from '@/components/warehouses/WarehouseAnalytics';
 import { ComplianceReportDialog } from '@/components/audit/ComplianceReportDialog';
 import { ClaimsReport } from '@/components/reports/ClaimsReport';
-import { WarehouseReport } from '@/components/reports/WarehouseReport';
 import { AuditReport } from '@/components/reports/AuditReport';
 import { CustomerReports } from '@/components/reports/CustomerReports';
 import { 
@@ -602,7 +601,9 @@ const Reports: React.FC = () => {
                   ส่งออก PDF
                 </Button>
               </div>
-              <WarehouseReport />
+              <div className="text-center text-gray-500 py-8">
+                <p>รายงานคลังสินค้าจะพร้อมใช้งานเร็วๆ นี้</p>
+              </div>
             </div>
           </TabsContent>
 

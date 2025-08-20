@@ -526,7 +526,7 @@ CREATE INDEX idx_customers_status ON customers(status);
 
 -- Products
 CREATE INDEX idx_products_category_id ON products(category_id);
-CREATE INDEX idx_products_code ON products(code);
+CREATE INDEX idx_products_product_code ON products(product_code);
 CREATE INDEX idx_products_barcode ON products(barcode);
 CREATE INDEX idx_products_is_active ON products(is_active);
 
@@ -811,7 +811,7 @@ INSERT INTO product_categories (code, name, description) VALUES
 ('CABINET', 'ตู้', 'ตู้เสื้อผ้าและตู้เก็บของ');
 
 -- Insert sample products
-INSERT INTO products (category_id, code, name, description, brand, model, cost_price, selling_price, barcode) VALUES
+INSERT INTO products (category_id, product_code, name, description, brand, model, cost_price, selling_price, barcode) VALUES
 ((SELECT id FROM product_categories WHERE code = 'SOFA'), 'SF001', 'โซฟา 3 ที่นั่ง สีน้ำตาล', 'โซฟาหนังแท้ 3 ที่นั่ง สีน้ำตาล', 'HomePro', 'Classic-3S', 15000, 25000, '1234567890001'),
 ((SELECT id FROM product_categories WHERE code = 'TABLE'), 'TB001', 'โต๊ะทำงานไม้โอ๊ค', 'โต๊ะทำงานไม้โอ๊คแท้ ขนาด 120x60 ซม.', 'Office+', 'Desk-120', 8000, 15000, '1234567890002'),
 ((SELECT id FROM product_categories WHERE code = 'CHAIR'), 'CH001', 'เก้าอี้สำนักงาน', 'เก้าอี้สำนักงานเพื่อสุขภาพ', 'ErgoMax', 'Chair-Pro', 5000, 9000, '1234567890003'),

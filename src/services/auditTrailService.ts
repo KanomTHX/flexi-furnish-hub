@@ -15,6 +15,7 @@ export interface AuditLogEntry {
   user_name?: string;
   description?: string;
   metadata?: any;
+  branch_id?: string;
 }
 
 export interface AuditFilter {

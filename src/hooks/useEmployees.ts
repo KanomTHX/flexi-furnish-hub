@@ -105,7 +105,7 @@ export const useEmployees = () => {
       const { data, error } = await supabase
         .from('departments')
         .select('*')
-        .eq('is_active', true);
+        .eq('status', 'active');
       
       if (error) throw error;
       setDepartments(data || []);
@@ -120,7 +120,7 @@ export const useEmployees = () => {
       const { data, error } = await supabase
         .from('positions')
         .select('*')
-        .eq('is_active', true);
+        .eq('status', 'active');
       
       if (error) throw error;
       setPositions(data || []);

@@ -21,7 +21,7 @@ async function testSystemAfterSetup() {
     console.log('1. Testing all required tables...');
     const requiredTables = [
       'notifications',
-      'product_serial_numbers', 
+      'serial_numbers', 
       'stock_transfers',
       'stock_transfer_items',
       'products',
@@ -147,7 +147,7 @@ async function testSystemAfterSetup() {
         const product = products[0];
         
         console.log(`   Using warehouses: ${warehouse1.name} -> ${warehouse2.name}`);
-        console.log(`   Using product: ${product.name} (${product.code})`);
+        console.log(`   Using product: ${product.name} (${product.product_code})`);
 
         // สร้าง sample serial numbers
         const sampleSerialNumbers = [
@@ -168,7 +168,7 @@ async function testSystemAfterSetup() {
         ];
 
         const { data: createdSNs, error: snError } = await supabaseAdmin
-          .from('product_serial_numbers')
+          .from('serial_numbers')
           .insert(sampleSerialNumbers)
           .select();
 
@@ -253,7 +253,7 @@ async function testSystemAfterSetup() {
                     quantity,
                     unit_cost,
                     status,
-                    serial_number:product_serial_numbers (
+                    serial_number:serial_numbers (
                       id,
                       serial_number,
                       product:products (
@@ -287,7 +287,7 @@ async function testSystemAfterSetup() {
               .eq('id', transfer.id);
               
             await supabaseAdmin
-              .from('product_serial_numbers')
+              .from('serial_numbers')
               .delete()
               .in('id', createdSNs.map(sn => sn.id));
               

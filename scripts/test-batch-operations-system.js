@@ -46,10 +46,10 @@ async function testBatchOperationsSystem() {
     // 2. Get sample serial numbers for batch operations
     console.log('\n2️⃣ Getting sample serial numbers for batch testing...');
     const { data: serialNumbers, error: snError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select(`
         *,
-        product:products(id, name, code),
+        product:products(id, name, product_code),
         warehouse:warehouses(id, name, code)
       `)
       .eq('warehouse_id', sourceWarehouse.id)
@@ -94,7 +94,7 @@ async function testBatchOperationsSystem() {
 
       // Check if exists in database
       const { data: snData, error: snCheckError } = await supabase
-        .from('product_serial_numbers')
+        .from('serial_numbers')
         .select(`
           *,
           product:products(name),
@@ -152,7 +152,7 @@ async function testBatchOperationsSystem() {
       for (const result of validSNs) {
         try {
           const { error: updateError } = await supabase
-            .from('product_serial_numbers')
+            .from('serial_numbers')
             .update({
               status: newStatus,
               reference_number: batchNumber,
@@ -211,7 +211,7 @@ async function testBatchOperationsSystem() {
       for (const result of transferSNs) {
         try {
           const { error: transferError } = await supabase
-            .from('product_serial_numbers')
+            .from('serial_numbers')
             .update({
               warehouse_id: targetWarehouse.id,
               status: 'transferred',
@@ -272,7 +272,7 @@ async function testBatchOperationsSystem() {
       .from('stock_movements')
       .select(`
         *,
-        product:products(name, code),
+        product:products(name, product_code),
         warehouse:warehouses(name, code)
       `)
       .eq('movement_type', 'batch_operation')

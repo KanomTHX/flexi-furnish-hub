@@ -24,19 +24,11 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useBranchData } from '@/hooks/useBranchData';
 import { AddNewProduct } from './AddNewProduct';
+import type { Branch, Product } from '@/types/warehouse';
 
 // Types for the component
-interface Product {
-  id: string;
-  name: string;
-  product_code: string;
-  description?: string;
-  cost_price: number;
-  selling_price: number;
-  status: string;
-}
-
 interface Warehouse {
   id: string;
   name: string;
@@ -54,19 +46,19 @@ interface ReceiveItem {
 
 interface SimpleReceiveGoodsProps {
   onReceiveComplete?: (data: any) => void;
-  defaultWarehouseId?: string;
+  defaultBranchId?: string;
 }
 
-export function SimpleReceiveGoods({ onReceiveComplete, defaultWarehouseId }: SimpleReceiveGoodsProps) {
+export function SimpleReceiveGoods({ onReceiveComplete, defaultBranchId }: SimpleReceiveGoodsProps) {
   const { toast } = useToast();
+  const { branches } = useBranchData();
   
   // State management
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   
   // Form state
-  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>(defaultWarehouseId || '');
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(defaultBranchId || '');
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [supplierName, setSupplierName] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
@@ -102,16 +94,6 @@ export function SimpleReceiveGoods({ onReceiveComplete, defaultWarehouseId }: Si
   const loadInitialData = async () => {
     setIsLoading(true);
     try {
-      // Load warehouses
-      const { data: warehousesData, error: warehousesError } = await supabase
-        .from('warehouses')
-        .select('id, code, name, status')
-        .eq('status', 'active')
-        .order('name');
-
-      if (warehousesError) throw warehousesError;
-      setWarehouses(warehousesData || []);
-
       // Load products
       const { data: productsData, error: productsError } = await supabase
         .from('products')
@@ -188,8 +170,8 @@ export function SimpleReceiveGoods({ onReceiveComplete, defaultWarehouseId }: Si
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!selectedWarehouseId) {
-      newErrors.warehouse = 'กรุณาเลือกคลังสินค้า';
+    if (!selectedBranchId) {
+      newErrors.branch = 'กรุณาเลือกสาขา';
     }
 
     if (items.length === 0) {
@@ -237,7 +219,7 @@ export function SimpleReceiveGoods({ onReceiveComplete, defaultWarehouseId }: Si
         // Create stock movement for each item
         const movement = {
           product_id: item.productId,
-          warehouse_id: selectedWarehouseId,
+          branch_id: selectedBranchId,
           movement_type: 'in',
           quantity: item.quantity,
           notes: `${receiveNumber}${supplierName ? ` - ${supplierName}` : ''}${invoiceNumber ? ` - Invoice: ${invoiceNumber}` : ''}${notes ? ` - ${notes}` : ''}`
@@ -256,7 +238,7 @@ export function SimpleReceiveGoods({ onReceiveComplete, defaultWarehouseId }: Si
 
       // Prepare response data
       const receiveData = {
-        warehouseId: selectedWarehouseId,
+        branchId: selectedBranchId,
         supplierName: supplierName || undefined,
         invoiceNumber: invoiceNumber || undefined,
         items,
@@ -340,30 +322,30 @@ export function SimpleReceiveGoods({ onReceiveComplete, defaultWarehouseId }: Si
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            รับสินค้าเข้าคลัง
+            รับสินค้าเข้าสาขา
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Warehouse Selection */}
+          {/* Branch Selection */}
           <div className="space-y-2">
-            <Label htmlFor="warehouse">คลังสินค้า *</Label>
-            <Select value={selectedWarehouseId} onValueChange={setSelectedWarehouseId}>
+            <Label htmlFor="branch">สาขา *</Label>
+            <Select value={selectedBranchId} onValueChange={setSelectedBranchId}>
               <SelectTrigger>
-                <SelectValue placeholder="เลือกคลังสินค้า" />
+                <SelectValue placeholder="เลือกสาขา" />
               </SelectTrigger>
               <SelectContent>
-                {warehouses.map((warehouse) => (
-                  <SelectItem key={warehouse.id} value={warehouse.id}>
+                {branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id}>
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
-                      {warehouse.name} ({warehouse.code})
+                      {branch.name} ({branch.code})
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.warehouse && (
-              <p className="text-sm text-red-500">{errors.warehouse}</p>
+            {errors.branch && (
+              <p className="text-sm text-red-500">{errors.branch}</p>
             )}
           </div>
 

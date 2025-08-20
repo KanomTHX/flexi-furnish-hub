@@ -16,7 +16,6 @@ interface SupabaseWarehouse {
 interface SupabaseStockMovement {
   id: string;
   branch_id: string;
-  warehouse_id: string;
   product_id: string;
   movement_type: string;
   quantity: number;
@@ -80,8 +79,8 @@ interface Warehouse {
 
 interface StockMovement {
   id: string;
-  warehouseId: string;
-  warehouseName: string;
+  branchId: string;
+  branchName: string;
   productId: string;
   movementType: string;
   quantity: number;
@@ -170,11 +169,11 @@ export function useSupabaseWarehouses() {
   }, []);
 
   // แปลงข้อมูลจาก Supabase เป็น StockMovement
-  const convertToStockMovement = useCallback((movement: SupabaseStockMovement, warehouseName: string): StockMovement => {
+  const convertToStockMovement = useCallback((movement: SupabaseStockMovement, branchName: string): StockMovement => {
     return {
       id: movement.id,
-      warehouseId: movement.warehouse_id,
-      warehouseName,
+      branchId: movement.branch_id,
+      branchName,
       productId: movement.product_id,
       movementType: movement.movement_type,
       quantity: movement.quantity,
@@ -254,17 +253,17 @@ export function useSupabaseWarehouses() {
 
       if (movementsError) throw movementsError;
 
-      // โหลดข้อมูลคลังสินค้าเพื่อใช้ในการแปลงข้อมูล
-      const { data: warehousesData, error: warehousesError } = await supabase
-        .from('warehouses')
+      // โหลดข้อมูลสาขาเพื่อใช้ในการแปลงข้อมูล
+      const { data: branchesData, error: branchesError } = await supabase
+        .from('branches')
         .select('id, name');
 
-      if (warehousesError) throw warehousesError;
+      if (branchesError) throw branchesError;
 
-      const warehouseMap = new Map(warehousesData?.map(w => [w.id, w.name]) || []);
+      const branchMap = new Map(branchesData?.map(b => [b.id, b.name]) || []);
 
       const movements = (movementsData || []).map(movement => 
-        convertToStockMovement(movement, warehouseMap.get(movement.warehouse_id) || 'Unknown')
+        convertToStockMovement(movement, branchMap.get(movement.branch_id) || 'Unknown')
       );
 
       setStockMovements(movements);
@@ -442,8 +441,7 @@ export function useSupabaseWarehouses() {
       const { data, error: insertError } = await supabase
         .from('stock_movements')
         .insert({
-          branch_id: '00000000-0000-0000-0000-000000000001', // Default branch
-          warehouse_id: movementData.warehouseId,
+          branch_id: movementData.branchId,
           product_id: movementData.productId,
           movement_type: movementData.movementType,
           quantity: movementData.quantity,
@@ -459,11 +457,11 @@ export function useSupabaseWarehouses() {
 
       if (insertError) throw insertError;
 
-      // หาชื่อคลังสินค้า
-      const warehouse = warehouses.find(w => w.id === movementData.warehouseId);
-      const warehouseName = warehouse?.name || 'Unknown';
+      // หาชื่อสาขา
+      const branch = warehouses.find(w => w.id === movementData.branchId);
+      const branchName = branch?.name || 'Unknown';
 
-      const newMovement = convertToStockMovement(data, warehouseName);
+      const newMovement = convertToStockMovement(data, branchName);
       setStockMovements(prev => [newMovement, ...prev]);
 
       return newMovement;

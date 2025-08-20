@@ -8,9 +8,9 @@ export interface SimpleStockLevel {
   productCode: string;
   productName: string;
   productDescription?: string;
-  warehouseId: string;
-  warehouseName: string;
-  warehouseCode: string;
+  branchId: string;
+  branchName: string;
+  branchCode: string;
   quantity: number;
   availableQuantity: number;
   reservedQuantity: number;
@@ -22,7 +22,7 @@ export interface SimpleStockLevel {
 
 export interface SimpleStockFilters {
   searchTerm?: string;
-  warehouseId?: string;
+  branchId?: string;
   category?: string;
   status?: string;
 }
@@ -59,7 +59,7 @@ export function useSimpleStock(): UseSimpleStockReturn {
       // Step 1: Fetch stock movements with only safe fields
       const { data: stockMovements, error: stockError } = await supabase
         .from('stock_movements')
-        .select('id, product_id, warehouse_id, movement_type, quantity, created_at')
+        .select('id, product_id, branch_id, movement_type, quantity, created_at')
         .order('created_at', { ascending: false });
 
       if (stockError) {
@@ -73,9 +73,9 @@ export function useSimpleStock(): UseSimpleStockReturn {
       if (stockMovements && stockMovements.length > 0) {
         // Step 2: Get unique IDs for separate queries
         const productIds = [...new Set(stockMovements.map(m => m.product_id))].filter(Boolean);
-        const warehouseIds = [...new Set(stockMovements.map(m => m.warehouse_id))].filter(Boolean);
+        const branchIds = [...new Set(stockMovements.map(m => m.branch_id))].filter(Boolean);
 
-        console.log(`🔍 Fetching ${productIds.length} products and ${warehouseIds.length} warehouses`);
+        console.log(`🔍 Fetching ${productIds.length} products and ${branchIds.length} branches`);
 
         // Step 3: Fetch products separately with only safe fields
         const { data: products, error: productsError } = await supabase
@@ -87,33 +87,33 @@ export function useSimpleStock(): UseSimpleStockReturn {
           throw new Error(`Failed to fetch products: ${productsError.message}`);
         }
 
-        // Step 4: Fetch warehouses separately with only safe fields
-        const { data: warehouses, error: warehousesError } = await supabase
-          .from('warehouses')
+        // Step 4: Fetch branches separately with only safe fields
+        const { data: branches, error: branchesError } = await supabase
+          .from('branches')
           .select('id, code, name')
-          .in('id', warehouseIds);
+          .in('id', branchIds);
 
-        if (warehousesError) {
-          throw new Error(`Failed to fetch warehouses: ${warehousesError.message}`);
+        if (branchesError) {
+          throw new Error(`Failed to fetch branches: ${branchesError.message}`);
         }
 
-        console.log(`✅ Fetched ${products?.length || 0} products and ${warehouses?.length || 0} warehouses`);
+        console.log(`✅ Fetched ${products?.length || 0} products and ${branches?.length || 0} branches`);
 
         // Step 5: Calculate stock levels safely
         const stockMap = new Map<string, SimpleStockLevel>();
 
         stockMovements.forEach(movement => {
-          // Find related product and warehouse
+          // Find related product and branch
           const product = products?.find(p => p.id === movement.product_id);
-          const warehouse = warehouses?.find(w => w.id === movement.warehouse_id);
+          const branch = branches?.find(w => w.id === movement.branch_id);
 
-          // Skip if no valid product or warehouse found
-          if (!product || !warehouse) {
-            console.warn(`⚠️ Skipping movement with missing product or warehouse: ${movement.id}`);
+          // Skip if no valid product or branch found
+          if (!product || !branch) {
+            console.warn(`⚠️ Skipping movement with missing product or branch: ${movement.id}`);
             return;
           }
 
-          const key = `${movement.product_id}-${movement.warehouse_id}`;
+          const key = `${movement.product_id}-${movement.branch_id}`;
 
           // Initialize stock level if not exists
           if (!stockMap.has(key)) {
@@ -123,9 +123,9 @@ export function useSimpleStock(): UseSimpleStockReturn {
               productCode: product.product_code || 'UNKNOWN',
               productName: product.name || 'Unknown Product',
               productDescription: product.description || '',
-              warehouseId: movement.warehouse_id,
-              warehouseName: warehouse.name || 'Unknown Warehouse',
-              warehouseCode: warehouse.code || 'UNKNOWN',
+              branchId: movement.branch_id,
+              branchName: branch.name || 'Unknown Branch',
+              branchCode: branch.code || 'UNKNOWN',
               quantity: 0,
               availableQuantity: 0,
               reservedQuantity: 0,
@@ -241,12 +241,12 @@ export function useSimpleStock(): UseSimpleStockReturn {
       filtered = filtered.filter(stock => 
         stock.productName.toLowerCase().includes(term) ||
         stock.productCode.toLowerCase().includes(term) ||
-        stock.warehouseName.toLowerCase().includes(term)
+        stock.branchName.toLowerCase().includes(term)
       );
     }
 
-    if (filters.warehouseId && filters.warehouseId !== 'all') {
-      filtered = filtered.filter(stock => stock.warehouseId === filters.warehouseId);
+    if (filters.branchId && filters.branchId !== 'all') {
+      filtered = filtered.filter(stock => stock.branchId === filters.branchId);
     }
 
     if (filters.status && filters.status !== 'all') {

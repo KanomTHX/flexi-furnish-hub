@@ -192,124 +192,10 @@ export function TaskManagement({ warehouseId }: TaskManagementProps) {
   const loadTasks = async () => {
     setLoading(true);
     try {
-      // Mock data with Serial Number integration
-      const mockTasks: ExtendedWarehouseTask[] = [
-        {
-          id: 'task-1',
-          title: 'รับสินค้าเฟอร์นิเจอร์ใหม่',
-          description: 'รับสินค้าเฟอร์นิเจอร์จากซัพพลายเออร์ ABC และตรวจสอบ Serial Number ทุกชิ้น',
-          type: 'receiving',
-          priority: 'high',
-          status: 'in_progress',
-          assignedTo: 'emp-1',
-          assignedBy: 'emp-manager',
-          warehouseId,
-          dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-          estimatedDuration: 120,
-          actualDuration: 90,
-          serialNumbers: ['SN001', 'SN002', 'SN003'],
-          completionPercentage: 75,
-          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-          startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          items: [
-            {
-              id: 'item-1',
-              productId: 'prod-1',
-              productName: 'โซฟา 3 ที่นั่ง',
-              serialNumber: 'SN001',
-              quantity: 1,
-              location: 'A-01-01',
-              status: 'completed'
-            },
-            {
-              id: 'item-2',
-              productId: 'prod-2',
-              productName: 'โต๊ะทำงาน',
-              serialNumber: 'SN002',
-              quantity: 1,
-              location: 'A-01-02',
-              status: 'completed'
-            },
-            {
-              id: 'item-3',
-              productId: 'prod-3',
-              productName: 'เก้าอี้สำนักงาน',
-              serialNumber: 'SN003',
-              quantity: 1,
-              location: 'A-01-03',
-              status: 'pending'
-            }
-          ],
-          comments: [
-            {
-              id: 'comment-1',
-              userId: 'emp-1',
-              userName: 'สมชาย ใจดี',
-              message: 'ได้รับสินค้า 2 รายการแล้ว กำลังตรวจสอบ Serial Number รายการสุดท้าย',
-              createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-            }
-          ]
-        },
-        {
-          id: 'task-2',
-          title: 'คัดสินค้าสำหรับออเดอร์ #12345',
-          description: 'คัดสินค้าตาม Serial Number ในออเดอร์และเตรียมส่งไปแผนกแพ็ค',
-          type: 'picking',
-          priority: 'medium',
-          status: 'pending',
-          assignedTo: 'emp-2',
-          assignedBy: 'emp-manager',
-          warehouseId,
-          dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          estimatedDuration: 90,
-          serialNumbers: ['SN004', 'SN005'],
-          completionPercentage: 0,
-          createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-          items: [
-            {
-              id: 'item-4',
-              productId: 'prod-4',
-              productName: 'ตู้เสื้อผ้า',
-              serialNumber: 'SN004',
-              quantity: 1,
-              location: 'B-02-05',
-              status: 'pending'
-            },
-            {
-              id: 'item-5',
-              productId: 'prod-5',
-              productName: 'เตียงนอน',
-              serialNumber: 'SN005',
-              quantity: 1,
-              location: 'B-03-01',
-              status: 'pending'
-            }
-          ]
-        },
-        {
-          id: 'task-3',
-          title: 'ตรวจนับสต็อกและ Serial Number ประจำเดือน',
-          description: 'ตรวจนับสต็อกสินค้าในโซน A และตรวจสอบ Serial Number ให้ตรงกับระบบ',
-          type: 'counting',
-          priority: 'low',
-          status: 'completed',
-          assignedTo: 'emp-3',
-          assignedBy: 'emp-manager',
-          warehouseId,
-          dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          estimatedDuration: 180,
-          actualDuration: 165,
-          completionPercentage: 100,
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          startedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          completedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
+      // Default empty tasks data
+      const defaultTasks: ExtendedWarehouseTask[] = [];
       
-      setTasks(mockTasks);
+      setTasks(defaultTasks);
     } catch (error) {
       toast({
         title: 'เกิดข้อผิดพลาด',
@@ -323,32 +209,10 @@ export function TaskManagement({ warehouseId }: TaskManagementProps) {
 
   const loadEmployees = async () => {
     try {
-      // Mock data
-      const mockEmployees: Employee[] = [
-        {
-          id: 'emp-1',
-          name: 'สมชาย ใจดี',
-          email: 'somchai@company.com',
-          role: 'พนักงานคลังสินค้า',
-          isActive: true
-        },
-        {
-          id: 'emp-2',
-          name: 'สมหญิง รักงาน',
-          email: 'somying@company.com',
-          role: 'พนักงานคลังสินค้า',
-          isActive: true
-        },
-        {
-          id: 'emp-3',
-          name: 'สมศักดิ์ ขยัน',
-          email: 'somsak@company.com',
-          role: 'หัวหน้าคลังสินค้า',
-          isActive: true
-        }
-      ];
+      // Default empty employees data
+      const defaultEmployees: Employee[] = [];
       
-      setEmployees(mockEmployees);
+      setEmployees(defaultEmployees);
     } catch (error) {
       console.error('Error loading employees:', error);
     }

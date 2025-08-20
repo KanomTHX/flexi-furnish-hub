@@ -69,10 +69,10 @@ async function testTransferSystem() {
     const firstProduct = stockData[0];
     
     const { data: serialNumbers, error: snError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select(`
         *,
-        product:products(id, name, code),
+        product:products(id, name, product_code),
         warehouse:warehouses(id, name, code)
       `)
       .eq('product_id', firstProduct.product_id)
@@ -100,7 +100,7 @@ async function testTransferSystem() {
 
     // Update serial number for transfer
     const { data: updatedSN, error: updateError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .update({
         warehouse_id: targetWarehouse.id,
         status: 'transferred',
@@ -195,9 +195,9 @@ async function testTransferSystem() {
       .from('stock_movements')
       .select(`
         *,
-        product:products(name, code),
+        product:products(name, product_code),
         warehouse:warehouses(name, code),
-        serial_number:product_serial_numbers(serial_number)
+        serial_number:serial_numbers(serial_number)
       `)
       .in('movement_type', ['transfer_out', 'transfer_in'])
       .eq('reference_number', transferNumber)
@@ -213,10 +213,10 @@ async function testTransferSystem() {
     // 7. Test transfer status tracking
     console.log('\n7️⃣ Testing transfer status tracking...');
     const { data: transferredItems, error: transferredError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select(`
         *,
-        product:products(name, code),
+        product:products(name, product_code),
         warehouse:warehouses(name, code)
       `)
       .eq('status', 'transferred')

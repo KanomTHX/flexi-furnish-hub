@@ -45,10 +45,10 @@ async function testWithdrawSystem() {
     const firstProduct = stockData[0];
     
     const { data: serialNumbers, error: snError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .select(`
         *,
-        product:products(id, name, code),
+        product:products(id, name, product_code),
         warehouse:warehouses(id, name, code)
       `)
       .eq('product_id', firstProduct.product_id)
@@ -85,7 +85,7 @@ async function testWithdrawSystem() {
 
     // Update serial number status
     const { data: updatedSN, error: updateError } = await supabase
-      .from('product_serial_numbers')
+      .from('serial_numbers')
       .update({
         status: 'sold',
         sold_at: new Date().toISOString(),
@@ -145,9 +145,9 @@ async function testWithdrawSystem() {
       .from('stock_movements')
       .select(`
         *,
-        product:products(name, code),
+        product:products(name, product_code),
         warehouse:warehouses(name, code),
-        serial_number:product_serial_numbers(serial_number)
+        serial_number:serial_numbers(serial_number)
       `)
       .eq('movement_type', 'withdraw')
       .eq('warehouse_id', withdrawData.warehouseId)
