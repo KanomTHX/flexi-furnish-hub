@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useBranch } from '@/hooks/useBranch';
-import { exportToCSV } from '@/utils/reportHelpers';
+import { exportToExcel, exportToPDF } from '@/utils/reportHelpers';
 import {
   Building2,
   Package,
@@ -85,11 +85,11 @@ export function BranchReport({ className }: BranchReportProps) {
         'เปอร์เซ็นต์การใช้งาน': branch.capacity.utilizationPercentage
       }));
       
-      exportToCSV(csvData, `branch-report-${new Date().toISOString().split('T')[0]}.csv`);
+      exportToExcel(csvData, `branch-report-${new Date().toISOString().split('T')[0]}`);
       
       toast({
         title: 'ส่งออกสำเร็จ',
-        description: 'รายงานสาขาถูกส่งออกเป็นไฟล์ CSV แล้ว'
+        description: 'รายงานสาขาถูกส่งออกเป็นไฟล์ Excel แล้ว'
       });
     } catch (error) {
       toast({

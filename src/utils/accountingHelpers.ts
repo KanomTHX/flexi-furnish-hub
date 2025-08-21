@@ -9,40 +9,20 @@ export const validateAccountingEntry = (entry: any) => true;
 export const formatDate = (date: string | Date) => new Date(date).toLocaleDateString('th-TH');
 
 // Enhanced export functions using exportService
-export const exportAccountsToCSV = async (accounts: Account[]) => {
+export const exportAccountsToExcel = async (accounts: Account[]) => {
   const options: ExportServiceOptions = {
-    format: 'csv',
+    format: 'excel',
     includeDetails: true,
     includeSummary: false
   };
   await exportService.exportChartOfAccounts(accounts, options);
 };
 
-export const exportJournalEntriesToCSV = async (entries: JournalEntry[]) => {
+export const exportAccountsToPDF = async (accounts: Account[]) => {
   const options: ExportServiceOptions = {
-    format: 'csv',
+    format: 'pdf',
     includeDetails: true,
     includeSummary: false
-  };
-  await exportService.exportJournalEntries(entries, options);
-};
-
-export const exportTransactionsToCSV = async (transactions: Transaction[]) => {
-  const options: ExportServiceOptions = {
-    format: 'csv',
-    includeDetails: true,
-    includeSummary: false
-  };
-  await exportService.exportTransactions(transactions, options);
-};
-
-// Export to Excel
-export const exportAccountsToExcel = async (accounts: Account[]) => {
-  const options: ExportServiceOptions = {
-    format: 'excel',
-    includeDetails: true,
-    includeSummary: true,
-    companyName: 'Flexi Furnish Hub'
   };
   await exportService.exportChartOfAccounts(accounts, options);
 };
@@ -51,8 +31,16 @@ export const exportJournalEntriesToExcel = async (entries: JournalEntry[]) => {
   const options: ExportServiceOptions = {
     format: 'excel',
     includeDetails: true,
-    includeSummary: true,
-    companyName: 'Flexi Furnish Hub'
+    includeSummary: false
+  };
+  await exportService.exportJournalEntries(entries, options);
+};
+
+export const exportJournalEntriesToPDF = async (entries: JournalEntry[]) => {
+  const options: ExportServiceOptions = {
+    format: 'pdf',
+    includeDetails: true,
+    includeSummary: false
   };
   await exportService.exportJournalEntries(entries, options);
 };
@@ -61,45 +49,21 @@ export const exportTransactionsToExcel = async (transactions: Transaction[]) => 
   const options: ExportServiceOptions = {
     format: 'excel',
     includeDetails: true,
-    includeSummary: true,
-    companyName: 'Flexi Furnish Hub'
+    includeSummary: false
   };
   await exportService.exportTransactions(transactions, options);
-};
-
-// Export to PDF
-export const exportAccountsToPDF = async (accounts: Account[]) => {
-  const options: ExportServiceOptions = {
-    format: 'pdf',
-    includeDetails: true,
-    includeSummary: true,
-    companyName: 'Flexi Furnish Hub',
-    includeWatermark: false
-  };
-  await exportService.exportChartOfAccounts(accounts, options);
-};
-
-export const exportJournalEntriesToPDF = async (entries: JournalEntry[]) => {
-  const options: ExportServiceOptions = {
-    format: 'pdf',
-    includeDetails: true,
-    includeSummary: true,
-    companyName: 'Flexi Furnish Hub',
-    includeWatermark: false
-  };
-  await exportService.exportJournalEntries(entries, options);
 };
 
 export const exportTransactionsToPDF = async (transactions: Transaction[]) => {
   const options: ExportServiceOptions = {
     format: 'pdf',
     includeDetails: true,
-    includeSummary: true,
-    companyName: 'Flexi Furnish Hub',
-    includeWatermark: false
+    includeSummary: false
   };
   await exportService.exportTransactions(transactions, options);
 };
+
+
 
 export const accountTypeLabels = {
   asset: 'สินทรัพย์',

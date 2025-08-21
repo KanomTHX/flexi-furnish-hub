@@ -434,55 +434,22 @@ export class InventoryReportService {
   }
 
   /**
-   * Export inventory report to CSV
+   * Prepare inventory report data for export
    */
   static async exportInventoryReport() {
     try {
       const report = await this.generateInventoryReport();
       
-      // Create CSV content
-      let csvContent = 'รายงานสต็อกสินค้า\n\n';
-      
-      // Summary section
-      csvContent += 'สรุปภาพรวม\n';
-      csvContent += `สินค้าทั้งหมด,${report.summary.totalProducts}\n`;
-      csvContent += `มูลค่ารวม,${report.summary.totalValue}\n`;
-      csvContent += `สต็อกต่ำ,${report.summary.lowStockItems}\n`;
-      csvContent += `หมดสต็อก,${report.summary.outOfStockItems}\n`;
-      csvContent += `เคลื่อนไหวช้า,${report.summary.slowMovingItems}\n`;
-      csvContent += `เคลื่อนไหวเร็ว,${report.summary.fastMovingItems}\n\n`;
-      
-      // Low stock items
-      csvContent += 'สินค้าสต็อกต่ำ\n';
-      csvContent += 'ชื่อสินค้า,สต็อกปัจจุบัน,สต็อกขั้นต่ำ,ระดับสั่งซื้อ,มูลค่า\n';
-      report.lowStockItems.forEach(item => {
-        csvContent += `${item.name},${item.currentStock},${item.minStock},${item.reorderLevel},${item.value}\n`;
+      console.log('Inventory report data prepared for export:', {
+        summary: report.summary,
+        lowStockItems: report.lowStockItems,
+        categoryBreakdown: report.categoryBreakdown
       });
       
-      csvContent += '\n';
-      
-      // Category breakdown
-      csvContent += 'การกระจายตามหมวดหมู่\n';
-      csvContent += 'หมวดหมู่,จำนวนสินค้า,มูลค่า,เปอร์เซ็นต์,แนวโน้ม\n';
-      report.categoryBreakdown.forEach(category => {
-        csvContent += `${category.category},${category.products},${category.value},${category.percentage.toFixed(2)}%,${category.trend.toFixed(2)}%\n`;
-      });
-      
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `inventory-report-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      return { success: true, message: 'ส่งออกรายงานสำเร็จ' };
+      return { success: true, message: 'เตรียมข้อมูลรายงานสำเร็จ' };
     } catch (error) {
-      console.error('Error exporting inventory report:', error);
-      throw new Error('ไม่สามารถส่งออกรายงานได้');
+      console.error('Error preparing inventory report:', error);
+      throw new Error('ไม่สามารถเตรียมข้อมูลรายงานได้');
     }
   }
 }

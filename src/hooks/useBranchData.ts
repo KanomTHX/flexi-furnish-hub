@@ -458,16 +458,7 @@ export function useBranchData() {
       รายได้รายปี: branch.stats.yearlyRevenue
     }));
 
-    const csv = [
-      Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `branch-data-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    console.log('Branch data prepared for export:', csvData);
   }, [branches, selectedBranchIds]);
 
   const exportBranchComparison = useCallback(() => {
@@ -491,16 +482,7 @@ export function useBranchData() {
       'อัตราการหมุนเวียนสต็อก': analytics.stock.turnoverRate
     }));
 
-    const csv = [
-      Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `branch-comparison-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    console.log('Branch comparison data prepared for export:', csvData);
   }, [selectedBranchesAnalytics]);
 
   return {

@@ -29,7 +29,7 @@ export interface CustomerSegmentData {
 }
 
 export interface InventoryData {
-  warehouse: string;
+  name: string;
   value: number;
   percentage: number;
   color: string;
@@ -73,7 +73,7 @@ export function useDashboardCharts(branchId?: string, timeRange: string = '7d') 
       startDate.setDate(startDate.getDate() - days);
       
       let query = supabase
-        .from('sales')
+        .from('sales_transactions')
         .select('created_at, total_amount')
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: true });
@@ -117,7 +117,7 @@ export function useDashboardCharts(branchId?: string, timeRange: string = '7d') 
       previousStartDate.setDate(previousStartDate.getDate() - days);
       
       let previousQuery = supabase
-        .from('sales')
+        .from('sales_transactions')
         .select('total_amount')
         .gte('created_at', previousStartDate.toISOString())
         .lt('created_at', startDate.toISOString());
@@ -150,7 +150,7 @@ export function useDashboardCharts(branchId?: string, timeRange: string = '7d') 
   const fetchProductCategories = async (): Promise<ProductCategoryData[]> => {
     try {
       let query = supabase
-        .from('sale_items')
+        .from('sales_transaction_items')
         .select(`
           quantity,
           unit_price,
@@ -160,7 +160,7 @@ export function useDashboardCharts(branchId?: string, timeRange: string = '7d') 
         `);
 
       if (branchId) {
-        query = query.eq('sales.branch_id', branchId);
+        query = query.eq('products.branch_id', branchId);
       }
 
       const { data, error } = await query;
@@ -199,7 +199,7 @@ export function useDashboardCharts(branchId?: string, timeRange: string = '7d') 
     try {
       let query = supabase
         .from('customers')
-        .select('customer_type');
+        .select('customer_code');
 
       if (branchId) {
         query = query.eq('branch_id', branchId);
@@ -209,12 +209,12 @@ export function useDashboardCharts(branchId?: string, timeRange: string = '7d') 
       
       if (error) throw error;
 
-      // Group by customer type
+      // Group by customer code prefix (first 2 characters)
       const segmentMap = new Map<string, number>();
       let totalCustomers = 0;
 
       data?.forEach(customer => {
-        const segment = customer.customer_type || 'ทั่วไป';
+        const segment = customer.customer_code ? customer.customer_code.substring(0, 2) : 'XX';
         segmentMap.set(segment, (segmentMap.get(segment) || 0) + 1);
         totalCustomers++;
       });
@@ -238,39 +238,49 @@ export function useDashboardCharts(branchId?: string, timeRange: string = '7d') 
   const fetchInventoryData = async (): Promise<InventoryData[]> => {
     try {
       let query = supabase
-        .from('inventory')
+        .from('product_inventory')
         .select(`
           quantity,
-          unit_cost,
-          warehouses!inner(
-            name
+          branch_id,
+          products!inner(
+            cost_price
           )
         `);
 
       if (branchId) {
-        query = query.eq('warehouses.branch_id', branchId);
+        query = query.eq('branch_id', branchId);
       }
 
       const { data, error } = await query;
       
       if (error) throw error;
 
-      // Group by warehouse
-      const warehouseMap = new Map<string, number>();
+      // Get branch names separately
+      const { data: branchesData } = await supabase
+        .from('branches')
+        .select('id, name');
+
+      const branchMap = new Map<string, string>();
+      branchesData?.forEach(branch => {
+        branchMap.set(branch.id, branch.name);
+      });
+
+      // Group by branch
+      const inventoryMap = new Map<string, number>();
       let totalValue = 0;
 
       data?.forEach(item => {
-        const warehouse = item.warehouses?.name || 'ไม่ระบุ';
-        const value = (item.quantity || 0) * (item.unit_cost || 0);
-        warehouseMap.set(warehouse, (warehouseMap.get(warehouse) || 0) + value);
+        const branchName = branchMap.get(item.branch_id) || 'ไม่ระบุ';
+        const value = (item.quantity || 0) * (item.products?.cost_price || 0);
+        inventoryMap.set(branchName, (inventoryMap.get(branchName) || 0) + value);
         totalValue += value;
       });
 
       const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
       
-      return Array.from(warehouseMap.entries())
-        .map(([warehouse, value], index) => ({
-          warehouse,
+      return Array.from(inventoryMap.entries())
+        .map(([name, value], index) => ({
+          name,
           value,
           percentage: totalValue > 0 ? (value / totalValue) * 100 : 0,
           color: colors[index % colors.length]
@@ -339,16 +349,6 @@ export function useDashboardCharts(branchId?: string, timeRange: string = '7d') 
 
   useEffect(() => {
     fetchData();
-    
-    // Set up auto-refresh every 2 minutes for dashboard data
-    const interval = setInterval(() => {
-      // Only auto-refresh if not currently loading and no critical errors
-      if (!loading && (!error || !error.includes('network'))) {
-        fetchData();
-      }
-    }, 2 * 60 * 1000);
-    
-    return () => clearInterval(interval);
   }, [branchId, timeRange]);
 
   return {

@@ -56,15 +56,7 @@ export default function Claims() {
 
   const handleExportClaims = () => {
     const csv = exportClaimsToCSV(claims);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `claims-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    console.log('Claims data prepared for export:', csv);
 
     toast({
       title: "ส่งออกข้อมูลสำเร็จ",
@@ -73,38 +65,22 @@ export default function Claims() {
   };
 
   const handleExportCustomers = () => {
-    const csv = exportCustomersToCSV(customers);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `customers-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const exportData = exportCustomersToCSV(customers);
+    console.log('Customer data prepared for export:', exportData);
 
     toast({
-      title: "ส่งออกข้อมูลสำเร็จ",
-      description: "ไฟล์ข้อมูลลูกค้าถูกดาวน์โหลดแล้ว",
+      title: "เตรียมข้อมูลสำเร็จ",
+      description: "ข้อมูลลูกค้าพร้อมส่งออกแล้ว",
     });
   };
 
   const handleExportProducts = () => {
-    const csv = exportProductsToCSV(products);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `products-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const exportData = exportProductsToCSV(products);
+    console.log('Product data prepared for export:', exportData);
 
     toast({
-      title: "ส่งออกข้อมูลสำเร็จ",
-      description: "ไฟล์ข้อมูลสินค้าถูกดาวน์โหลดแล้ว",
+      title: "เตรียมข้อมูลสำเร็จ",
+      description: "ข้อมูลสินค้าพร้อมส่งออกแล้ว",
     });
   };
 

@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useAudit } from '@/hooks/useAudit';
-import { exportToCSV } from '@/utils/reportHelpers';
+import { exportToExcel, exportToPDF } from '@/utils/reportHelpers';
 import {
   Shield,
   Eye,
@@ -63,10 +63,10 @@ export function AuditReport({ className }: AuditReportProps) {
         'IP Address': log.ipAddress || '-'
       }));
       
-      exportToCSV(exportData, `audit-report-${format(new Date(), 'yyyy-MM-dd')}`);
+      exportToExcel(exportData, `audit-report-${format(new Date(), 'yyyy-MM-dd')}`);
       toast({
         title: 'ส่งออกสำเร็จ',
-        description: 'รายงาน Audit ถูกส่งออกเป็นไฟล์ CSV แล้ว'
+        description: 'รายงาน Audit ถูกส่งออกเป็นไฟล์ Excel แล้ว'
       });
     } catch (error) {
       toast({

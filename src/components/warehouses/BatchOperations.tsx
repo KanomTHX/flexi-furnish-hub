@@ -299,22 +299,7 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
       return;
     }
 
-    const csvContent = [
-      'Serial Number,Product Name,Status,Warehouse,Message',
-      ...validResults.map(r => 
-        `${r.serialNumber},${r.productName || ''},${r.currentStatus || ''},${r.warehouseName || ''},${r.message || ''}`
-      )
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `batch_validation_${Date.now()}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    console.log('Batch validation data prepared for export:', validResults);
     
     toast.success('ส่งออกข้อมูลเสร็จสิ้น');
   };

@@ -9,6 +9,7 @@ import { Product } from '@/types/pos';
 import { SerialNumber } from '@/types/serialNumber';
 import { EnhancedProductSearch } from './EnhancedProductSearch';
 import { CategorySearch } from './CategorySearch';
+import { FavoriteProducts } from './FavoriteProducts';
 import { POSShoppingCart } from './POSShoppingCart';
 import { BarcodeScanner } from './BarcodeScanner';
 import { SalesHistory } from './SalesHistory';
@@ -385,16 +386,10 @@ export function POSInterface() {
               />
             </TabsContent>
             
-            <TabsContent value="favorites" className="mt-4">
-              <Card>
-                <CardContent className="flex items-center justify-center py-12">
-                  <div className="text-center text-muted-foreground">
-                    <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>รายการสินค้าโปรด</p>
-                    <p className="text-sm">ฟีเจอร์นี้จะพัฒนาในเวอร์ชันถัดไป</p>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="favorites" className="mt-4 h-full">
+              <FavoriteProducts 
+                onAddToCart={handleAddToCart}
+              />
             </TabsContent>
           </Tabs>
         </div>

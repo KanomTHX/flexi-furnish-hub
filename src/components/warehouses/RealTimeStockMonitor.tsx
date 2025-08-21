@@ -257,16 +257,9 @@ export function RealTimeStockMonitor({
     }
   };
 
-  // Fetch data on component mount
+  // Fetch data on component mount only (removed auto-refresh)
   useEffect(() => {
     fetchStockData();
-    
-    // Set up interval for real-time updates (every 30 seconds)
-    const interval = setInterval(() => {
-      fetchStockData();
-    }, 30000);
-    
-    return () => clearInterval(interval);
   }, [warehouseId, productId, effectiveBranchId]);
 
   const stockPercentage = Math.round((stockData.inStock / stockData.totalItems) * 100) || 0;

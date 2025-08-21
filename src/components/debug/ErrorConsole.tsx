@@ -112,24 +112,12 @@ export const ErrorConsole: React.FC<ErrorConsoleProps> = ({
 
   const exportErrors = () => {
     const data = browserErrorHandler.exportErrors();
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `errors-${new Date().toISOString()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    console.log('Error data prepared for export:', data);
   };
 
   const exportLogs = () => {
     const data = ConsoleMonitor.exportLogs();
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `console-logs-${new Date().toISOString()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    console.log('Console logs data prepared for export:', data);
   };
 
   if (!isVisible) {

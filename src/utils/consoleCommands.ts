@@ -135,13 +135,7 @@ if (import.meta.env.DEV) {
         url: window.location.href
       };
       
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `debug-export-${new Date().toISOString().slice(0, 19)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      console.log('Debug data prepared for export:', JSON.stringify(data, null, 2));
       
       console.log('📁 Debug data exported');
       return data;

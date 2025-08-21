@@ -15,7 +15,7 @@ import { TransactionJournalLink } from '@/components/accounting/TransactionJourn
 import { CreateJournalEntryDialog } from '@/components/accounting/CreateJournalEntryDialog';
 import { PendingApprovalDialog } from '@/components/accounting/PendingApprovalDialog';
 import { ClearFiltersDialog } from '@/components/accounting/ClearFiltersDialog';
-import { exportAccountsToCSV, exportJournalEntriesToCSV, exportTransactionsToCSV } from '@/utils/accountingHelpers';
+import { exportAccountsToExcel, exportAccountsToPDF, exportJournalEntriesToExcel, exportJournalEntriesToPDF, exportTransactionsToExcel, exportTransactionsToPDF } from '@/utils/accountingHelpers';
 import { 
   Calculator, 
   FileText, 
@@ -67,57 +67,51 @@ export default function Accounting() {
   const [pendingApprovalOpen, setPendingApprovalOpen] = useState(false);
   const [clearFiltersOpen, setClearFiltersOpen] = useState(false);
 
-  const handleExportAccounts = () => {
-    const csv = exportAccountsToCSV(accounts);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `chart-of-accounts-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+  const handleExportAccountsToExcel = () => {
+    exportAccountsToExcel(accounts);
     toast({
       title: "ส่งออกข้อมูลสำเร็จ",
-      description: "ไฟล์ผังบัญชีถูกดาวน์โหลดแล้ว",
+      description: "ไฟล์ผังบัญชีถูกส่งออกเป็น Excel แล้ว",
     });
   };
 
-  const handleExportJournalEntries = () => {
-    const csv = exportJournalEntriesToCSV(journalEntries);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `journal-entries-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+  const handleExportAccountsToPDF = () => {
+    exportAccountsToPDF(accounts);
     toast({
       title: "ส่งออกข้อมูลสำเร็จ",
-      description: "ไฟล์รายการบัญชีถูกดาวน์โหลดแล้ว",
+      description: "ไฟล์ผังบัญชีถูกส่งออกเป็น PDF แล้ว",
     });
   };
 
-  const handleExportTransactions = () => {
-    const csv = exportTransactionsToCSV(transactions);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `transactions-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+  const handleExportJournalEntriesToExcel = () => {
+    exportJournalEntriesToExcel(journalEntries);
     toast({
       title: "ส่งออกข้อมูลสำเร็จ",
-      description: "ไฟล์ธุรกรรมถูกดาวน์โหลดแล้ว",
+      description: "ไฟล์รายการบัญชีถูกส่งออกเป็น Excel แล้ว",
+    });
+  };
+
+  const handleExportJournalEntriesToPDF = () => {
+    exportJournalEntriesToPDF(journalEntries);
+    toast({
+      title: "ส่งออกข้อมูลสำเร็จ",
+      description: "ไฟล์รายการบัญชีถูกส่งออกเป็น PDF แล้ว",
+    });
+  };
+
+  const handleExportTransactionsToExcel = () => {
+    exportTransactionsToExcel(transactions);
+    toast({
+      title: "ส่งออกข้อมูลสำเร็จ",
+      description: "ไฟล์ธุรกรรมถูกส่งออกเป็น Excel แล้ว",
+    });
+  };
+
+  const handleExportTransactionsToPDF = () => {
+    exportTransactionsToPDF(transactions);
+    toast({
+      title: "ส่งออกข้อมูลสำเร็จ",
+      description: "ไฟล์ธุรกรรมถูกส่งออกเป็น PDF แล้ว",
     });
   };
 
@@ -386,7 +380,8 @@ export default function Accounting() {
             accounts={accounts}
             filter={accountFilter}
             onFilterChange={setAccountFilter}
-            onExport={handleExportAccounts}
+            onExportToExcel={handleExportAccountsToExcel}
+            onExportToPDF={handleExportAccountsToPDF}
             onCreateAccount={handleCreateAccount}
             onUpdateAccount={updateAccount}
             onDeactivateAccount={deactivateAccount}
@@ -399,7 +394,8 @@ export default function Accounting() {
             accounts={accounts}
             filter={journalEntryFilter}
             onFilterChange={setJournalEntryFilter}
-            onExport={handleExportJournalEntries}
+            onExportToExcel={handleExportJournalEntriesToExcel}
+            onExportToPDF={handleExportJournalEntriesToPDF}
             onApprove={handleApproveJournalEntry}
             onReject={handleRejectJournalEntry}
             onCreateEntry={handleCreateJournalEntry}
@@ -414,7 +410,8 @@ export default function Accounting() {
             onCreateTransaction={handleCreateTransaction}
             onUpdateTransaction={handleUpdateTransaction}
             onDeleteTransaction={handleDeleteTransaction}
-            onExport={handleExportTransactions}
+            onExportToExcel={handleExportTransactionsToExcel}
+            onExportToPDF={handleExportTransactionsToPDF}
           />
         </TabsContent>
 

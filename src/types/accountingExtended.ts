@@ -480,7 +480,7 @@ export interface ExpenseFilter {
 
 // ===== Export and Import =====
 export interface ExportOptions {
-  format: 'excel' | 'pdf' | 'csv';
+  format: 'excel' | 'pdf';
   includeDetails: boolean;
   includeSummary: boolean;
   period?: AccountingPeriod;

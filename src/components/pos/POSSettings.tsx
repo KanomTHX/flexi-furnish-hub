@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Settings, Printer, Calculator, Receipt, Save, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 interface POSSettingsData {
   // การตั้งค่าภาษี
@@ -65,22 +67,64 @@ export const POSSettings: React.FC<POSSettingsProps> = ({ onBack }) => {
   });
   
   const [loading, setLoading] = useState(false);
+  const [settingsId, setSettingsId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     loadSettings();
   }, []);
 
-  const loadSettings = () => {
-    // โหลดการตั้งค่าจาก localStorage
-    const savedSettings = localStorage.getItem('pos-settings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setSettings(prev => ({ ...prev, ...parsed }));
-      } catch (error) {
-        console.error('Error loading settings:', error);
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      
+      if (!profile?.branch_id) {
+        console.error('No branch_id found in profile');
+        return;
       }
+
+      const { data, error } = await supabase
+        .from('pos_settings')
+        .select('*')
+        .eq('branch_id', profile.branch_id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading settings:', error);
+        toast({
+          title: 'เกิดข้อผิดพลาด',
+          description: 'ไม่สามารถโหลดการตั้งค่าได้',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (data) {
+        setSettingsId(data.id);
+        setSettings({
+          taxRate: data.tax_rate || 7,
+          taxEnabled: data.enable_tax || true,
+          maxDiscountPercent: data.max_discount_percent || 20,
+          allowManualDiscount: data.enable_discount || true,
+          autoPrintReceipt: data.auto_print_receipt || false,
+          printerName: '',
+          receiptTemplate: 'standard',
+          defaultPaymentMethod: data.default_payment_method || 'cash',
+          requireCustomerInfo: false,
+          allowNegativeStock: false,
+          theme: data.theme || 'light',
+          fontSize: 'medium',
+          storeName: data.store_name || 'Flexi Furnish Hub',
+          storeAddress: data.store_address || '',
+          storePhone: data.store_phone || '',
+          storeTaxId: data.store_tax_id || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,10 +132,54 @@ export const POSSettings: React.FC<POSSettingsProps> = ({ onBack }) => {
     try {
       setLoading(true);
       
-      // บันทึกการตั้งค่าลง localStorage
-      localStorage.setItem('pos-settings', JSON.stringify(settings));
-      
-      // ในอนาคตอาจบันทึกลงฐานข้อมูลด้วย
+      if (!profile?.branch_id || !user?.id) {
+        toast({
+          title: 'เกิดข้อผิดพลาด',
+          description: 'ไม่พบข้อมูลผู้ใช้หรือสาขา',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const settingsData = {
+        branch_id: profile.branch_id,
+        store_name: settings.storeName,
+        store_address: settings.storeAddress,
+        store_phone: settings.storePhone,
+        store_tax_id: settings.storeTaxId,
+        tax_rate: settings.taxRate,
+        enable_tax: settings.taxEnabled,
+        max_discount_percent: settings.maxDiscountPercent,
+        enable_discount: settings.allowManualDiscount,
+        auto_print_receipt: settings.autoPrintReceipt,
+        default_payment_method: settings.defaultPaymentMethod,
+        theme: settings.theme,
+        created_by: user.id
+      };
+
+      let result;
+      if (settingsId) {
+        // Update existing settings
+        result = await supabase
+          .from('pos_settings')
+          .update(settingsData)
+          .eq('id', settingsId);
+      } else {
+        // Insert new settings
+        result = await supabase
+          .from('pos_settings')
+          .insert([settingsData])
+          .select()
+          .single();
+        
+        if (result.data) {
+          setSettingsId(result.data.id);
+        }
+      }
+
+      if (result.error) {
+        throw result.error;
+      }
       
       toast({
         title: 'บันทึกสำเร็จ',

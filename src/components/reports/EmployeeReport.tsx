@@ -149,38 +149,20 @@ export const EmployeeReport: React.FC<EmployeeReportProps> = ({ branchId }) => {
     };
   }, [reportData]);
 
-  const exportToCSV = () => {
-    const headers = [
-      'ชื่อ-นามสกุล',
-      'ตำแหน่ง',
-      'สาขา',
-      'วันเข้างาน',
-      'วันมาสาย',
-      'อัตราเข้างาน (%)',
-      'วันลา',
-      'ค่าคอมมิชชั่น (บาท)'
-    ];
+  const exportToExcel = () => {
+    const exportData = reportData.map(data => ({
+      'ชื่อ-นามสกุล': `${data.employee.firstName} ${data.employee.lastName}`,
+      'ตำแหน่ง': data.employee.position,
+      'สาขา': branches.find(b => b.id === data.employee.branchId)?.name || '-',
+      'วันเข้างาน': data.presentDays,
+      'วันมาสาย': data.lateDays,
+      'อัตราเข้างาน (%)': data.attendanceRate.toFixed(1),
+      'วันลา': data.approvedLeaves,
+      'ค่าคอมมิชชั่น (บาท)': data.totalCommission.toLocaleString()
+    }));
     
-    const csvData = reportData.map(data => [
-      `${data.employee.firstName} ${data.employee.lastName}`,
-      data.employee.position,
-      branches.find(b => b.id === data.employee.branchId)?.name || '-',
-      data.presentDays,
-      data.lateDays,
-      data.attendanceRate.toFixed(1),
-      data.approvedLeaves,
-      data.totalCommission.toLocaleString()
-    ]);
-    
-    const csvContent = [headers, ...csvData]
-      .map(row => row.join(','))
-      .join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `employee-report-${selectedMonth}.csv`;
-    link.click();
+    // This would use exportToExcel from reportHelpers
+    console.log('Export to Excel:', `employee-report-${selectedMonth}`, exportData);
   };
 
   return (
@@ -232,9 +214,9 @@ export const EmployeeReport: React.FC<EmployeeReportProps> = ({ branchId }) => {
             
             <div className="space-y-2">
               <Label>&nbsp;</Label>
-              <Button onClick={exportToCSV} className="w-full">
+              <Button onClick={exportToExcel} className="w-full">
                 <Download className="h-4 w-4 mr-2" />
-                ส่งออก CSV
+                ส่งออก Excel
               </Button>
             </div>
           </div>

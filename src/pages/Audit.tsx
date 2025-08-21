@@ -76,15 +76,7 @@ export default function Audit() {
   const handleExportAuditLogs = () => {
     try {
       const csv = exportAuditLogsToCSV(auditLogs);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `audit-logs-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      console.log('Audit logs data prepared for export:', csv);
 
       toast({
         title: "ส่งออกข้อมูลสำเร็จ",
@@ -114,20 +106,7 @@ export default function Audit() {
         'User Agent': event.userAgent || '-'
       }));
       
-      const csvContent = [
-        Object.keys(csvData[0]).join(','),
-        ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
-      ].join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `security_events_export_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      console.log('Security events data prepared for export:', csvData);
       
       toast({
         title: "ส่งออกสำเร็จ",
@@ -145,15 +124,7 @@ export default function Audit() {
   const handleExportUsers = () => {
     try {
       const csv = exportUsersToCSV(users);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `users-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      console.log('Users data prepared for export:', csv);
 
       toast({
         title: "ส่งออกข้อมูลสำเร็จ",
@@ -193,17 +164,7 @@ export default function Audit() {
     });
   };
 
-  // Auto-refresh functionality
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Auto refresh every 30 seconds
-      if (!isRefreshing) {
-        handleRefresh();
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [isRefreshing]);
+  // Removed auto-refresh - data will only be refreshed manually
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

@@ -225,13 +225,7 @@ export function TransactionReports({ transactions }: TransactionReportsProps) {
     };
 
     const dataStr = JSON.stringify(reportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `transaction-report-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    console.log('Transaction report data prepared for export:', dataStr);
   };
 
   return (

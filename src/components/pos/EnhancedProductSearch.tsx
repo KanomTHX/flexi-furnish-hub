@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Scan, Package, Plus, Eye, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Search, Scan, Package, Plus, Eye, AlertCircle, CheckCircle, Clock, Star } from 'lucide-react';
 import { Product } from '@/types/pos';
 import { SerialNumber } from '@/types/serialNumber';
 import { useSupabasePOS, SupabaseProduct } from '@/hooks/useSupabasePOS';
 import { useBranchData } from '@/hooks/useBranchData';
 import { useToast } from '@/hooks/use-toast';
+import { addProductToFavorites } from './FavoriteProducts';
 
 interface EnhancedProductSearchProps {
   onAddToCart: (product: Product, serialNumbers?: SerialNumber[]) => void;
@@ -300,16 +301,51 @@ export function EnhancedProductSearch({ onAddToCart, onProductSelect }: Enhanced
                       </div>
                     </div>
                     
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleProductSelect(product);
-                      }}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const success = addProductToFavorites({
+                            id: product.id,
+                            name: product.name,
+                            sku: product.product_code,
+                            price: product.selling_price,
+                            stock: product.stock,
+                            category: product.category?.name || 'ไม่ระบุ',
+                            description: product.description || '',
+                            barcode: product.barcode || ''
+                          }, currentBranch.id);
+                          
+                          if (success) {
+                            toast({
+                              title: "เพิ่มในรายการโปรดแล้ว",
+                              description: `${product.name} ถูกเพิ่มในรายการโปรดแล้ว`
+                            });
+                          } else {
+                            toast({
+                              title: "สินค้านี้อยู่ในรายการโปรดแล้ว",
+                              description: `${product.name} อยู่ในรายการโปรดของคุณแล้ว`
+                            });
+                          }
+                        }}
+                        title="เพิ่มเข้ารายการโปรด"
+                      >
+                        <Star className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleProductSelect(product);
+                        }}
+                        title="ดูรายละเอียด"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -330,14 +366,45 @@ export function EnhancedProductSearch({ onAddToCart, onProductSelect }: Enhanced
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>รายละเอียดสินค้า</span>
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={selectedProduct.stock === 0}
-                  className="ml-2"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  เพิ่มลงตะกร้า
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const success = addProductToFavorites({
+                        id: selectedProduct.id,
+                        name: selectedProduct.name,
+                        sku: selectedProduct.product_code,
+                        price: selectedProduct.selling_price,
+                        stock: selectedProduct.stock,
+                        category: selectedProduct.category?.name || 'ไม่ระบุ',
+                        description: selectedProduct.description || '',
+                        barcode: selectedProduct.barcode || ''
+                      }, currentBranch.id);
+                      
+                      if (success) {
+                        toast({
+                          title: "เพิ่มในรายการโปรดแล้ว",
+                          description: `${selectedProduct.name} ถูกเพิ่มในรายการโปรดแล้ว`
+                        });
+                      } else {
+                        toast({
+                          title: "สินค้านี้อยู่ในรายการโปรดแล้ว",
+                          description: `${selectedProduct.name} อยู่ในรายการโปรดของคุณแล้ว`
+                        });
+                      }
+                    }}
+                  >
+                    <Star className="w-4 h-4 mr-2" />
+                    เพิ่มเข้าโปรด
+                  </Button>
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={selectedProduct.stock === 0}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    เพิ่มลงตะกร้า
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

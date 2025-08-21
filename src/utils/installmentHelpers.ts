@@ -29,7 +29,10 @@ export const calculateContractStatus = (contract: any) => ({
 });
 export const getContractStatusText = (status: string) => status;
 export const getPaymentStatusText = (status: string) => status;
-export const exportContractsToCSV = (contracts: any[]) => 'contract,data,test';
+export const exportContractsToCSV = (contracts: any[]) => {
+  console.log('Contract data prepared for export:', contracts);
+  return 'Data prepared for Excel export';
+};
 export const updatePaymentStatus = (contracts: any[]) => contracts;
 export const calculateLateFee = (payment: any, daysPastDue: number = 0) => daysPastDue * 10;
 

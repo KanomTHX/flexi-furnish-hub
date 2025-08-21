@@ -111,7 +111,7 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
     try {
       if (!serialNumbers) return;
 
-      const csvData = serialNumbers.map(sn => ({
+      const exportData = serialNumbers.map(sn => ({
         'หมายเลขซีเรียล': sn.serialNumber,
         'รหัสสินค้า': sn.product?.code || sn.productId,
         'ชื่อสินค้า': sn.product?.name || '',
@@ -129,30 +129,16 @@ export function SerialNumberReports({ className }: SerialNumberReportsProps) {
         'วันที่สร้าง': new Date(sn.createdAt).toLocaleDateString('th-TH')
       }));
 
-      const headers = Object.keys(csvData[0] || {});
-      const csvContent = [
-        headers.join(','),
-        ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row] || ''}"`).join(','))
-      ].join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `serial-number-report-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      console.log('Serial number report data prepared for export:', exportData);
 
       toast({
-        title: "ส่งออกสำเร็จ",
-        description: "ข้อมูลรายงานหมายเลขซีเรียลถูกส่งออกเป็นไฟล์ CSV แล้ว"
+        title: "เตรียมข้อมูลสำเร็จ",
+        description: "ข้อมูลรายงานหมายเลขซีเรียลพร้อมส่งออกแล้ว"
       });
     } catch (error) {
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถส่งออกข้อมูลได้",
+        description: "ไม่สามารถเตรียมข้อมูลได้",
         variant: "destructive"
       });
     }

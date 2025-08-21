@@ -73,8 +73,6 @@ export class ExportService {
       await this.exportToExcel(data, 'ผังบัญชี', options);
     } else if (options.format === 'pdf') {
       await this.exportToPDF(data, 'ผังบัญชี', options);
-    } else {
-      await this.exportToCSV(data, 'chart-of-accounts');
     }
   }
 
@@ -122,8 +120,6 @@ export class ExportService {
       await this.exportToExcel(data, 'รายการบัญชี', options);
     } else if (options.format === 'pdf') {
       await this.exportToPDF(data, 'รายการบัญชี', options);
-    } else {
-      await this.exportToCSV(data, 'journal-entries');
     }
   }
 
@@ -152,8 +148,6 @@ export class ExportService {
       await this.exportToExcel(data, 'ธุรกรรม', options);
     } else if (options.format === 'pdf') {
       await this.exportToPDF(data, 'ธุรกรรม', options);
-    } else {
-      await this.exportToCSV(data, 'transactions');
     }
   }
 
@@ -289,8 +283,6 @@ export class ExportService {
       await this.exportToExcel(data, title, options);
     } else if (options.format === 'pdf') {
       await this.exportToPDF(data, title, options);
-    } else {
-      await this.exportToCSV(data, 'profit-loss-report');
     }
   }
 
@@ -445,8 +437,6 @@ export class ExportService {
       await this.exportToExcel(data, title, options);
     } else if (options.format === 'pdf') {
       await this.exportToPDF(data, title, options);
-    } else {
-      await this.exportToCSV(data, 'balance-sheet-report');
     }
   }
 
@@ -541,8 +531,6 @@ export class ExportService {
       await this.exportToExcel(data, 'รายงานรวมทุกสาขา', options);
     } else if (options.format === 'pdf') {
       await this.exportToPDF(data, 'รายงานรวมทุกสาขา', options);
-    } else {
-      await this.exportToCSV(data, 'consolidated-report');
     }
   }
 
@@ -633,36 +621,7 @@ export class ExportService {
     doc.save(fileName);
   }
 
-  private async exportToCSV(
-    data: any[],
-    fileName: string
-  ): Promise<void> {
-    if (data.length === 0) return;
-    
-    const headers = Object.keys(data[0]);
-    const csvContent = [
-      headers.join(','),
-      ...data.map(row => 
-        headers.map(header => {
-          const value = row[header] || '';
-          // Escape commas and quotes
-          return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
-            ? `"${value.replace(/"/g, '""')}"` 
-            : value;
-        }).join(',')
-      )
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${fileName}-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+
 
   // ========================================
   // HELPER FUNCTIONS

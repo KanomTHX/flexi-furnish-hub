@@ -147,7 +147,7 @@ export type ChartType =
   | 'area' 
   | 'scatter';
 
-export type ExportFormat = 'pdf' | 'excel' | 'csv';
+export type ExportFormat = 'pdf' | 'excel';
 
 export interface ReportStats {
   totalReports: number;

@@ -428,19 +428,10 @@ export function useDashboardData(branchId?: string) {
     }
   }, [branchId, fetchTodaySales, fetchCustomersData, fetchProductsData, fetchEmployeesData, fetchRecentSales, fetchLowStockItems, toast]);
 
-  // Auto refresh every 30 seconds with retry logic
+  // Fetch data on mount only (removed auto-refresh)
   useEffect(() => {
     fetchDashboardData();
-    
-    const interval = setInterval(() => {
-      // Only auto-refresh if not currently loading and no critical errors
-      if (!data.loading && (!data.error || !data.error.includes('network'))) {
-        fetchDashboardData();
-      }
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [fetchDashboardData, data.loading, data.error]);
+  }, [fetchDashboardData]);
 
   // Debounced refresh to prevent rapid successive calls
   const refresh = useCallback(() => {

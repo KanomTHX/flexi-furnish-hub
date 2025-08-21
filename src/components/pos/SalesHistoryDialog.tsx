@@ -150,8 +150,8 @@ export const SalesHistoryDialog: React.FC<SalesHistoryDialogProps> = ({
   };
 
   const handleExportSales = () => {
-    // Export filtered sales to CSV
-    const csvData = filteredSales.map(sale => ({
+    // Prepare filtered sales data for export
+    const exportData = filteredSales.map(sale => ({
       'เลขที่ขาย': sale.saleNumber,
       'วันที่': formatDateTime(sale.createdAt),
       'ลูกค้า': sale.customer?.name || 'ไม่ระบุ',
@@ -161,23 +161,7 @@ export const SalesHistoryDialog: React.FC<SalesHistoryDialogProps> = ({
       'สถานะ': sale.status
     }));
 
-    const headers = Object.keys(csvData[0] || {});
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map(row => 
-        headers.map(header => `"${row[header as keyof typeof row]}"`).join(',')
-      )
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `sales-history-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    console.log('Sales history data prepared for export:', exportData);
   };
 
   return (

@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useClaims } from "@/hooks/useClaims";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 
 import {
   Sidebar,
@@ -54,6 +55,7 @@ export function AdminSidebar() {
   const { toast } = useToast();
   const { statistics } = useClaims();
   const { todaySales, systemStatus, isLoading, error, lastUpdated, refreshStats } = useDashboardStats();
+  const { storeSettings } = useStoreSettings();
 
   // Quick Actions สำหรับงานที่ใช้บ่อย
   const quickActions = [
@@ -322,7 +324,7 @@ export function AdminSidebar() {
             {!collapsed && (
               <div className="animate-fade-in min-w-0 flex-1">
                 <h2 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent truncate">
-                  Flexi Furnish Hub
+                  {storeSettings.storeName}
                 </h2>
                 <p className="text-sm text-sidebar-foreground/70 font-medium truncate flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-sm"></span>

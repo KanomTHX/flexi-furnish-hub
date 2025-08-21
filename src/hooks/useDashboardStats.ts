@@ -136,14 +136,7 @@ export const useDashboardStats = () => {
     fetchStats();
   }, []);
 
-  // Auto-refresh every 5 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchStats();
-    }, 5 * 60 * 1000); // 5 minutes
-
-    return () => clearInterval(interval);
-  }, []);
+  // Removed auto-refresh - data will only be fetched on mount and manual refresh
 
   // Manual refresh function
   const refreshStats = () => {

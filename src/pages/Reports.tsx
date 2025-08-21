@@ -46,9 +46,12 @@ import {
   FilePlus
 } from 'lucide-react';
 import {
-  exportSalesReportToCSV,
-  exportInventoryReportToCSV,
-  exportFinancialReportToCSV
+  exportSalesReportToExcel,
+  exportSalesReportToPDF,
+  exportInventoryReportToExcel,
+  exportInventoryReportToPDF,
+  exportFinancialReportToExcel,
+  exportFinancialReportToPDF
 } from '@/utils/reportHelpers';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -128,27 +131,51 @@ const Reports: React.FC = () => {
   };
 
   // Export functions
-  const handleExportSalesReport = () => {
-    exportSalesReportToCSV(salesReports);
+  const handleExportSalesReportToExcel = () => {
+    exportSalesReportToExcel(salesReports);
     toast({
       title: "ส่งออกสำเร็จ",
-      description: "รายงานยอดขายถูกส่งออกเป็น CSV แล้ว",
+      description: "รายงานยอดขายถูกส่งออกเป็น Excel แล้ว",
     });
   };
 
-  const handleExportInventoryReport = () => {
-    exportInventoryReportToCSV(inventoryReports);
+  const handleExportSalesReportToPDF = () => {
+    exportSalesReportToPDF(salesReports);
     toast({
       title: "ส่งออกสำเร็จ",
-      description: "รายงานสต็อกถูกส่งออกเป็น CSV แล้ว",
+      description: "รายงานยอดขายถูกส่งออกเป็น PDF แล้ว",
     });
   };
 
-  const handleExportFinancialReport = () => {
-    exportFinancialReportToCSV(financialReports);
+  const handleExportInventoryReportToExcel = () => {
+    exportInventoryReportToExcel(inventoryReports);
     toast({
       title: "ส่งออกสำเร็จ",
-      description: "รายงานการเงินถูกส่งออกเป็น CSV แล้ว",
+      description: "รายงานสต็อกถูกส่งออกเป็น Excel แล้ว",
+    });
+  };
+
+  const handleExportInventoryReportToPDF = () => {
+    exportInventoryReportToPDF(inventoryReports);
+    toast({
+      title: "ส่งออกสำเร็จ",
+      description: "รายงานสต็อกถูกส่งออกเป็น PDF แล้ว",
+    });
+  };
+
+  const handleExportFinancialReportToExcel = () => {
+    exportFinancialReportToExcel(financialReports);
+    toast({
+      title: "ส่งออกสำเร็จ",
+      description: "รายงานการเงินถูกส่งออกเป็น Excel แล้ว",
+    });
+  };
+
+  const handleExportFinancialReportToPDF = () => {
+    exportFinancialReportToPDF(financialReports);
+    toast({
+      title: "ส่งออกสำเร็จ",
+      description: "รายงานการเงินถูกส่งออกเป็น PDF แล้ว",
     });
   };
 
@@ -439,16 +466,15 @@ const Reports: React.FC = () => {
                 <h2 className="text-xl font-semibold">รายงานยอดขาย</h2>
                 <div className="flex gap-2">
                   <Button 
-                    onClick={handleExportSalesReport} 
+                    onClick={handleExportSalesReportToExcel} 
                     variant="outline"
                     size="sm"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    ส่งออก CSV
+                    ส่งออก Excel
                   </Button>
                   <Button 
-                    onClick={() => handleExportToPDF('sales')} 
-                    disabled={isExporting}
+                    onClick={handleExportSalesReportToPDF} 
                     variant="outline"
                     size="sm"
                   >
@@ -467,16 +493,15 @@ const Reports: React.FC = () => {
                 <h2 className="text-xl font-semibold">รายงานสต็อกสินค้า</h2>
                 <div className="flex gap-2">
                   <Button 
-                    onClick={handleExportInventoryReport} 
+                    onClick={handleExportInventoryReportToExcel} 
                     variant="outline"
                     size="sm"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    ส่งออก CSV
+                    ส่งออก Excel
                   </Button>
                   <Button 
-                    onClick={() => handleExportToPDF('inventory')} 
-                    disabled={isExporting}
+                    onClick={handleExportInventoryReportToPDF} 
                     variant="outline"
                     size="sm"
                   >
@@ -488,7 +513,7 @@ const Reports: React.FC = () => {
               <InventoryReports
                 inventoryReports={inventoryReports}
                 onGenerateReport={() => handleGenerateReport('inventory')}
-                onExportReport={handleExportInventoryReport}
+                onExportReport={handleExportInventoryReportToExcel}
                 loading={loading}
               />
             </div>
@@ -500,16 +525,15 @@ const Reports: React.FC = () => {
                 <h2 className="text-xl font-semibold">รายงานการเงิน</h2>
                 <div className="flex gap-2">
                   <Button 
-                    onClick={handleExportFinancialReport} 
+                    onClick={handleExportFinancialReportToExcel} 
                     variant="outline"
                     size="sm"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    ส่งออก CSV
+                    ส่งออก Excel
                   </Button>
                   <Button 
-                    onClick={() => handleExportToPDF('financial')} 
-                    disabled={isExporting}
+                    onClick={handleExportFinancialReportToPDF} 
                     variant="outline"
                     size="sm"
                   >
@@ -541,7 +565,7 @@ const Reports: React.FC = () => {
                 onExportReport={() => {
                   toast({
                     title: "ส่งออกสำเร็จ",
-                    description: "รายงานลูกค้าถูกส่งออกเป็น CSV แล้ว",
+                    description: "รายงานลูกค้าถูกส่งออกเป็น Excel แล้ว",
                   });
                 }}
               />

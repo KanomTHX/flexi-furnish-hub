@@ -650,9 +650,7 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerAdded }: AddCu
                        onAddressChange={handleGuarantorAddressChange}
                        required={true}
                      />
-                     {errors.guarantorFullAddress && (
-                       <p className="text-sm text-red-500">{errors.guarantorFullAddress}</p>
-                     )}
+
                   </div>
                 </div>
 

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useClaims } from '@/hooks/useClaims';
-import { exportToCSV } from '@/utils/reportHelpers';
+import { exportToExcel, exportToPDF } from '@/utils/reportHelpers';
 import {
   FileText,
   Download,
@@ -71,11 +71,11 @@ export function ClaimsReport({ className }: ClaimsReportProps) {
         'รายละเอียด': claim.issueDescription
       }));
       
-      exportToCSV(csvData, `claims-report-${new Date().toISOString().split('T')[0]}.csv`);
+      exportToExcel(csvData, `claims-report-${new Date().toISOString().split('T')[0]}`);
       
       toast({
         title: 'ส่งออกสำเร็จ',
-        description: 'รายงานเคลมถูกส่งออกเป็นไฟล์ CSV แล้ว'
+        description: 'รายงานเคลมถูกส่งออกเป็นไฟล์ Excel แล้ว'
       });
     } catch (error) {
       toast({

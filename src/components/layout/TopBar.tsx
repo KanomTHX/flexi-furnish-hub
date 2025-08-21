@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NotificationButton } from '@/components/ui/NotificationButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ export function TopBar({
   isOnline = true 
 }: TopBarProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     // Handle logout logic here
@@ -32,13 +34,15 @@ export function TopBar({
   };
 
   const handleSettings = () => {
-    // Handle settings navigation
-    console.log('Opening settings...');
+    navigate('/settings');
   };
 
   const handleProfile = () => {
-    // Handle profile navigation
-    console.log('Opening profile...');
+    navigate('/profile');
+  };
+
+  const handleActivity = () => {
+    navigate('/activity');
   };
 
   return (

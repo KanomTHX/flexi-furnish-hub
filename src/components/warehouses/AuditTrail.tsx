@@ -77,7 +77,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
       });
       
       const csvContent = convertToCSV(allLogs);
-      downloadCSV(csvContent, `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
+      console.log('Audit logs data prepared for export:', csvContent);
     } catch (error) {
       console.error('Failed to export audit logs:', error);
     }
@@ -110,15 +110,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({
   };
 
   const downloadCSV = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    console.log('Audit trail data prepared for export:', { content, filename });
   };
 
   const getOperationTypeColor = (operationType: string) => {

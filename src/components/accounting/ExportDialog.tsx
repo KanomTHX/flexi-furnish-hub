@@ -39,7 +39,7 @@ interface ExportDialogProps {
 }
 
 export function ExportDialog({ open, onOpenChange, exportType, data, title }: ExportDialogProps) {
-  const [format, setFormat] = useState<'excel' | 'pdf' | 'csv'>('excel');
+  const [format, setFormat] = useState<'excel' | 'pdf'>('excel');
   const [includeDetails, setIncludeDetails] = useState(true);
   const [includeSummary, setIncludeSummary] = useState(true);
   const [includeWatermark, setIncludeWatermark] = useState(false);
@@ -50,13 +50,13 @@ export function ExportDialog({ open, onOpenChange, exportType, data, title }: Ex
   const formatIcons = {
     excel: FileSpreadsheet,
     pdf: FileText,
-    csv: File
+
   };
 
   const formatLabels = {
     excel: 'Excel (.xlsx)',
     pdf: 'PDF (.pdf)',
-    csv: 'CSV (.csv)'
+
   };
 
   const exportTypeLabels = {
@@ -159,7 +159,7 @@ export function ExportDialog({ open, onOpenChange, exportType, data, title }: Ex
           {/* Format Selection */}
           <div className="space-y-2">
             <Label htmlFor="format">รูปแบบไฟล์</Label>
-            <Select value={format} onValueChange={(value: 'excel' | 'pdf' | 'csv') => setFormat(value)}>
+            <Select value={format} onValueChange={(value: 'excel' | 'pdf') => setFormat(value)}>
               <SelectTrigger>
                 <SelectValue>
                   <div className="flex items-center gap-2">
@@ -247,9 +247,7 @@ export function ExportDialog({ open, onOpenChange, exportType, data, title }: Ex
             {format === 'pdf' && (
               <p>ไฟล์ PDF เหมาะสำหรับการพิมพ์และการแชร์ที่ไม่ต้องการแก้ไข</p>
             )}
-            {format === 'csv' && (
-              <p>ไฟล์ CSV เหมาะสำหรับการนำเข้าข้อมูลในโปรแกรมอื่น</p>
-            )}
+                 )}
           </div>
         </div>
 

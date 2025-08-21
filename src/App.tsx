@@ -33,6 +33,9 @@ const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const LogAnalysis = lazy(() => import("./pages/LogAnalysis"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Activity = lazy(() => import("./pages/Activity"));
 
 // Testing components would go here if needed
 
@@ -179,6 +182,33 @@ const App = () => {
                 <AdminLayout>
                   <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการวิเคราะห์ Log..." />}>
                     <LogAnalysis />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดโปรไฟล์..." />}>
+                    <Profile />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดการตั้งค่า..." />}>
+                    <Settings />
+                  </SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/activity" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper fallback={<LoadingSpinner text="กำลังโหลดกิจกรรมล่าสุด..." />}>
+                    <Activity />
                   </SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>

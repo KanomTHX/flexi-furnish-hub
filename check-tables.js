@@ -80,6 +80,55 @@ async function checkTables() {
         console.log('📄 โครงสร้างข้อมูล:', Object.keys(productInventory[0]));
       } else {
         console.log('📄 ตารางว่าง');
+        // ตรวจสอบโครงสร้างตารางแม้ว่าจะว่าง
+        const { data: schema, error: schemaError } = await supabase
+          .from('product_inventory')
+          .select('*')
+          .limit(0);
+        if (!schemaError) {
+          console.log('📄 โครงสร้างตาราง: ตรวจสอบได้');
+        }
+      }
+    }
+
+    // ตรวจสอบตาราง warehouses
+    console.log('\n📋 ตรวจสอบตาราง warehouses:');
+    const { data: warehouses, error: warehouseError } = await supabase
+      .from('warehouses')
+      .select('*')
+      .limit(1);
+    
+    if (warehouseError) {
+      console.log('❌ ตาราง warehouses:', warehouseError.message);
+    } else {
+      console.log('✅ ตาราง warehouses: มีอยู่');
+      if (warehouses.length > 0) {
+        console.log('📄 โครงสร้างข้อมูล:', Object.keys(warehouses[0]));
+      } else {
+        console.log('📄 ตารางว่าง');
+      }
+    }
+
+    // ตรวจสอบความสัมพันธ์ระหว่าง product_inventory และ warehouses
+    console.log('\n📋 ตรวจสอบความสัมพันธ์ product_inventory กับ warehouses:');
+    const { data: inventoryWithWarehouse, error: relationError } = await supabase
+      .from('product_inventory')
+      .select(`
+        id,
+        warehouse_id,
+        warehouses(
+          id,
+          name
+        )
+      `)
+      .limit(1);
+    
+    if (relationError) {
+      console.log('❌ ความสัมพันธ์:', relationError.message);
+    } else {
+      console.log('✅ ความสัมพันธ์: ใช้งานได้');
+      if (inventoryWithWarehouse.length > 0) {
+        console.log('📄 ตัวอย่างข้อมูล:', inventoryWithWarehouse[0]);
       }
     }
     

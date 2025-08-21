@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Package, Plus, Eye, Search } from 'lucide-react';
+import { Package, Plus, Eye, Search, Star } from 'lucide-react';
 import { Product } from '@/types/pos';
 import { SerialNumber } from '@/types/serialNumber';
 import { useSupabasePOS, SupabaseProduct } from '@/hooks/useSupabasePOS';
 import { useBranchData } from '@/hooks/useBranchData';
 import { useToast } from '@/hooks/use-toast';
+import { addProductToFavorites } from './FavoriteProducts';
 
 interface CategorySearchProps {
   onAddToCart: (product: Product, serialNumbers?: SerialNumber[]) => void;
@@ -291,8 +292,41 @@ export function CategorySearch({ onAddToCart, onProductSelect }: CategorySearchP
                               variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                const success = addProductToFavorites({
+                                  id: product.id,
+                                  name: product.name,
+                                  sku: product.product_code,
+                                  price: product.selling_price,
+                                  stock: product.stock,
+                                  category: product.category?.name || 'ไม่ระบุ',
+                                  description: product.description || '',
+                                  barcode: product.barcode || ''
+                                }, currentBranch.id);
+                                
+                                if (success) {
+                                  toast({
+                                    title: "เพิ่มในรายการโปรดแล้ว",
+                                    description: `${product.name} ถูกเพิ่มในรายการโปรดแล้ว`
+                                  });
+                                } else {
+                                  toast({
+                                    title: "สินค้านี้อยู่ในรายการโปรดแล้ว",
+                                    description: `${product.name} อยู่ในรายการโปรดของคุณแล้ว`
+                                  });
+                                }
+                              }}
+                              title="เพิ่มเข้ารายการโปรด"
+                            >
+                              <Star className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleProductSelect(product);
                               }}
+                              title="ดูรายละเอียด"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -307,6 +341,7 @@ export function CategorySearch({ onAddToCart, onProductSelect }: CategorySearchP
                                 }
                               }}
                               disabled={product.stock === 0}
+                              title="เพิ่มลงตะกร้า"
                             >
                               <Plus className="w-4 h-4" />
                             </Button>

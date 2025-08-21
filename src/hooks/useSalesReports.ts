@@ -125,21 +125,8 @@ export function useSalesReports(): UseSalesReportsReturn {
       ])
     ];
 
-    // แปลงเป็น CSV string
-    const csvContent = csvData.map(row => 
-      row.map(cell => `"${cell}"`).join(',')
-    ).join('\n');
-
-    // สร้างและดาวน์โหลดไฟล์
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `sales-report-${currentBranch.name}-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // เตรียมข้อมูลสำหรับส่งออก
+    console.log('Sales report data prepared for export:', csvData);
 
     toast({
       title: 'สำเร็จ',

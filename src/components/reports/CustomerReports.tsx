@@ -40,10 +40,12 @@ export const CustomerReports: React.FC<CustomerReportsProps> = ({
   const {
     customers,
     customerStats,
-    calculateCustomerAnalytics,
-    searchCustomers,
-    filterCustomers,
-    getOverdueCustomers,
+    actions: {
+      calculateCustomerAnalytics,
+      searchCustomers,
+      filterCustomers,
+      getOverdueCustomers
+    },
     loading: customersLoading
   } = useCustomers();
 
@@ -58,7 +60,7 @@ export const CustomerReports: React.FC<CustomerReportsProps> = ({
   // คำนวณสถิติลูกค้า
   const analytics = calculateCustomerAnalytics();
   const overdueCustomers = getOverdueCustomers();
-  const stats = customerStats();
+  const stats = customerStats;
 
   // กรองข้อมูลลูกค้า
   useEffect(() => {
@@ -87,29 +89,18 @@ export const CustomerReports: React.FC<CustomerReportsProps> = ({
 
   // ฟังก์ชันส่งออกรายงาน
   const handleExportCustomerReport = () => {
-    const csvContent = [
-      ['ชื่อ-นามสกุล', 'เบอร์โทร', 'อีเมล', 'คะแนนเครดิต', 'ระดับความเสี่ยง', 'ยอดให้เครดิต', 'ยอดค้างชำระ', 'วันที่เป็นลูกค้า'],
-      ...filteredCustomers.map(customer => [
-        customer.name,
-        customer.phone,
-        customer.email || '',
-        customer.creditScore?.toString() || '0',
-        customer.riskLevel || 'medium',
-        customer.totalFinanced?.toLocaleString() || '0',
-        customer.overdueAmount?.toLocaleString() || '0',
-        format(new Date(customer.customerSince), 'dd/MM/yyyy', { locale: th })
-      ])
-    ].map(row => row.join(',')).join('\n');
+    const exportData = filteredCustomers.map(customer => ({
+      'ชื่อ-นามสกุล': customer.name,
+      'เบอร์โทร': customer.phone,
+      'อีเมล': customer.email || '',
+      'คะแนนเครดิต': customer.creditScore?.toString() || '0',
+      'ระดับความเสี่ยง': customer.riskLevel || 'medium',
+      'ยอดให้เครดิต': customer.totalFinanced?.toLocaleString() || '0',
+      'ยอดค้างชำระ': customer.overdueAmount?.toLocaleString() || '0',
+      'วันที่เป็นลูกค้า': format(new Date(customer.customerSince), 'dd/MM/yyyy', { locale: th })
+    }));
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `customer-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    console.log('Customer report data prepared for export:', exportData);
 
     if (onExportReport) {
       onExportReport();
@@ -241,7 +232,7 @@ export const CustomerReports: React.FC<CustomerReportsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">คะแนนเครดิตเฉลี่ย</p>
-                <p className="text-2xl font-bold">{analytics.averageMetrics.creditScore.toFixed(0)}</p>
+                <p className="text-2xl font-bold">{analytics.averageMetrics?.creditScore?.toFixed(0) || '0'}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   จาก 850 คะแนน
                 </p>

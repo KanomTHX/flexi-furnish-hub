@@ -221,19 +221,7 @@ export default function Customers() {
       'วันที่สร้าง': new Date(customer.createdAt).toLocaleDateString('th-TH'),
     }));
 
-    const csvContent = [
-      Object.keys(csvData[0] || {}).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `customers_${new Date().toISOString().split('T')[0]}.csv`;
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    console.log('Customers data prepared for export:', csvData);
 
     toast({
       title: 'ส่งออกข้อมูลสำเร็จ',

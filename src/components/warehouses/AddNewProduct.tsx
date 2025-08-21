@@ -16,7 +16,10 @@ import {
   Hash,
   DollarSign,
   Tag,
-  FileText
+  FileText,
+  Upload,
+  X,
+  Image
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +36,7 @@ interface NewProduct {
   max_stock_level: number;
   unit: string;
   status: string;
+  image_url?: string;
 }
 
 interface AddNewProductProps {
@@ -56,12 +60,15 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
     min_stock_level: defaultData?.min_stock_level || 5,
     max_stock_level: defaultData?.max_stock_level || 1000,
     unit: defaultData?.unit || 'piece',
-    status: 'active'
+    status: 'active',
+    image_url: defaultData?.image_url || ''
   });
   
   // UI state
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   // Categories
   const categories = [
@@ -91,6 +98,69 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "ไฟล์ไม่ถูกต้อง",
+          description: "กรุณาเลือกไฟล์รูปภาพเท่านั้น",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "ไฟล์ใหญ่เกินไป",
+          description: "กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview('');
+    setFormData(prev => ({ ...prev, image_url: '' }));
+  };
+
+  const uploadImage = async (file: File, productCode: string): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${productCode}-${Date.now()}.${fileExt}`;
+      const filePath = `products/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      return null;
     }
   };
 
@@ -191,10 +261,26 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
         return;
       }
 
+      let productData = { ...formData };
+
+      // Upload image if selected
+      if (selectedImage) {
+        const imageUrl = await uploadImage(selectedImage, formData.product_code);
+        if (imageUrl) {
+          productData.image_url = imageUrl;
+        } else {
+          toast({
+            title: "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ",
+            description: "ระบบจะบันทึกข้อมูลสินค้าโดยไม่มีรูปภาพ",
+            variant: "destructive",
+          });
+        }
+      }
+
       // Insert new product
       const { data: newProduct, error: insertError } = await supabase
         .from('products')
-        .insert([formData])
+        .insert([productData])
         .select()
         .single();
 
@@ -239,9 +325,12 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
       min_stock_level: 5,
       max_stock_level: 1000,
       unit: 'piece',
-      status: 'active'
+      status: 'active',
+      image_url: ''
     });
     setErrors({});
+    setSelectedImage(null);
+    setImagePreview('');
   };
 
   const handleClose = () => {
@@ -317,6 +406,56 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
               placeholder="รายละเอียดเพิ่มเติมเกี่ยวกับสินค้า"
               rows={3}
             />
+          </div>
+
+          {/* Product Image */}
+          <div className="space-y-2">
+            <Label>รูปภาพสินค้า</Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+              {imagePreview ? (
+                <div className="space-y-4">
+                  <div className="relative inline-block">
+                    <img
+                      src={imagePreview}
+                      alt="Product preview"
+                      className="w-32 h-32 object-cover rounded-lg border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                      onClick={removeImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-600">{selectedImage?.name}</p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <Image className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="mt-4">
+                    <Label htmlFor="image-upload" className="cursor-pointer">
+                      <div className="flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800">
+                        <Upload className="h-4 w-4" />
+                        คลิกเพื่อเลือกรูปภาพ
+                      </div>
+                    </Label>
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    รองรับไฟล์ JPG, PNG, GIF ขนาดไม่เกิน 5MB
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Category and Unit */}

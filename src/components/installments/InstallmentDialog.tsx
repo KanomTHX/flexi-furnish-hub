@@ -94,7 +94,7 @@ export function InstallmentDialog({
         // แปลงข้อมูลจากฐานข้อมูลให้ตรงกับ InstallmentPlan type
         const mappedPlans = plans.map(plan => ({
           id: plan.id,
-          name: plan.plan_name,
+          name: plan.name, // แก้ไขจาก plan.plan_name เป็น plan.name
           planNumber: plan.plan_number,
           months: plan.number_of_installments,
           interestRate: plan.interest_rate,
@@ -980,15 +980,31 @@ export function InstallmentDialog({
         </CardHeader>
         <CardContent>
           <SerialNumberSelector
-            selectedSerialNumbers={selectedSerialNumbers}
-            onSelectionChange={setSelectedSerialNumbers}
-            contractAmount={contractAmount}
+            branchId="main-branch"
+            selectedProducts={[]}
+            onSelectionChange={(selections) => {
+              // แปลง SerialNumberSelection[] เป็น SerialNumber[]
+              const serialNumbers = selections.flatMap(selection => 
+                selection.selectedSerialNumbers.map(snId => ({
+                  id: snId,
+                  serialNumber: snId,
+                  productId: selection.productId,
+                  status: 'available' as const,
+                  condition: 'new' as const,
+                  warehouseId: 'main-warehouse',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString()
+                }))
+              );
+              setSelectedSerialNumbers(serialNumbers);
+            }}
+            initialSelections={[]}
           />
         </CardContent>
       </Card>
 
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => setStep('serials')}>
+        <Button variant="outline" onClick={() => setStep('plan')}>
           ย้อนกลับ
         </Button>
         <Button

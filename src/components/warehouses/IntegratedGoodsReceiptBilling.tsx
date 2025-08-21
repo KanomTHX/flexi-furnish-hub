@@ -38,6 +38,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AddNewProduct } from './AddNewProduct';
 import { useBranchData } from '@/hooks/useBranchData';
+import { useAuth } from '@/hooks/useAuth';
 
 // Types
 interface Product {
@@ -94,6 +95,7 @@ interface IntegratedGoodsReceiptBillingProps {
 export function IntegratedGoodsReceiptBilling({ onComplete, defaultBranchId, branchId }: IntegratedGoodsReceiptBillingProps) {
   const { toast } = useToast();
   const { branches } = useBranchData();
+  const { user } = useAuth();
   
   // State management
   const [products, setProducts] = useState<Product[]>([]);
@@ -112,7 +114,7 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultBranchId, bra
   ]);
   
   // Form state
-  const [selectedBranchId, setSelectedBranchId] = useState<string>(defaultBranchId || '');
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(defaultBranchId || branchId || user?.branch_id || '');
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -128,6 +130,13 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultBranchId, bra
   const [showAddSupplier, setShowAddSupplier] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [receiptData, setReceiptData] = useState<any>(null);
+
+  // Set branch from user data
+  useEffect(() => {
+    if (user?.branch_id && !selectedBranchId) {
+      setSelectedBranchId(user.branch_id);
+    }
+  }, [user, selectedBranchId]);
 
   // Load initial data
   useEffect(() => {
@@ -635,21 +644,16 @@ export function IntegratedGoodsReceiptBilling({ onComplete, defaultBranchId, bra
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="branch">สาขา *</Label>
-                  <Select value={selectedBranchId} onValueChange={setSelectedBranchId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="เลือกสาขา" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {branches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id}>
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4" />
-                            {branch.name} ({branch.code})
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Input
+                      id="branch"
+                      value={selectedBranchId ? `${branches.find(b => b.id === selectedBranchId)?.name || ''} (${branches.find(b => b.id === selectedBranchId)?.code || ''})`  : 'กำลังโหลด...'}
+                      readOnly
+                      className="pl-10 bg-gray-50 cursor-not-allowed"
+                    />
+                    <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  </div>
+                  <p className="text-xs text-gray-500">สาขาถูกกำหนดตามบัญชีผู้ใช้ของคุณ</p>
                   {errors.branch && (
                     <p className="text-sm text-red-500">{errors.branch}</p>
                   )}

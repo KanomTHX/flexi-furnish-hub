@@ -11,6 +11,109 @@ import {
 // TODO: Replace with real data fetching from Supabase
 // import { supabase } from '@/lib/supabase';
 
+// Mock data for development
+const mockSalesReports: SalesReport[] = [
+  {
+    id: 'sales-001',
+    date: new Date('2024-01-15'),
+    totalSales: 125000,
+    totalOrders: 45,
+    averageOrderValue: 2777.78,
+    topProducts: [
+      {
+        productId: 'prod-001',
+        productName: 'โซฟา 3 ที่นั่ง Modern',
+        quantity: 8,
+        revenue: 32000,
+        profit: 8000
+      }
+    ],
+    salesByCategory: [
+      { category: 'โซฟา', quantity: 12, revenue: 45000, percentage: 36 },
+      { category: 'เตียง', quantity: 8, revenue: 35000, percentage: 28 }
+    ],
+    salesByEmployee: [
+      {
+        employeeId: 'emp-001',
+        employeeName: 'สมชาย ใจดี',
+        totalSales: 45000,
+        totalOrders: 15,
+        commission: 2250
+      }
+    ]
+  }
+];
+
+const mockInventoryReports: InventoryReport[] = [
+  {
+    id: 'inv-001',
+    date: new Date('2024-01-15'),
+    totalProducts: 150,
+    totalValue: 2500000,
+    lowStockItems: [
+      {
+        productId: 'prod-004',
+        productName: 'เก้าอี้ทำงาน Ergonomic',
+        currentStock: 3,
+        minimumStock: 10,
+        reorderLevel: 15
+      }
+    ],
+    slowMovingItems: [
+      {
+        productId: 'prod-006',
+        productName: 'ตู้โชว์ Vintage',
+        lastSaleDate: new Date('2023-11-15'),
+        currentStock: 5,
+        daysWithoutSale: 45
+      }
+    ],
+    stockMovements: []
+  }
+];
+
+const mockFinancialReports: FinancialReport[] = [
+  {
+    id: 'fin-001',
+    period: 'มกราคม 2024',
+    totalRevenue: 500000,
+    totalExpenses: 350000,
+    netProfit: 150000,
+    profitMargin: 30,
+    expenseBreakdown: [
+      { category: 'เงินเดือน', amount: 200000, percentage: 57.14 },
+      { category: 'ค่าเช่า', amount: 50000, percentage: 14.29 }
+    ],
+    revenueBreakdown: [
+      { category: 'ขายสินค้า', amount: 450000, percentage: 90 },
+      { category: 'บริการ', amount: 50000, percentage: 10 }
+    ]
+  }
+];
+
+const mockCustomReportConfigs: CustomReportConfig[] = [
+  {
+    id: 'custom-001',
+    name: 'รายงานยอดขายรายเดือน',
+    description: 'รายงานสรุปยอดขายแยกตามเดือน',
+    reportType: 'sales',
+    filters: {
+      dateRange: { start: new Date('2024-01-01'), end: new Date('2024-01-31') },
+      categories: ['โซฟา', 'เตียง'],
+      employees: ['emp-001']
+    },
+    schedule: {
+      frequency: 'monthly',
+      dayOfMonth: 1,
+      time: '09:00',
+      recipients: ['manager@company.com']
+    },
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    isActive: true
+  }
+];
+
 export const useReports = () => {
   const [salesReports, setSalesReports] = useState<SalesReport[]>([]);
   const [inventoryReports, setInventoryReports] = useState<InventoryReport[]>([]);

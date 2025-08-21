@@ -173,7 +173,7 @@ export function ChartOfAccounts({
       propOnExport();
     } else {
       // Default export functionality
-      const csvData = accounts.map(account => ({
+      const exportData = accounts.map(account => ({
         code: account.code,
         name: account.name,
         type: account.type,
@@ -182,22 +182,8 @@ export function ChartOfAccounts({
         isActive: account.isActive
       }));
       
-      const csv = [
-        'Code,Name,Type,Category,Balance,Active',
-        ...csvData.map(row => 
-          `${row.code},"${row.name}",${row.type},${row.category},${row.balance},${row.isActive}`
-        )
-      ].join('\n');
-      
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'chart-of-accounts.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      toast.success('ส่งออกข้อมูลสำเร็จ');
+      console.log('Chart of accounts data prepared for export:', exportData);
+      toast.success('เตรียมข้อมูลส่งออกสำเร็จ');
     }
   };
 

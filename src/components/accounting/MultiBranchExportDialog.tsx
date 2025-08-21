@@ -35,7 +35,7 @@ interface MultiBranchExportDialogProps {
 }
 
 export function MultiBranchExportDialog({ open, onOpenChange }: MultiBranchExportDialogProps) {
-  const [format, setFormat] = useState<'excel' | 'pdf' | 'csv'>('excel');
+  const [format, setFormat] = useState<'excel' | 'pdf'>('excel');
   const [reportType, setReportType] = useState<'profit_loss' | 'balance_sheet' | 'cash_flow' | 'consolidated'>('consolidated');
   const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
   const [period, setPeriod] = useState<AccountingPeriod>({
@@ -59,13 +59,13 @@ export function MultiBranchExportDialog({ open, onOpenChange }: MultiBranchExpor
   const formatIcons = {
     excel: FileSpreadsheet,
     pdf: FileText,
-    csv: File
+
   };
 
   const formatLabels = {
     excel: 'Excel (.xlsx)',
     pdf: 'PDF (.pdf)',
-    csv: 'CSV (.csv)'
+
   };
 
   const reportTypeLabels = {
@@ -318,7 +318,7 @@ export function MultiBranchExportDialog({ open, onOpenChange }: MultiBranchExpor
             {/* Format Selection */}
             <div className="space-y-2">
               <Label htmlFor="format">รูปแบบไฟล์</Label>
-              <Select value={format} onValueChange={(value: 'excel' | 'pdf' | 'csv') => setFormat(value)}>
+              <Select value={format} onValueChange={(value: 'excel' | 'pdf') => setFormat(value)}>
                 <SelectTrigger>
                   <SelectValue>
                     <div className="flex items-center gap-2">
@@ -420,9 +420,7 @@ export function MultiBranchExportDialog({ open, onOpenChange }: MultiBranchExpor
               {format === 'pdf' && (
                 <p>ไฟล์ PDF จะรวมข้อมูลทุกสาขาในเอกสารเดียว เหมาะสำหรับการนำเสนอ</p>
               )}
-              {format === 'csv' && (
-                <p>ไฟล์ CSV จะส่งออกเป็นไฟล์แยกสำหรับแต่ละสาขา พร้อมไฟล์สรุปรวม</p>
-              )}
+                       )}
             </div>
           </div>
         </ScrollArea>
