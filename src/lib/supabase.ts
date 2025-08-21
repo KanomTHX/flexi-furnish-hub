@@ -115,8 +115,6 @@ export interface Product {
   name: string
   description?: string
   unit: string
-  cost_price?: number
-  selling_price?: number
   barcode?: string
   status: 'active' | 'inactive'
   created_at: string

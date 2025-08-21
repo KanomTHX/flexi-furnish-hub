@@ -8,15 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import SupplierServiceSimple from '@/services/supplierServiceSimple';
 
-// Add Supplier Modal
+// Add Supplier Modal for IntegratedGoodsReceiptBilling
 export function AddSupplierModal({ 
-  open, 
-  onOpenChange, 
-  onSuccess 
+  branchId,
+  onSupplierAdded,
+  onClose
 }: { 
-  open: boolean; 
-  onOpenChange: (open: boolean) => void; 
-  onSuccess: () => void; 
+  branchId?: string;
+  onSupplierAdded: () => void;
+  onClose: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -42,7 +42,190 @@ export function AddSupplierModal({
 
     try {
       setLoading(true);
-      await SupplierServiceSimple.createSupplier(formData);
+      await SupplierServiceSimple.createSupplier(formData, branchId);
+      toast.success('เพิ่มซัพพลายเออร์สำเร็จ');
+      onSupplierAdded();
+      onClose();
+      setFormData({
+        supplierCode: '',
+        supplierName: '',
+        contactPerson: '',
+        phone: '',
+        email: '',
+        address: '',
+        taxId: '',
+        paymentTerms: 30,
+        creditLimit: 0,
+        notes: ''
+      });
+    } catch (error: any) {
+      toast.error(error.message || 'เกิดข้อผิดพลาดในการเพิ่มซัพพลายเออร์');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="supplierCode">รหัสซัพพลายเออร์ *</Label>
+          <Input
+            id="supplierCode"
+            value={formData.supplierCode}
+            onChange={(e) => setFormData({ ...formData, supplierCode: e.target.value })}
+            placeholder="SUP001"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="supplierName">ชื่อซัพพลายเออร์ *</Label>
+          <Input
+            id="supplierName"
+            value={formData.supplierName}
+            onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
+            placeholder="ชื่อบริษัทซัพพลายเออร์"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="contactPerson">ผู้ติดต่อ</Label>
+          <Input
+            id="contactPerson"
+            value={formData.contactPerson}
+            onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+            placeholder="ชื่อผู้ติดต่อ"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">เบอร์โทรศัพท์</Label>
+          <Input
+            id="phone"
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            placeholder="02-xxx-xxxx"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="email">อีเมล</Label>
+        <Input
+          id="email"
+          type="email"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          placeholder="supplier@company.com"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="address">ที่อยู่</Label>
+        <Textarea
+          id="address"
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          placeholder="ที่อยู่ของซัพพลายเออร์"
+          rows={3}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="taxId">เลขประจำตัวผู้เสียภาษี</Label>
+          <Input
+            id="taxId"
+            value={formData.taxId}
+            onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
+            placeholder="1234567890123"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="paymentTerms">เงื่อนไขการชำระเงิน (วัน)</Label>
+          <Input
+            id="paymentTerms"
+            type="number"
+            value={formData.paymentTerms}
+            onChange={(e) => setFormData({ ...formData, paymentTerms: parseInt(e.target.value) || 0 })}
+            placeholder="30"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="creditLimit">วงเงินเครดิต</Label>
+        <Input
+          id="creditLimit"
+          type="number"
+          value={formData.creditLimit}
+          onChange={(e) => setFormData({ ...formData, creditLimit: parseFloat(e.target.value) || 0 })}
+          placeholder="0"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notes">หมายเหตุ</Label>
+        <Textarea
+          id="notes"
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          placeholder="หมายเหตุเพิ่มเติม..."
+          rows={2}
+        />
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <Button type="button" variant="outline" onClick={onClose}>
+          ยกเลิก
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'กำลังบันทึก...' : 'บันทึก'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// Legacy Add Supplier Modal
+export function AddSupplierModalLegacy({ 
+  open, 
+  onOpenChange, 
+  onSuccess,
+  branchId 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void; 
+  onSuccess: () => void;
+  branchId?: string; 
+}) {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    supplierCode: '',
+    supplierName: '',
+    contactPerson: '',
+    phone: '',
+    email: '',
+    address: '',
+    taxId: '',
+    paymentTerms: 30,
+    creditLimit: 0,
+    notes: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.supplierCode || !formData.supplierName) {
+      toast.error('กรุณากรอกรหัสซัพพลายเออร์และชื่อซัพพลายเออร์');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await SupplierServiceSimple.createSupplier(formData, branchId);
       toast.success('เพิ่มซัพพลายเออร์สำเร็จ');
       onSuccess();
       onOpenChange(false);

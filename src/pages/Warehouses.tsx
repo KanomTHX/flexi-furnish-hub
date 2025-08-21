@@ -63,10 +63,12 @@ import {
   ArrowRightLeft
 } from 'lucide-react';
 import { useBranchData } from '../hooks/useBranchData';
+import { useBranches } from '../hooks/useBranches';
 import { BranchSelector } from '../components/branch/BranchSelector';
 
 export default function Warehouses() {
   const { currentBranch } = useBranchData();
+  const { branches, loading: branchesLoading, refreshBranches } = useBranches();
   const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [warehouses, setWarehouses] = useState<any[]>([]);

@@ -373,8 +373,10 @@ export default function SupplierBilling() {
                         <TableHead>รหัส</TableHead>
                         <TableHead>ชื่อซัพพลายเออร์</TableHead>
                         <TableHead>ติดต่อ</TableHead>
+                        <TableHead>เลขประจำตัวผู้เสียภาษี</TableHead>
                         <TableHead className="text-right">ยอดค้างชำระ</TableHead>
                         <TableHead className="text-right">เครดิตลิมิต</TableHead>
+                        <TableHead>เงื่อนไขการชำระ</TableHead>
                         <TableHead>สถานะ</TableHead>
                         <TableHead>การดำเนินการ</TableHead>
                       </TableRow>
@@ -397,6 +399,11 @@ export default function SupplierBilling() {
                               {supplier.email && <p className="text-muted-foreground">{supplier.email}</p>}
                             </div>
                           </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {supplier.taxId || '-'}
+                            </span>
+                          </TableCell>
                           <TableCell className="text-right">
                             <span className={supplier.currentBalance > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>
                               {formatCurrency(supplier.currentBalance)}
@@ -404,6 +411,11 @@ export default function SupplierBilling() {
                           </TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(supplier.creditLimit)}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {supplier.paymentTerms} วัน
+                            </span>
                           </TableCell>
                           <TableCell>
                             {getStatusBadge(supplier.status)}

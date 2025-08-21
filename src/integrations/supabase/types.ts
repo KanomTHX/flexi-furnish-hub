@@ -1733,46 +1733,49 @@ export type Database = {
       }
       products: {
         Row: {
+          brand: string | null
           category_id: string | null
-          cost_price: number
+          color: string | null
           created_at: string | null
           description: string | null
           id: string
           max_stock_level: number | null
           min_stock_level: number | null
+          model: string | null
           name: string
           product_code: string
-          selling_price: number
           status: string | null
           unit: string | null
           updated_at: string | null
         }
         Insert: {
+          brand?: string | null
           category_id?: string | null
-          cost_price?: number
+          color?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           max_stock_level?: number | null
           min_stock_level?: number | null
+          model?: string | null
           name: string
           product_code: string
-          selling_price?: number
           status?: string | null
           unit?: string | null
           updated_at?: string | null
         }
         Update: {
+          brand?: string | null
           category_id?: string | null
-          cost_price?: number
+          color?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           max_stock_level?: number | null
           min_stock_level?: number | null
+          model?: string | null
           name?: string
           product_code?: string
-          selling_price?: number
           status?: string | null
           unit?: string | null
           updated_at?: string | null

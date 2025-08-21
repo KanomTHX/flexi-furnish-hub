@@ -23,20 +23,23 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useBranchData } from '@/hooks/useBranchData';
 
 // Types
 interface NewProduct {
   product_code: string;
   name: string;
   description?: string;
+  brand?: string;
+  color?: string;
+  model?: string;
   category?: string;
-  cost_price: number;
-  selling_price: number;
   min_stock_level: number;
   max_stock_level: number;
   unit: string;
   status: string;
   image_url?: string;
+  branch_id?: string;
 }
 
 interface AddNewProductProps {
@@ -48,15 +51,17 @@ interface AddNewProductProps {
 
 export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: AddNewProductProps) {
   const { toast } = useToast();
+  const { currentBranch } = useBranchData();
   
   // Form state
   const [formData, setFormData] = useState<NewProduct>({
     product_code: defaultData?.product_code || '',
     name: defaultData?.name || '',
     description: defaultData?.description || '',
+    brand: defaultData?.brand || '',
+    color: defaultData?.color || '',
+    model: defaultData?.model || '',
     category: defaultData?.category || 'เฟอร์นิเจอร์',
-    cost_price: defaultData?.cost_price || 0,
-    selling_price: defaultData?.selling_price || 0,
     min_stock_level: defaultData?.min_stock_level || 5,
     max_stock_level: defaultData?.max_stock_level || 1000,
     unit: defaultData?.unit || 'piece',
@@ -165,15 +170,14 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
   };
 
   const generateProductCode = () => {
-    if (formData.name && formData.category) {
-      // Generate code from category and name
-      const categoryCode = formData.category.substring(0, 3).toUpperCase();
-      const nameCode = formData.name.substring(0, 3).toUpperCase();
-      const timestamp = Date.now().toString().slice(-4);
-      const code = `${categoryCode}-${nameCode}-${timestamp}`;
-      
-      setFormData(prev => ({ ...prev, product_code: code }));
+    // Generate random 8-character code with letters and numbers
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    
+    setFormData(prev => ({ ...prev, product_code: code }));
   };
 
   const validateForm = (): boolean => {
@@ -197,17 +201,6 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
     }
 
     // Numeric validations
-    if (formData.cost_price < 0) {
-      newErrors.cost_price = 'ราคาทุนต้องไม่ติดลบ';
-    }
-
-    if (formData.selling_price < 0) {
-      newErrors.selling_price = 'ราคาขายต้องไม่ติดลบ';
-    }
-
-    if (formData.selling_price > 0 && formData.cost_price > formData.selling_price) {
-      newErrors.selling_price = 'ราคาขายควรมากกว่าราคาทุน';
-    }
 
     if (formData.min_stock_level < 0) {
       newErrors.min_stock_level = 'สต็อกขั้นต่ำต้องไม่ติดลบ';
@@ -261,7 +254,10 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
         return;
       }
 
-      let productData = { ...formData };
+      let productData = { 
+        ...formData,
+        branch_id: currentBranch?.id || null
+      };
 
       // Upload image if selected
       if (selectedImage) {
@@ -319,9 +315,10 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
       product_code: '',
       name: '',
       description: '',
+      brand: '',
+      color: '',
+      model: '',
       category: 'เฟอร์นิเจอร์',
-      cost_price: 0,
-      selling_price: 0,
       min_stock_level: 5,
       max_stock_level: 1000,
       unit: 'piece',
@@ -371,7 +368,7 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
                   variant="outline"
                   size="sm"
                   onClick={generateProductCode}
-                  disabled={!formData.name || !formData.category}
+                  title="สุ่มรหัสสินค้า"
                 >
                   <Hash className="h-4 w-4" />
                 </Button>
@@ -406,6 +403,39 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
               placeholder="รายละเอียดเพิ่มเติมเกี่ยวกับสินค้า"
               rows={3}
             />
+          </div>
+
+          {/* Brand, Color, and Model */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="brand">ยี่ห้อ</Label>
+              <Input
+                id="brand"
+                value={formData.brand || ''}
+                onChange={(e) => handleInputChange('brand', e.target.value)}
+                placeholder="เช่น IKEA, Index Living Mall"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="color">สี</Label>
+              <Input
+                id="color"
+                value={formData.color || ''}
+                onChange={(e) => handleInputChange('color', e.target.value)}
+                placeholder="เช่น น้ำตาล, ขาว, ดำ"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="model">รุ่น</Label>
+              <Input
+                id="model"
+                value={formData.model || ''}
+                onChange={(e) => handleInputChange('model', e.target.value)}
+                placeholder="เช่น Classic, Modern, Vintage"
+              />
+            </div>
           </div>
 
           {/* Product Image */}
@@ -508,48 +538,7 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
             </div>
           </div>
 
-          {/* Pricing */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cost_price">ราคาทุน (บาท)</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="cost_price"
-                  type="number"
-                  value={formData.cost_price}
-                  onChange={(e) => handleInputChange('cost_price', parseFloat(e.target.value) || 0)}
-                  placeholder="0.00"
-                  className={`pl-10 ${errors.cost_price ? 'border-red-500' : ''}`}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              {errors.cost_price && (
-                <p className="text-sm text-red-500">{errors.cost_price}</p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="selling_price">ราคาขาย (บาท)</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="selling_price"
-                  type="number"
-                  value={formData.selling_price}
-                  onChange={(e) => handleInputChange('selling_price', parseFloat(e.target.value) || 0)}
-                  placeholder="0.00"
-                  className={`pl-10 ${errors.selling_price ? 'border-red-500' : ''}`}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              {errors.selling_price && (
-                <p className="text-sm text-red-500">{errors.selling_price}</p>
-              )}
-            </div>
-          </div>
 
           {/* Stock Levels */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -586,18 +575,7 @@ export function AddNewProduct({ isOpen, onClose, onProductAdded, defaultData }: 
             </div>
           </div>
 
-          {/* Profit Margin Display */}
-          {formData.cost_price > 0 && formData.selling_price > 0 && (
-            <Alert>
-              <FileText className="h-4 w-4" />
-              <AlertDescription>
-                <div className="space-y-1">
-                  <div>กำไรต่อหน่วย: ฿{(formData.selling_price - formData.cost_price).toLocaleString()}</div>
-                  <div>อัตรากำไร: {(((formData.selling_price - formData.cost_price) / formData.cost_price) * 100).toFixed(2)}%</div>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
+
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">

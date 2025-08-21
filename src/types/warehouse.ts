@@ -255,8 +255,6 @@ export interface Product {
   brand?: string;
   model?: string;
   description?: string;
-  unitCost: number;
-  sellingPrice: number;
   barcode?: string;
   imageUrl?: string;
   isActive: boolean;

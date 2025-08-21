@@ -111,12 +111,12 @@ export function useSupplierBilling(options: UseSupplierBillingOptions = {}) {
   }, [toast]);
 
   // Create supplier
-  const createSupplier = useCallback(async (supplierData: CreateSupplierData) => {
+  const createSupplier = useCallback(async (supplierData: CreateSupplierData, branchId?: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      const newSupplier = await SupplierServiceSimple.createSupplier(supplierData);
+      const newSupplier = await SupplierServiceSimple.createSupplier(supplierData, branchId);
       
       // Refresh suppliers list
       await fetchSuppliers();

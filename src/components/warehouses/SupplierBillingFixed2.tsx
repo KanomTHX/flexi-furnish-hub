@@ -359,11 +359,15 @@ export default function SupplierBillingFixed2() {
                   <div className="space-y-4">
                     {suppliers.slice(0, 5).map((supplier) => (
                       <div key={supplier.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium">{supplier.supplierName}</p>
                           <p className="text-sm text-muted-foreground">
                             {supplier.supplierCode}
                           </p>
+                          <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
+                            <span>เลขประจำตัวผู้เสียภาษี: {supplier.taxId || '-'}</span>
+                            <span>เงื่อนไขการชำระ: {supplier.paymentTerms} วัน</span>
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="font-medium">{formatCurrency(supplier.currentBalance)}</p>

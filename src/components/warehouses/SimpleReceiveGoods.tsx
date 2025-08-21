@@ -97,7 +97,7 @@ export function SimpleReceiveGoods({ onReceiveComplete, defaultBranchId }: Simpl
       // Load products
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, product_code, name, description, cost_price, selling_price, status')
+        .select('id, product_code, name, description, status')
         .eq('status', 'active')
         .order('name');
 
@@ -128,13 +128,13 @@ export function SimpleReceiveGoods({ onReceiveComplete, defaultBranchId }: Simpl
         updatedItems[existingItemIndex].quantity * updatedItems[existingItemIndex].unitCost;
       setItems(updatedItems);
     } else {
-      // Add new item
+      // Add new item with default unit cost of 0 (to be set by supplier price)
       const newItem: ReceiveItem = {
         productId: product.id,
         product,
         quantity: 1,
-        unitCost: product.cost_price || product.selling_price || 1000,
-        totalCost: product.cost_price || product.selling_price || 1000
+        unitCost: 0,
+        totalCost: 0
       };
       setItems([...items, newItem]);
     }
@@ -442,9 +442,7 @@ export function SimpleReceiveGoods({ onReceiveComplete, defaultBranchId }: Simpl
                               รหัส: {product.product_code}
                               {product.description && ` • ${product.description}`}
                             </div>
-                            <div className="text-sm text-green-600">
-                              ราคาทุน: ฿{product.cost_price?.toLocaleString() || 'ไม่ระบุ'}
-                            </div>
+
                           </div>
                           <Plus className="h-4 w-4 text-muted-foreground" />
                         </div>

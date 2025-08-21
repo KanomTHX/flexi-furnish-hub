@@ -11,6 +11,8 @@ import {
 import { InstallmentContract } from '@/types/pos';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { cacheManager } from '@/utils/cacheManager';
+import { useAuth } from '@/hooks/useAuth';
 
 // ข้อมูลลูกค้าจะโหลดจากฐานข้อมูล Supabase
 
@@ -18,17 +20,66 @@ export function useCustomers() {
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFromCache, setIsFromCache] = useState(false);
+  const { profile } = useAuth();
 
-  // โหลดข้อมูลลูกค้าจากฐานข้อมูล
-  const loadCustomers = useCallback(async () => {
+  // โหลดข้อมูลลูกค้าจากแคชหรือฐานข้อมูล
+  const loadCustomers = useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
-      const { data: customersData, error: customersError } = await supabase
+      // ลองโหลดจากแคชก่อน (ถ้าไม่ได้บังคับรีเฟรช)
+      if (!forceRefresh && profile?.branch_id) {
+        const cachedCustomers = cacheManager.getCustomers(profile.branch_id);
+        if (cachedCustomers && cachedCustomers.length > 0) {
+          console.log('Loading customers from cache:', cachedCustomers.length);
+          
+          // แปลงข้อมูลจากแคชให้ตรงกับ CustomerData interface
+          const formattedCustomers: CustomerData[] = cachedCustomers.map(customer => ({
+            id: customer.id,
+            name: customer.name || '',
+            phone: customer.phone || '',
+            email: customer.email || '',
+            address: customer.address || '',
+            idCard: customer.id_card || '',
+            occupation: customer.occupation || '',
+            monthlyIncome: customer.monthly_income || 0,
+            creditScore: customer.credit_score || 500,
+            totalContracts: customer.total_contracts || 0,
+            activeContracts: customer.active_contracts || 0,
+            totalFinanced: customer.total_financed || 0,
+            totalPaid: customer.total_paid || 0,
+            overdueAmount: customer.overdue_amount || 0,
+            lastPaymentDate: customer.last_payment_date ? new Date(customer.last_payment_date) : new Date(),
+            riskLevel: customer.risk_level || 'low',
+            customerSince: customer.created_at ? new Date(customer.created_at) : new Date(),
+            notes: customer.notes || ''
+          }));
+
+          setCustomers(formattedCustomers);
+          setIsFromCache(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // ถ้าไม่มีแคชหรือบังคับรีเฟรช ให้โหลดจากฐานข้อมูล
+      console.log('Loading customers from database...');
+      setIsFromCache(false);
+      
+      let query = supabase
         .from('customers')
         .select('*')
+        .eq('status', 'active')
         .order('created_at', { ascending: false });
+      
+      // กรองตามสาขาถ้ามี
+      if (profile?.branch_id) {
+        query = query.eq('branch_id', profile.branch_id);
+      }
+
+      const { data: customersData, error: customersError } = await query;
 
       if (customersError) {
         console.warn('ไม่สามารถโหลดข้อมูลลูกค้าจากฐานข้อมูล:', customersError);
@@ -64,6 +115,12 @@ export function useCustomers() {
       }));
 
       setCustomers(formattedCustomers);
+      
+      // อัปเดตแคช
+      if (profile?.branch_id) {
+        cacheManager.setCustomers(customersData, profile.branch_id);
+      }
+      
     } catch (err) {
       console.error('เกิดข้อผิดพลาดในการโหลดข้อมูลลูกค้า:', err);
       setError('ไม่สามารถโหลดข้อมูลลูกค้าได้');
@@ -71,7 +128,7 @@ export function useCustomers() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profile?.branch_id]);
 
   // โหลดข้อมูลเมื่อ component mount
   useEffect(() => {
@@ -136,6 +193,14 @@ export function useCustomers() {
       };
       
       setCustomers(prev => [newCustomer, ...prev]);
+      
+      // อัปเดตแคช
+      if (profile?.branch_id) {
+        const currentCache = cacheManager.getCustomers(profile.branch_id) || [];
+        const updatedCache = [data, ...currentCache];
+        cacheManager.setCustomers(updatedCache, profile.branch_id);
+      }
+      
       return newCustomer;
     } catch (err) {
       setError('เกิดข้อผิดพลาดในการสร้างลูกค้า');
@@ -143,7 +208,7 @@ export function useCustomers() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profile?.branch_id]);
 
   // อัปเดตลูกค้า
   const updateCustomer = useCallback(async (customerId: string, customerData: Partial<CustomerData>) => {
@@ -185,13 +250,25 @@ export function useCustomers() {
           ? { ...customer, ...customerData }
           : customer
       ));
+      
+      // อัปเดตแคช
+      if (profile?.branch_id) {
+        const currentCache = cacheManager.getCustomers(profile.branch_id) || [];
+        const updatedCache = currentCache.map(customer => 
+          customer.id === customerId 
+            ? { ...customer, ...updateRecord }
+            : customer
+        );
+        cacheManager.setCustomers(updatedCache, profile.branch_id);
+      }
+      
     } catch (err) {
       setError('เกิดข้อผิดพลาดในการอัปเดตลูกค้า');
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profile?.branch_id]);
 
   // ลบลูกค้า
   const deleteCustomer = useCallback(async (customerId: string) => {
@@ -564,10 +641,16 @@ export function useCustomers() {
     return filtered;
   }, [customers]);
 
+  // ฟังก์ชันรีเฟรชข้อมูลจากฐานข้อมูล
+  const refreshCustomers = useCallback(async () => {
+    await loadCustomers(true); // บังคับโหลดจากฐานข้อมูล
+  }, [loadCustomers]);
+
   return {
     customers,
     loading,
     error,
+    isFromCache,
     customerStats,
     actions: {
       createCustomer,
@@ -581,6 +664,7 @@ export function useCustomers() {
       getCustomerById,
       recalculateCreditScore,
       loadCustomers,
+      refreshCustomers,
       addGuarantor,
       getGuarantors,
       calculateCustomerMetrics,

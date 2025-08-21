@@ -66,7 +66,7 @@ export class SupplierServiceSimple {
   /**
    * Create new supplier
    */
-  static async createSupplier(supplierData: CreateSupplierData): Promise<Supplier> {
+  static async createSupplier(supplierData: CreateSupplierData, branchId?: string): Promise<Supplier> {
     try {
       console.log('Creating supplier with data:', supplierData);
       
@@ -81,7 +81,8 @@ export class SupplierServiceSimple {
         payment_terms: supplierData.paymentTerms || 30,
         credit_limit: supplierData.creditLimit || 0,
         notes: supplierData.notes || '',
-        status: 'active'
+        status: 'active',
+        branch_id: branchId || null
       };
 
       console.log('Insert data:', insertData);

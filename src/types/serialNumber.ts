@@ -206,8 +206,6 @@ export interface Product {
   description?: string;
   categoryId?: string;
   brandId?: string;
-  unitPrice?: number;
-  costPrice?: number;
   requiresSerialNumber: boolean;
   warrantyPeriod?: number; // in months
   isActive: boolean;
