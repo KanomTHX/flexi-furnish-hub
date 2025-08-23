@@ -420,7 +420,6 @@ export function MultiBranchExportDialog({ open, onOpenChange }: MultiBranchExpor
               {format === 'pdf' && (
                 <p>ไฟล์ PDF จะรวมข้อมูลทุกสาขาในเอกสารเดียว เหมาะสำหรับการนำเสนอ</p>
               )}
-                       )}
             </div>
           </div>
         </ScrollArea>
