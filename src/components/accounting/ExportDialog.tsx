@@ -247,7 +247,6 @@ export function ExportDialog({ open, onOpenChange, exportType, data, title }: Ex
             {format === 'pdf' && (
               <p>ไฟล์ PDF เหมาะสำหรับการพิมพ์และการแชร์ที่ไม่ต้องการแก้ไข</p>
             )}
-                 )}
           </div>
         </div>
 
